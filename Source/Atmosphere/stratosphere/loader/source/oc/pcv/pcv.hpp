@@ -171,7 +171,7 @@ namespace ams::ldr::oc::pcv {
         constexpr u32 EmcClkPllmLimit = 2133'000'000;
         constexpr u32 EmcVddqDefault = 600'000;
         constexpr u32 MemVdd2Default = 1100'000;
-
+        constexpr u32 EmcClkHHDefault = 1331'200;
         constexpr u32 MTC_TABLE_REV = 3;
 
         void Patch(uintptr_t mapped_nso, size_t nso_size);
@@ -280,6 +280,7 @@ namespace ams::ldr::oc::pcv {
 
         constexpr u32 MemVoltHOS = 1125'000;
         constexpr u32 EmcClkPllmLimit = 1866'000'000;
+
 
         constexpr u32 MTC_TABLE_REV = 7;
 

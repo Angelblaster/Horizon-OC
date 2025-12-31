@@ -413,6 +413,34 @@ namespace ams::ldr::oc::pcv::mariko {
     }
 
     void MemMtcTableAutoAdjust(MarikoMtcTable *table) {
+        tCK_avg = 1000'000.0 / table->rate_khz;
+        tRCD = tRCD_values[C.t1_tRCD];
+        tRPpb = tRP_values[C.t2_tRP];
+        tRAS = tRAS_values[C.t3_tRAS];
+        tRRD = tRRD_values[C.t4_tRRD];
+        tRFCpb = tRFC_values[C.t5_tRFC];
+        tWTR = 10 - tWTR_values[C.t7_tWTR];
+        tRC = tRAS + tRPpb;
+        tRFCab = tRFCpb * 2;
+        tXSR = (double) (tRFCab + 7.5);
+        tFAW = static_cast<u32>(tRRD * 4.0);
+        tRPab = tRPpb + 3;
+        tR2P = 12 + (C.mem_burst_read_latency / 2);
+        tRTM = RL + 9 + (tDQSCK_max / tCK_avg) + FLOOR(tRPST) + CEIL(10 / tCK_avg); // Fix?
+        tRATM = tRTM + CEIL(10 / tCK_avg) - 12; // Fix?
+        quse = FLOOR((-0.0048159 * (table->rate_khz / 1000.0)) + RL_DBI) + (FLOOR((table->rate_khz / 1000.0) * 0.0050997) * 1.5134);
+        einput = quse - ((table->rate_khz / 1000.0) * 0.01);
+        tW2P = (CEIL(WL * 1.7303) * 2) - 5;
+        tW2R = CEIL(MAX(WL + (0.010322547033278747 * (table->rate_khz / 1000.0)), (WL * -0.2067922202979121) + FLOOR(((RL_DBI * -0.1331159971685554) + WL) * 3.654131957826108)) - (tWTR / tCK_avg));
+        tWTM = WL + (BL / 2) + 1 + CEIL(7.5 / tCK_avg);
+        tWATM = tWTM + CEIL(tWR / tCK_avg);
+        wdv = WL;
+        wsv = WL - 2;
+        wev = 0xA + C.mem_burst_write_latency;
+        tCKE = CEIL(1.0795 * CEIL(0.0074472 * (table->rate_khz / 1000.0)));
+        tMMRI = tRCD + (tCK_avg * 3);
+        pdex2mrr = tMMRI + 10; /* Do this properly? */
+
         #define WRITE_PARAM_ALL_REG(TABLE, PARAM, VALUE) \
             TABLE->burst_regs.PARAM = VALUE;             \
             TABLE->shadow_regs_ca_train.PARAM   = VALUE; \
@@ -435,7 +463,7 @@ namespace ams::ldr::oc::pcv::mariko {
         u32 trefbw = refresh_raw + 0x40;
         trefbw = MIN(trefbw, static_cast<u32>(0x3FFF));
 
-        CalculateTimings();
+        CalculateTimings(table->rate_khz);
 
         WRITE_PARAM_ALL_REG(table, emc_rd_rcd, GET_CYCLE_CEIL(tRCD));
         WRITE_PARAM_ALL_REG(table, emc_wr_rcd, GET_CYCLE_CEIL(tRCD));
@@ -462,7 +490,7 @@ namespace ams::ldr::oc::pcv::mariko {
         WRITE_PARAM_ALL_REG(table, emc_twtm, tWTM);
         WRITE_PARAM_ALL_REG(table, emc_twatm, tWATM);
         WRITE_PARAM_ALL_REG(table, emc_rext, rext);
-        WRITE_PARAM_ALL_REG(table, emc_wext, (C.marikoEmcMaxClock >= 2533000) ? 0x19 : 0x16);
+        WRITE_PARAM_ALL_REG(table, emc_wext, (table->rate_khz >= 2533000) ? 0x19 : 0x16);
         WRITE_PARAM_ALL_REG(table, emc_refresh, refresh_raw);
         WRITE_PARAM_ALL_REG(table, emc_pre_refresh_req_cnt, refresh_raw / 4);
         WRITE_PARAM_ALL_REG(table, emc_trefbw, trefbw);
@@ -509,7 +537,7 @@ namespace ams::ldr::oc::pcv::mariko {
         constexpr double MC_ARB_DIV = 4.0;
         constexpr u32 MC_ARB_SFA = 2;
 
-        table->burst_mc_regs.mc_emem_arb_cfg          = C.marikoEmcMaxClock           / (33.3 * 1000) / MC_ARB_DIV;
+        table->burst_mc_regs.mc_emem_arb_cfg          = table->rate_khz           / (33.3 * 1000) / MC_ARB_DIV;
         table->burst_mc_regs.mc_emem_arb_timing_rcd   = CEIL(GET_CYCLE_CEIL(tRCD)   / MC_ARB_DIV) - 2;
         table->burst_mc_regs.mc_emem_arb_timing_rp    = CEIL(GET_CYCLE_CEIL(tRPpb)  / MC_ARB_DIV) - 1;
         table->burst_mc_regs.mc_emem_arb_timing_rc    = CEIL(GET_CYCLE_CEIL(tRC)    / MC_ARB_DIV) - 1;
@@ -544,7 +572,7 @@ namespace ams::ldr::oc::pcv::mariko {
 
         table->la_scale_regs.mc_mll_mpcorer_ptsa_rate = 0x115;
 
-        if (C.marikoEmcMaxClock >= 2133000) {
+        if (table->rate_khz >= 2133000) {
             table->la_scale_regs.mc_ftop_ptsa_rate = 0x1F;
         } else {
             table->la_scale_regs.mc_ftop_ptsa_rate = 0x1B;
@@ -556,11 +584,11 @@ namespace ams::ldr::oc::pcv::mariko {
         constexpr u32 Mask2 = 0xFFFFFF00;
         constexpr u32 Mask3 = 0xFF00FF00;
 
-        const u32 allowance1 = static_cast<u32>(0x32000 / (C.marikoEmcMaxClock / 0x3E8)) & 0xFF;
-        const u32 allowance2 = static_cast<u32>(0x9C40  / (C.marikoEmcMaxClock / 0x3E8)) & 0xFF;
-        const u32 allowance3 = static_cast<u32>(0xB540  / (C.marikoEmcMaxClock / 0x3E8)) & 0xFF;
-        const u32 allowance4 = static_cast<u32>(0x9600  / (C.marikoEmcMaxClock / 0x3E8)) & 0xFF;
-        const u32 allowance5 = static_cast<u32>(0x8980  / (C.marikoEmcMaxClock / 0x3E8)) & 0xFF;
+        const u32 allowance1 = static_cast<u32>(0x32000 / (table->rate_khz / 0x3E8)) & 0xFF;
+        const u32 allowance2 = static_cast<u32>(0x9C40  / (table->rate_khz / 0x3E8)) & 0xFF;
+        const u32 allowance3 = static_cast<u32>(0xB540  / (table->rate_khz / 0x3E8)) & 0xFF;
+        const u32 allowance4 = static_cast<u32>(0x9600  / (table->rate_khz / 0x3E8)) & 0xFF;
+        const u32 allowance5 = static_cast<u32>(0x8980  / (table->rate_khz / 0x3E8)) & 0xFF;
 
         table->la_scale_regs.mc_latency_allowance_xusb_0 = (table->la_scale_regs.mc_latency_allowance_xusb_0 & MaskHigh) | (allowance1 << 16);
         table->la_scale_regs.mc_latency_allowance_xusb_1 = (table->la_scale_regs.mc_latency_allowance_xusb_1 & MaskHigh) | (allowance1 << 16);
@@ -808,24 +836,24 @@ namespace ams::ldr::oc::pcv::mariko {
         constexpr u32 PllOscInKHz   = 38400;
         constexpr u32 PllOscHalfKHz = 19200;
 
-        double target_freq_d = static_cast<double>(C.marikoEmcMaxClock);
+        double target_freq_d = static_cast<double>(table->rate_khz);
 
-        s32 divm_candidate_half = static_cast<u8>(C.marikoEmcMaxClock / PllOscHalfKHz);
+        s32 divm_candidate_half = static_cast<u8>(table->rate_khz / PllOscHalfKHz);
 
-        bool remainder_check = (C.marikoEmcMaxClock - PllOscInKHz * (C.marikoEmcMaxClock / PllOscInKHz)) > (C.marikoEmcMaxClock - PllOscHalfKHz * divm_candidate_half) && static_cast<int>(((target_freq_d / PllOscHalfKHz - divm_candidate_half - 0.5) * 8192.0)) != 0;
+        bool remainder_check = (table->rate_khz - PllOscInKHz * (table->rate_khz / PllOscInKHz)) > (table->rate_khz - PllOscHalfKHz * divm_candidate_half) && static_cast<int>(((target_freq_d / PllOscHalfKHz - divm_candidate_half - 0.5) * 8192.0)) != 0;
 
         u32 divm_final = remainder_check + 1;
         table->pllmb_divm = divm_final;
 
         double div_step_d = static_cast<double>(PllOscInKHz) / divm_final;
-        s32 divn_integer = static_cast<u8>(C.marikoEmcMaxClock / div_step_d);
+        s32 divn_integer = static_cast<u8>(table->rate_khz / div_step_d);
         table->pllmb_divn = divn_integer;
 
         u32 divn_fraction = static_cast<s32>((target_freq_d / div_step_d - divn_integer - 0.5) * 8192.0);
 
         u32 actual_freq_khz = static_cast<u32>((divn_integer + 0.5 + divn_fraction * 0.000122070312) * div_step_d);
 
-        if (C.marikoEmcMaxClock - 2366001 < 133999) {
+        if (table->rate_khz - 2366001 < 133999) {
             s32 divn_fraction_ssc = static_cast<s32>((actual_freq_khz * 0.997 / div_step_d - divn_integer - 0.5) * 8192.0);
 
             double delta_scaled = (0.3 / div_step_d + 0.3 / div_step_d) * (divn_fraction - divn_fraction_ssc);
@@ -853,7 +881,7 @@ namespace ams::ldr::oc::pcv::mariko {
             table->pllm_ss_cfg &= 0xBFFFFFFF;
             table->pllmb_ss_cfg &= 0xBFFFFFFF;
 
-            u64 pair = (static_cast<u64>(divn_fraction) << 32) | static_cast<u64>(C.marikoEmcMaxClock);
+            u64 pair = (static_cast<u64>(divn_fraction) << 32) | static_cast<u64>(table->rate_khz);
             u32 pll_misc = (table->pllm_ss_ctrl2 & 0xFFFF0000) | static_cast<u32>((pair - actual_freq_khz) >> 32);
 
             table->pllm_ss_ctrl2 = pll_misc;
@@ -865,7 +893,6 @@ namespace ams::ldr::oc::pcv::mariko {
         u32 khz_list[] = {1600000, 1331200, 204000};
         u32 khz_list_size = sizeof(khz_list) / sizeof(u32);
 
-        // Generate list for mtc table pointers
         MarikoMtcTable *table_list[khz_list_size];
         for (u32 i = 0; i < khz_list_size; i++) {
             u8 *table = reinterpret_cast<u8 *>(ptr) - offsetof(MarikoMtcTable, rate_khz) - i * sizeof(MarikoMtcTable);
@@ -877,23 +904,17 @@ namespace ams::ldr::oc::pcv::mariko {
         if (C.marikoEmcMaxClock <= EmcClkOSLimit)
             R_SKIP();
 
-        MarikoMtcTable *table_alt = table_list[1], *table_max = table_list[0];
-        MarikoMtcTable *tmp = new MarikoMtcTable;
-
-        // Copy unmodified 1600000 table to tmp
-        std::memcpy(reinterpret_cast<void *>(tmp), reinterpret_cast<void *>(table_max), sizeof(MarikoMtcTable));
-        // Adjust max freq mtc timing parameters with reference to 1331200 table
-        /* TODO: Implement mariko */
-
+        MarikoMtcTable *table_max = table_list[0];   // originally 1600000
+        table_max->rate_khz = C.marikoEmcMaxClock;
         MemMtcTableAutoAdjust(table_max);
-
         MemMtcPllmbDivisor(table_max);
-        // Overwrite 13312000 table with unmodified 1600000 table copied back
-        std::memcpy(reinterpret_cast<void *>(table_alt), reinterpret_cast<void *>(tmp), sizeof(MarikoMtcTable));
+        
 
-        delete tmp;
+        MarikoMtcTable *table_alt = table_list[1];   // originally 1331200
+        table_alt->rate_khz = C.marikoEmcMaxClockH;
+        MemMtcTableAutoAdjust(table_alt);
+        MemMtcPllmbDivisor(table_alt);
 
-        PATCH_OFFSET(ptr, C.marikoEmcMaxClock);
         R_SUCCEED();
     }
 

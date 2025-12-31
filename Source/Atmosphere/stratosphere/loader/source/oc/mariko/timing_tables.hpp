@@ -18,7 +18,7 @@
 #include "../mtc_timing_value.hpp"
 
 namespace ams::ldr::oc::pcv::mariko {
-
+    void SetTableMaxClock(u32 maxClock);
     struct ReplacePatch {
         u32 freq;
         u32 correct;

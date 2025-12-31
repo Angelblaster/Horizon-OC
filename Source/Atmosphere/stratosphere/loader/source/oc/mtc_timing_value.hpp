@@ -110,55 +110,47 @@ namespace ams::ldr::oc {
      //   const u32 tRPab = tRPpb + 3;
     }
 
-    namespace pcv::mariko {
-        const double tCK_avg = 1000'000.0 / C.marikoEmcMaxClock;
-
-        const u32 tRCD  = tRCD_values[C.t1_tRCD];
-        const u32 tRPpb = tRP_values[C.t2_tRP];
-        const u32 tRAS  = tRAS_values[C.t3_tRAS];
-        const double tRRD = tRRD_values[C.t4_tRRD];
-        const u32 tRFCpb = tRFC_values[C.t5_tRFC];
-        const u32 tWTR   = 10 - tWTR_values[C.t7_tWTR];
-
-        const u32 tRC = tRAS + tRPpb;
-        const u32 tRFCab = tRFCpb * 2;
-        const double tXSR = (double) (tRFCab + 7.5);
-        const u32 tFAW = static_cast<u32>(tRRD * 4.0);
-        const double tRPab = tRPpb + 3;
-
-        const u32 tR2P = 12 + (C.mem_burst_read_latency / 2);
-        inline u32 tR2W;
-        const u32 tRTM = RL + 9 + (tDQSCK_max / tCK_avg) + FLOOR(tRPST) + CEIL(10 / tCK_avg); // Fix?
-        const u32 tRATM = tRTM + CEIL(10 / tCK_avg) - 12; // Fix?
-        inline u32 rdv;
-        const u32 quse = FLOOR((-0.0048159 * (C.marikoEmcMaxClock / 1000.0)) + RL_DBI) + (FLOOR((C.marikoEmcMaxClock / 1000.0) * 0.0050997) * 1.5134);
-        const u32 einput = quse - ((C.marikoEmcMaxClock / 1000.0) * 0.01);
-        inline u32 einput_duration;
-        inline u32 ibdly;
-        inline u32 obdly;
-        inline u32 quse_width;
-        inline u32 rext;
-        inline u32 qrst;
-        inline u32 qsafe;
-        inline u32 qpop;
-
-        const u32 tW2P = (CEIL(WL * 1.7303) * 2) - 5;
-        inline u32 tWTPDEN;
-        const u32 tW2R = CEIL(MAX(WL + (0.010322547033278747 * (C.marikoEmcMaxClock / 1000.0)), (WL * -0.2067922202979121) + FLOOR(((RL_DBI * -0.1331159971685554) + WL) * 3.654131957826108)) - (tWTR / tCK_avg));
-        const u32 tWTM = WL + (BL / 2) + 1 + CEIL(7.5 / tCK_avg);
-        const u32 tWATM = tWTM + CEIL(tWR / tCK_avg);
-
-        const u32 wdv = WL;
-        const u32 wsv = WL - 2;
-        const u32 wev = 0xA + C.mem_burst_write_latency;
-
-        inline u32 pdex2rw;
-        inline u32 cke2pden;
-
-        const u32 tCKE = CEIL(1.0795 * CEIL(0.0074472 * (C.marikoEmcMaxClock / 1000.0)));
-
-        const double tMMRI = tRCD + (tCK_avg * 3);
-        const double pdex2mrr = tMMRI + 10; /* Do this properly? */
+namespace pcv::mariko {
+    extern double tCK_avg;
+    extern u32 tRCD;
+    extern u32 tRPpb;
+    extern u32 tRAS;
+    extern double tRRD;
+    extern u32 tRFCpb;
+    extern u32 tWTR;
+    extern u32 tRC;
+    extern u32 tRFCab;
+    extern double tXSR;
+    extern u32 tFAW;
+    extern double tRPab;
+    extern u32 tR2P;
+    extern u32 tR2W;
+    extern u32 tRTM;
+    extern u32 tRATM;
+    extern u32 rdv;
+    extern u32 quse;
+    extern u32 einput;
+    extern u32 einput_duration;
+    extern u32 ibdly;
+    extern u32 obdly;
+    extern u32 quse_width;
+    extern u32 rext;
+    extern u32 qrst;
+    extern u32 qsafe;
+    extern u32 qpop;
+    extern u32 tW2P;
+    extern u32 tWTPDEN;
+    extern u32 tW2R;
+    extern u32 tWTM;
+    extern u32 tWATM;
+    extern u32 wdv;
+    extern u32 wsv;
+    extern u32 wev;
+    extern u32 pdex2rw;
+    extern u32 cke2pden;
+    extern u32 tCKE;
+    extern double tMMRI;
+    extern double pdex2mrr;
     }
 
 }

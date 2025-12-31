@@ -19,7 +19,7 @@
 #include "timing_tables.hpp"
 
 namespace ams::ldr::oc::pcv::mariko {
-
+    u32 calcClock;
     u32 GetRext() {
         if (auto r = FindRext()) {
             return r->correct;
@@ -35,7 +35,7 @@ namespace ams::ldr::oc::pcv::mariko {
 
         for (u32 i = 0; i < g_misc_table_size; i++) {
             const auto& e = g_misc_table[i];
-            if (C.marikoEmcMaxClock >= e.min_freq) {
+            if (calcClock >= e.min_freq) {
                 rdv += e.rdv_inc;
                 if (e.einput) einput_duration = e.einput;
                 if (e.quse_width) quse_width = e.quse_width;
@@ -64,8 +64,8 @@ namespace ams::ldr::oc::pcv::mariko {
 
     void CalculateTWTPDEN() {
         tWTPDEN = tW2P + 1 + CEIL(tDQSS_max / tCK_avg) + CEIL(tDQS2DQ_max / tCK_avg) + 6;
-        if (C.marikoEmcMaxClock >= 2'233'000 && C.marikoEmcMaxClock < 2'533'000) tWTPDEN++;
-        if (C.marikoEmcMaxClock >= 2'433'000 && C.marikoEmcMaxClock < 2'800'000) tWTPDEN--;
+        if (calcClock >= 2'233'000 && calcClock < 2'533'000) tWTPDEN++;
+        if (calcClock >= 2'433'000 && calcClock < 2'800'000) tWTPDEN--;
     }
 
     void CalculateTR2W() {
@@ -78,12 +78,12 @@ namespace ams::ldr::oc::pcv::mariko {
 
     void CalculateQrst() {
         qrst = 0x00070000;
-        u32 qrst_calc = ROUND(22.1 - (C.marikoEmcMaxClock / 1000000.0) * 8.0) + C.mem_burst_read_latency;
+        u32 qrst_calc = ROUND(22.1 - (calcClock / 1000000.0) * 8.0) + C.mem_burst_read_latency;
         u32 qrst_low = MAX(static_cast<u32>(0), qrst_calc);
 
-        if (C.marikoEmcMaxClock >= 2'533'000) {
+        if (calcClock >= 2'533'000) {
             qrst = INCREMENT_HIGH_BYTES_BY(qrst, 1);
-        } else if (C.marikoEmcMaxClock == 2'800'000) {
+        } else if (calcClock == 2'800'000) {
             qrst = SET_HIGH_BYTES(qrst, 6);
         }
 
@@ -95,20 +95,20 @@ namespace ams::ldr::oc::pcv::mariko {
     }
 
     void CalculateQsafe() {
-        qsafe = ROUND((C.marikoEmcMaxClock / 1000.0) / 138.0 + 37.4) + C.mem_burst_read_latency;
+        qsafe = ROUND((calcClock / 1000.0) / 138.0 + 37.4) + C.mem_burst_read_latency;
         if (auto patch = FindQsafePatch()) {
             qsafe += patch->adjust;
         }
     }
 
     void CalculateQpop() {
-        qpop = FLOOR(((C.marikoEmcMaxClock / 1000.0) - 2133 + 167) / 200.0) + 0x2D + C.mem_burst_read_latency;
+        qpop = FLOOR(((calcClock / 1000.0) - 2133 + 167) / 200.0) + 0x2D + C.mem_burst_read_latency;
 
-        if (C.marikoEmcMaxClock >= 3'133'000) qpop++;
+        if (calcClock >= 3'133'000) qpop++;
     }
 
     void CalculatePdex2rw() {
-        double freq_mhz = C.marikoEmcMaxClock / 1000.0;
+        double freq_mhz = calcClock / 1000.0;
 
         double pdex_local = (0.011 * freq_mhz) - 1.443;
         pdex2rw = static_cast<u32>(ROUND(pdex_local));
@@ -122,14 +122,16 @@ namespace ams::ldr::oc::pcv::mariko {
     }
 
     void CalculateCke2pden() {
-        cke2pden = (static_cast<double>((C.marikoEmcMaxClock / 1000.0) * 0.00875) - 0.65);
+        cke2pden = (static_cast<double>((calcClock / 1000.0) * 0.00875) - 0.65);
 
         if (auto patch = FindCke2pdenPatch()) {
             cke2pden += patch->adjust;
         }
     }
 
-    void CalculateTimings() {
+    void CalculateTimings(u32 rate_khz) {
+        calcClock = rate_khz;
+        SetTableMaxClock(rate_khz);
         CalculateMiscTimings();
         CalculateIbdly();
         CalculateObdly();
