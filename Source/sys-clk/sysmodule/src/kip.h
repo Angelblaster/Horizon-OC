@@ -275,7 +275,7 @@ static inline u32 cust_get_erista_gpu_volt(const CustomizeTable* t, int idx) {
 }
 
 static inline u32 cust_get_mariko_gpu_volt(const CustomizeTable* t, int idx) {
-    if (!t || idx < 0 || idx >= 24) return 0;
+    if (!t || idx < 0 || idx >= 31) return 0;
     return t->marikoGpuVoltArray[idx];
 }
 
