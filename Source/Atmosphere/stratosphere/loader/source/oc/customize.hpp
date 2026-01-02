@@ -108,7 +108,7 @@ typedef struct CustomizeTable {
     u32 marikoGpuFullUnlock;
 
     u32 eristaGpuVoltArray[27];
-    u32 marikoGpuVoltArray[24];
+    u32 marikoGpuVoltArray[31];
 
     CustomizeCpuDvfsTable eristaCpuDvfsTable;
     CustomizeCpuDvfsTable eristaCpuDvfsTableSLT;

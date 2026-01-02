@@ -733,7 +733,7 @@ protected:
             addConfigButton(
                 KipConfigValue_eristaCpuMaxVolt,
                 "CPU Max Voltage",
-                ValueRange(1120, 1235, 5, "mV", 1),
+                ValueRange(1120, 1500, 5, "mV", 1),
                 "CPU Max Voltage",
                 &thresholdsDisabled,
                 {},
@@ -762,7 +762,7 @@ protected:
             addConfigButton(
                 KipConfigValue_marikoCpuUVLow,
                 "CPU Low UV",
-                ValueRange(0, 8, 1, "", 1),
+                ValueRange(0, 12, 1, "", 1),
                 "CPU Low UV",
                 &thresholdsDisabled,
                 {},
@@ -901,7 +901,7 @@ protected:
             addConfigButton(
                 KipConfigValue_marikoGpuVmax,
                 "GPU VMAX",
-                ValueRange(750, 960, 5, "mV", 1),
+                ValueRange(750, 1525, 5, "mV", 1),
                 "GPU VMAX",
                 &MgpuVmaxThresholds,
                 {},
@@ -990,7 +990,44 @@ protected:
             NamedValue("915mV", 915), NamedValue("920mV", 920), NamedValue("925mV", 925),
             NamedValue("930mV", 930), NamedValue("935mV", 935), NamedValue("940mV", 940),
             NamedValue("945mV", 945), NamedValue("950mV", 950), NamedValue("955mV", 955),
-            NamedValue("960mV", 960),
+            NamedValue("960mV", 960), NamedValue("965mV", 965), NamedValue("970mV", 970),
+            NamedValue("975mV", 975), NamedValue("980mV", 980), NamedValue("985mV", 985),
+            NamedValue("990mV", 990), NamedValue("995mV", 995), NamedValue("1000mV", 1000),
+            NamedValue("1005mV", 1005), NamedValue("1010mV", 1010), NamedValue("1015mV", 1015),
+            NamedValue("1020mV", 1020), NamedValue("1025mV", 1025), NamedValue("1030mV", 1030),
+            NamedValue("1035mV", 1035), NamedValue("1040mV", 1040), NamedValue("1045mV", 1045),
+            NamedValue("1050mV", 1050), NamedValue("1055mV", 1055), NamedValue("1060mV", 1060),
+            NamedValue("1065mV", 1065), NamedValue("1070mV", 1070), NamedValue("1075mV", 1075),
+            NamedValue("1080mV", 1080), NamedValue("1085mV", 1085), NamedValue("1090mV", 1090),
+            NamedValue("1095mV", 1095), NamedValue("1100mV", 1100), NamedValue("1105mV", 1105),
+            NamedValue("1110mV", 1110), NamedValue("1115mV", 1115), NamedValue("1120mV", 1120),
+            NamedValue("1125mV", 1125), NamedValue("1130mV", 1130), NamedValue("1135mV", 1135),
+            NamedValue("1140mV", 1140), NamedValue("1145mV", 1145), NamedValue("1150mV", 1150),
+            NamedValue("1155mV", 1155), NamedValue("1160mV", 1160), NamedValue("1165mV", 1165),
+            NamedValue("1170mV", 1170), NamedValue("1175mV", 1175), NamedValue("1180mV", 1180),
+            NamedValue("1185mV", 1185), NamedValue("1190mV", 1190), NamedValue("1195mV", 1195),
+            NamedValue("1200mV", 1200), NamedValue("1205mV", 1205), NamedValue("1210mV", 1210),
+            NamedValue("1215mV", 1215), NamedValue("1220mV", 1220), NamedValue("1225mV", 1225),
+            NamedValue("1230mV", 1230), NamedValue("1235mV", 1235), NamedValue("1240mV", 1240),
+            NamedValue("1245mV", 1245), NamedValue("1250mV", 1250), NamedValue("1255mV", 1255),
+            NamedValue("1260mV", 1260), NamedValue("1265mV", 1265), NamedValue("1270mV", 1270),
+            NamedValue("1275mV", 1275), NamedValue("1280mV", 1280), NamedValue("1285mV", 1285),
+            NamedValue("1290mV", 1290), NamedValue("1295mV", 1295), NamedValue("1300mV", 1300),
+            NamedValue("1305mV", 1305), NamedValue("1310mV", 1310), NamedValue("1315mV", 1315),
+            NamedValue("1320mV", 1320), NamedValue("1325mV", 1325), NamedValue("1330mV", 1330),
+            NamedValue("1335mV", 1335), NamedValue("1340mV", 1340), NamedValue("1345mV", 1345),
+            NamedValue("1350mV", 1350), NamedValue("1355mV", 1355), NamedValue("1360mV", 1360),
+            NamedValue("1365mV", 1365), NamedValue("1370mV", 1370), NamedValue("1375mV", 1375),
+            NamedValue("1380mV", 1380), NamedValue("1385mV", 1385), NamedValue("1390mV", 1390),
+            NamedValue("1395mV", 1395), NamedValue("1400mV", 1400), NamedValue("1405mV", 1405),
+            NamedValue("1410mV", 1410), NamedValue("1415mV", 1415), NamedValue("1420mV", 1420),
+            NamedValue("1425mV", 1425), NamedValue("1430mV", 1430), NamedValue("1435mV", 1435),
+            NamedValue("1440mV", 1440), NamedValue("1445mV", 1445), NamedValue("1450mV", 1450),
+            NamedValue("1455mV", 1455), NamedValue("1460mV", 1460), NamedValue("1465mV", 1465),
+            NamedValue("1470mV", 1470), NamedValue("1475mV", 1475), NamedValue("1480mV", 1480),
+            NamedValue("1485mV", 1485), NamedValue("1490mV", 1490), NamedValue("1495mV", 1495),
+            NamedValue("1500mV", 1500), NamedValue("1505mV", 1505), NamedValue("1510mV", 1510),
+            NamedValue("1515mV", 1515), NamedValue("1520mV", 1520), NamedValue("1525mV", 1525),
         };
 
         std::vector<NamedValue> eGpuVolts = {
@@ -1043,6 +1080,14 @@ protected:
             addConfigButton(KipConfigValue_g_volt_1459200, "1459.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_1497600, "1497.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_1536000, "1536.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1574400, "1574.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1612800, "1612.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1651200, "1651.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1689600, "1689.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1728000, "1728.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1766400, "1766.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1804800, "1804.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+
         } else {
             addConfigButton(KipConfigValue_g_volt_e_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_115200, "115.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);

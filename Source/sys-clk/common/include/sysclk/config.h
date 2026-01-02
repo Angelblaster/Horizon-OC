@@ -137,6 +137,13 @@ typedef enum {
     KipConfigValue_g_volt_1459200,
     KipConfigValue_g_volt_1497600,
     KipConfigValue_g_volt_1536000,
+    KipConfigValue_g_volt_1574400,
+    KipConfigValue_g_volt_1612800, 
+    KipConfigValue_g_volt_1651200,
+    KipConfigValue_g_volt_1689600, 
+    KipConfigValue_g_volt_1728000,
+    KipConfigValue_g_volt_1766400,
+    KipConfigValue_g_volt_1804800,
 
     KipConfigValue_g_volt_e_76800,
     KipConfigValue_g_volt_e_115200,

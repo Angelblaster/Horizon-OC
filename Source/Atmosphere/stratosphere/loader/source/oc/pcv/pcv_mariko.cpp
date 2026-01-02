@@ -127,6 +127,7 @@ namespace ams::ldr::oc::pcv::mariko {
                 break;
             }
         }
+        cpuCap = 3519000; // Temporary remove cap
         return cpuCap;
     }
 

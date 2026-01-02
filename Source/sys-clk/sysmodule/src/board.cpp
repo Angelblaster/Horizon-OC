@@ -1042,3 +1042,25 @@ void Board::UpdateShadowRegs(u32 tRCD_i, u32 tRP_i, u32 tRAS_i, u32 tRRD_i, u32 
     WRITE_REGISTER_MC(MC_TIMING_CONTROL_0, 0x1); // update timing regs as they are shadowed
     WRITE_REGISTER_EMC(EMC_TIMING_CONTROL_0, 0x1);
 }
+
+// u32 Board::CalculateSpeedoGpuMax() {
+//     u32 gpuMaxClock;
+//     switch(Board::getGPUSpeedo()) {
+//         case 1400 ... 1575:
+//             gpuMaxClock = 1075;
+//             FileUtils::LogLine("This switch is awful, using 1075 max clock");
+//             break;
+//         case 1576 ... 1675:
+//             gpuMaxClock = 1152;
+//             FileUtils::LogLine("This switch is ok, using 1152 max clock");
+//             break;
+//         case 1676 ... 1810:
+//             gpuMaxClock = 1228;
+//             FileUtils::LogLine("This switch is good, using 1228 max clock");
+//             break;
+//         default:
+//             gpuMaxClock = 998;
+//             FileUtils::LogLine("Speedo not in table!");
+//     }
+//     return gpuMaxClock;
+// }

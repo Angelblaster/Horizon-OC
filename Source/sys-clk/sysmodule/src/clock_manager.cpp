@@ -824,7 +824,7 @@ void ClockManager::GetKipData() {
             initialConfigValues[KipConfigValue_gpuSpeedo] = cust_get_gpu_speedo(&table);
             initialConfigValues[KipConfigValue_marikoGpuFullUnlock] = cust_get_mariko_gpu_unlock(&table);
 
-            for (int i = 0; i < 24; i++) {
+            for (int i = 0; i < 31; i++) {
                 initialConfigValues[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);
             }
 
@@ -878,7 +878,7 @@ void ClockManager::GetKipData() {
         configValues.values[KipConfigValue_gpuSpeedo] = cust_get_gpu_speedo(&table);
         configValues.values[KipConfigValue_marikoGpuFullUnlock] = cust_get_mariko_gpu_unlock(&table);
 
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 31; i++) {
             configValues.values[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);
         }
 

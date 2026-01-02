@@ -26,7 +26,7 @@
 #define DISABLED 0
 #define DEACTIVATED_GPU_FREQ 2000
 #define GPU_MIN_MIN_VOLT 480000
-#define CPU_MAX_MAX_VOLT 1235000
+#define CPU_MAX_MAX_VOLT 150000
 
 namespace ams::ldr::oc {
 
@@ -63,18 +63,18 @@ volatile CustomizeTable C = {
 /* Unlocks up to 2295 Mhz CPU, usage is not recommended. */
 .eristaCpuUnlock = DISABLED,
 
-.marikoCpuUVLow = 0, // No undervolt
-.marikoCpuUVHigh = 0, // No undervolt
-.tableConf = DEFAULT_TABLE, /* TODO: Add AUTO */
+.marikoCpuUVLow = 4, // No undervolt
+.marikoCpuUVHigh = 8, // No undervolt
+.tableConf = TBREAK_1581, /* TODO: Add AUTO */
 .marikoCpuLowVmin = 620,
 .marikoCpuHighVmin = 750,
-.marikoCpuMaxVolt = 1120,
+.marikoCpuMaxVolt = 1375,
 
 /* Supported values: 2397000, 2499000, 2601000, 2703000. */
 /* 2499000 should be used with caution. */
 /* 2601000 exceeds pmic limit on most consoles. */
 /* 2703000 is potentially dangerous and not advised. */
-.marikoCpuMaxClock = 2397000,
+.marikoCpuMaxClock = 3519000,
 
 .eristaCpuBoostClock = 1785000, // Default boost clock
 .marikoCpuBoostClock = 1963000, // Default boost clock
@@ -82,11 +82,11 @@ volatile CustomizeTable C = {
 .eristaGpuUV = 0,
 .eristaGpuVmin = 800,
 
-.marikoGpuUV = 0,
+.marikoGpuUV = 2,
 /* For automatic vmin detection, set this to AUTO. */
 .marikoGpuVmin = 610,
 
-.marikoGpuVmax = 800,
+.marikoGpuVmax = 1150,
 
 .commonGpuVoltOffset = 0,
 
@@ -97,7 +97,7 @@ volatile CustomizeTable C = {
 /* This setting is very dangerous and can damage your pmic, degrade your soc, damage the voltage rails and can cause various other damage. */
 /* Even with all of that said, if you still decide to use this despite all the warnings, use it at your own risk. */
 /* No warranty is provided in any way whatsoever. */
-.marikoGpuFullUnlock = DISABLED,
+.marikoGpuFullUnlock = ENABLED,
 
 /* This table is used with a gpu uv mode of 2. */
 /* Setting DEACTIVATED_GPU_FREQ on any freq will disable it and all freqs greater than it. (the latter is a bug :/) */
@@ -159,6 +159,12 @@ volatile CustomizeTable C = {
     DEACTIVATED_GPU_FREQ  /* 1459 (Disabled by default) */,
     DEACTIVATED_GPU_FREQ  /* 1497 (Disabled by default) */,
     DEACTIVATED_GPU_FREQ  /* 1536 (Disabled by default) */,
+    DEACTIVATED_GPU_FREQ  /*  1574                       */,
+    DEACTIVATED_GPU_FREQ  /*  1612                       */,
+    DEACTIVATED_GPU_FREQ  /*  1689                       */,
+    DEACTIVATED_GPU_FREQ  /*  1728                       */,
+    DEACTIVATED_GPU_FREQ  /*  1766                       */,
+    DEACTIVATED_GPU_FREQ  /*  1804                       */,
 },
 
 /* You shouldn't have to anything past here. */
@@ -234,14 +240,7 @@ volatile CustomizeTable C = {
 },
 
 .marikoCpuDvfsTableSLT = {
-    {  204000, {  732856, -17335, 113, }, {                   } },
-    {  306000, {  760024, -18195, 113, }, {                   } },
-    {  408000, {  789258, -19055, 113, }, {                   } },
-    {  510000, {  789258, -19055, 113, }, {                   } },
     {  612000, {  789258, -19055, 113, }, {                   } },
-    {  714000, {  789258, -19055, 113, }, {                   } },
-    {  816000, {  789258, -19055, 113, }, {                   } },
-    {  918000, {  820558, -19055, 113, }, {                   } },
     { 1020000, {  853926, -20775, 113, }, {          1120000, } },
     { 1122000, {  889361, -21625, 113, }, {          1120000, } },
     { 1224000, {  926862, -22485, 113, }, {          1120000, } },
@@ -258,18 +257,19 @@ volatile CustomizeTable C = {
     { 2397000, { 1490873, -34955, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2499000, { 1580725, -35815, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2601000, { 1702903, -36675, 113, }, { CPU_MAX_MAX_VOLT, } },
-    { 2703000, { 1770375, -37515, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2703000, { 1838820, -36648, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2805000, { 1940784, -37329, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2907000, { 1991766, -38010, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3009000, { 2042748, -38691, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3111000, { 2093730, -39372, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3213000, { 2144712, -40053, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3315000, { 2195694, -40734, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3417000, { 2246676, -41415, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3519000, { 2297658, -42096, 113, }, { CPU_MAX_MAX_VOLT, } },
 },
 
 .marikoCpuDvfsTable1581Tbreak {
-    {  204000, {  732856, -17335, 113, }, {                   } },
-    {  306000, {  760024, -18195, 113, }, {                   } },
-    {  408000, {  789258, -19055, 113, }, {                   } },
-    {  510000, {  789258, -19055, 113, }, {                   } },
     {  612000, {  853926, -20775, 113, }, {                   } },
-    {  714000, {  889361, -21625, 113, }, {                   } },
-    {  816000, {  926862, -22485, 113, }, {                   } },
-    {  918000, {  966431, -23345, 113, }, {                   } },
     { 1020000, { 1008066, -24205, 113, }, {          1120000, } },
     { 1122000, { 1008066, -24205, 113, }, {          1120000, } },
     { 1224000, { 1008066, -24205, 113, }, {          1120000, } },
@@ -287,17 +287,19 @@ volatile CustomizeTable C = {
     { 2499000, { 1736856, -35286, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2601000, { 1787838, -35967, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2703000, { 1838820, -36648, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2805000, { 1940784, -37329, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2907000, { 1991766, -38010, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3009000, { 2042748, -38691, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3111000, { 2093730, -39372, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3213000, { 2144712, -40053, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3315000, { 2195694, -40734, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3417000, { 2246676, -41415, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3519000, { 2297658, -42096, 113, }, { CPU_MAX_MAX_VOLT, } },
 },
 
 .marikoCpuDvfsTable1683Tbreak {
-    {  204000, {  732856, -17335, 113, }, {                   } },
-    {  306000, {  760024, -18195, 113, }, {                   } },
-    {  408000, {  789258, -19055, 113, }, {                   } },
-    {  510000, {  789258, -19055, 113, }, {                   } },
+
     {  612000, {  853926, -20775, 113, }, {                   } },
-    {  714000, {  889361, -21625, 113, }, {                   } },
-    {  816000, {  926862, -22485, 113, }, {                   } },
-    {  918000, {  966431, -23345, 113, }, {                   } },
     { 1020000, { 1008066, -24205, 113, }, {          1120000, } },
     { 1122000, { 1008066, -24205, 113, }, {          1120000, } },
     { 1224000, { 1008066, -24205, 113, }, {          1120000, } },
@@ -315,17 +317,18 @@ volatile CustomizeTable C = {
     { 2499000, { 1736856, -35286, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2601000, { 1787838, -35967, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2703000, { 1838820, -36648, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2805000, { 1940784, -37329, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2907000, { 1991766, -38010, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3009000, { 2042748, -38691, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3111000, { 2093730, -39372, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3213000, { 2144712, -40053, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3315000, { 2195694, -40734, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3417000, { 2246676, -41415, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3519000, { 2297658, -42096, 113, }, { CPU_MAX_MAX_VOLT, } },
 },
 
 .marikoCpuDvfsTableHelios {
-    {  204000, {  732856, -17335, 113, }, {                   } },
-    {  306000, {  760024, -18195, 113, }, {                   } },
-    {  408000, {  789258, -19055, 113, }, {                   } },
-    {  510000, {  789258, -19915, 113, }, {                   } },
     {  612000, {  789258, -19055, 113, }, {                   } },
-    {  714000, {  820558, -19915, 113, }, {                   } },
-    {  816000, {  853926, -20775, 113, }, {                   } },
-    {  918000, {  889361, -21625, 113, }, {                   } },
     { 1020000, {  926862, -22485, 113, }, {          1120000, } },
     { 1122000, {  926862, -22485, 113, }, {          1120000, } },
     { 1224000, {  926862, -22485, 113, }, {          1120000, } },
@@ -342,7 +345,15 @@ volatile CustomizeTable C = {
     { 2397000, { 1490873, -34955, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2499000, { 1580725, -35815, 113, }, { CPU_MAX_MAX_VOLT, } },
     { 2601000, { 1702903, -36675, 113, }, { CPU_MAX_MAX_VOLT, } },
-    { 2703000, { 1770375, -37515, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2703000, { 1838820, -36648, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2805000, { 1940784, -37329, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 2907000, { 1991766, -38010, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3009000, { 2042748, -38691, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3111000, { 2093730, -39372, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3213000, { 2144712, -40053, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3315000, { 2195694, -40734, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3417000, { 2246676, -41415, 113, }, { CPU_MAX_MAX_VOLT, } },
+    { 3519000, { 2297658, -42096, 113, }, { CPU_MAX_MAX_VOLT, } },
 },
 
 .eristaGpuDvfsTable = {
@@ -495,6 +506,13 @@ volatile CustomizeTable C = {
     { 1459200, { }, {       0,      0,    0,    0,     0,   0 } },
     { 1497600, { }, {       0,      0,    0,    0,     0,   0 } },
     { 1536000, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1574400, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1612800, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1651200, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1689600, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1728000, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1766400, { }, {       0,      0,    0,    0,     0,   0 } },
+    { 1804800, { }, {       0,      0,    0,    0,     0,   0 } },
 },
 
 };

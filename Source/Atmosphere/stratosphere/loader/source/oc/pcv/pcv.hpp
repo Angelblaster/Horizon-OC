@@ -58,7 +58,7 @@ namespace ams::ldr::oc::pcv {
 
         static const u32 cpuVoltThermalData[] = { 620, 1120, 20000, 620, 1120, 70000, 950, 1132, 0, 950, 1227, 0 };
 
-        static const u32 allowedCpuMaxFrequencies[] = { 2'397'000, 2'499'000, 2'601'000, 2'703'000, };
+        static const u32 allowedCpuMaxFrequencies[] = { 2'397'000, 2'499'000, 2'601'000, 2'703'000, 3'009'000};
 
         constexpr cvb_entry_t GpuCvbTableDefault[] = {
             // GPUB01_NA_CVB_TABLE
