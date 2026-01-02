@@ -741,24 +741,24 @@ protected:
                 false
             );
         } else {
-            std::vector<NamedValue> marikoTableConf = {
-                // NamedValue("Auto", 0),
-                NamedValue("Default", 1),
-                NamedValue("1581MHz Tbreak", 2),
-                NamedValue("1683MHz Tbreak", 3),
-                NamedValue("Extreme UV Table", 4)
-            };
+            // std::vector<NamedValue> marikoTableConf = {
+            //     // NamedValue("Auto", 0),
+            //     NamedValue("Default", 1),
+            //     NamedValue("1581MHz Tbreak", 2),
+            //     NamedValue("1683MHz Tbreak", 3),
+            //     NamedValue("Extreme UV Table", 4)
+            // };
 
-            addConfigButton(
-                KipConfigValue_tableConf,
-                "CPU UV Table",
-                ValueRange(0, 12, 1, "", 0),
-                "CPU UV Table",
-                &thresholdsDisabled,
-                {},
-                marikoTableConf,
-                false
-            );
+            // addConfigButton(
+            //     KipConfigValue_tableConf,
+            //     "CPU UV Table",
+            //     ValueRange(0, 12, 1, "", 0),
+            //     "CPU UV Table",
+            //     &thresholdsDisabled,
+            //     {},
+            //     marikoTableConf,
+            //     false
+            // );
             addConfigButton(
                 KipConfigValue_marikoCpuUVLow,
                 "CPU Low UV",

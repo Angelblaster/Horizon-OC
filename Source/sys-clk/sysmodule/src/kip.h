@@ -51,7 +51,7 @@ typedef struct {
     u32 gpuSpeedo;
     u32 marikoGpuFullUnlock;
     u32 eristaGpuVoltArray[27];
-    u32 marikoGpuVoltArray[30];
+    u32 marikoGpuVoltArray[31];
 } CustomizeTable;
 
 #pragma pack(pop)

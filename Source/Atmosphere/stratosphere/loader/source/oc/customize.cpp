@@ -26,7 +26,7 @@
 #define DISABLED 0
 #define DEACTIVATED_GPU_FREQ 2000
 #define GPU_MIN_MIN_VOLT 480000
-#define CPU_MAX_MAX_VOLT 150000
+#define CPU_MAX_MAX_VOLT 1375000
 
 namespace ams::ldr::oc {
 
@@ -63,8 +63,8 @@ volatile CustomizeTable C = {
 /* Unlocks up to 2295 Mhz CPU, usage is not recommended. */
 .eristaCpuUnlock = DISABLED,
 
-.marikoCpuUVLow = 4, // No undervolt
-.marikoCpuUVHigh = 8, // No undervolt
+.marikoCpuUVLow = 0, // No undervolt
+.marikoCpuUVHigh = 0, // No undervolt
 .tableConf = TBREAK_1581, /* TODO: Add AUTO */
 .marikoCpuLowVmin = 620,
 .marikoCpuHighVmin = 750,
@@ -82,7 +82,7 @@ volatile CustomizeTable C = {
 .eristaGpuUV = 0,
 .eristaGpuVmin = 800,
 
-.marikoGpuUV = 2,
+.marikoGpuUV = 0,
 /* For automatic vmin detection, set this to AUTO. */
 .marikoGpuVmin = 610,
 

@@ -367,7 +367,14 @@ static inline const char* sysclkFormatConfigValue(SysClkConfigValue val, bool pr
         case KipConfigValue_g_volt_1459200: return pretty ? "Mariko GPU Volt 1459 MHz" : "g_volt_1459200";
         case KipConfigValue_g_volt_1497600: return pretty ? "Mariko GPU Volt 1497 MHz" : "g_volt_1497600";
         case KipConfigValue_g_volt_1536000: return pretty ? "Mariko GPU Volt 1536 MHz" : "g_volt_1536000";
-
+        case KipConfigValue_g_volt_1574400: return pretty ? "Mariko GPU Volt 1574 MHz" : "g_volt_1574400";
+        case KipConfigValue_g_volt_1612800: return pretty ? "Mariko GPU Volt 1612 MHz" : "g_volt_1612800";
+        case KipConfigValue_g_volt_1651200: return pretty ? "Mariko GPU Volt 1651 MHz" : "g_volt_1651200";
+        case KipConfigValue_g_volt_1689600: return pretty ? "Mariko GPU Volt 1689 MHz" : "g_volt_1689600";
+        case KipConfigValue_g_volt_1728000: return pretty ? "Mariko GPU Volt 1728 MHz" : "g_volt_1728000";
+        case KipConfigValue_g_volt_1766400: return pretty ? "Mariko GPU Volt 1766 MHz" : "g_volt_1766400";
+        case KipConfigValue_g_volt_1804800: return pretty ? "Mariko GPU Volt 1804 MHz" : "g_volt_1804800";
+        
         // Erista GPU voltages (27)
         case KipConfigValue_g_volt_e_76800: return pretty ? "Erista GPU Volt 76 MHz" : "g_volt_e_76800";
         case KipConfigValue_g_volt_e_115200: return pretty ? "Erista GPU Volt 115 MHz" : "g_volt_e_115200";
@@ -541,6 +548,14 @@ static inline uint64_t sysclkValidConfigValue(SysClkConfigValue val, uint64_t in
         case KipConfigValue_g_volt_1459200:
         case KipConfigValue_g_volt_1497600:
         case KipConfigValue_g_volt_1536000:
+        case KipConfigValue_g_volt_1574400:
+        case KipConfigValue_g_volt_1612800:
+        case KipConfigValue_g_volt_1651200:
+        case KipConfigValue_g_volt_1689600:
+        case KipConfigValue_g_volt_1728000:
+        case KipConfigValue_g_volt_1766400:
+        case KipConfigValue_g_volt_1804800:
+
         case KipConfigValue_g_volt_e_76800:
         case KipConfigValue_g_volt_e_115200:
         case KipConfigValue_g_volt_e_153600:
