@@ -210,7 +210,7 @@ static inline bool cust_set_erista_gpu_volt(const char* p, int idx, u32 v) {
 }
 
 static inline bool cust_set_mariko_gpu_volt(const char* p, int idx, u32 v) {
-    if (idx < 0 || idx >= 24) return false;
+    if (idx < 0 || idx >= 31) return false;
     CustomizeTable t;
     if (!cust_read_table(p, &t)) return false;
     t.marikoGpuVoltArray[idx] = v;

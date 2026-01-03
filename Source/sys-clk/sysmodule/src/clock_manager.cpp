@@ -747,7 +747,7 @@ void ClockManager::SetKipData() {
     CUST_WRITE_FIELD_BATCH(&table, gpuSpeedo, this->config->GetConfigValue(KipConfigValue_gpuSpeedo));
     CUST_WRITE_FIELD_BATCH(&table, marikoGpuFullUnlock, this->config->GetConfigValue(KipConfigValue_marikoGpuFullUnlock));
 
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 31; i++) {
         table.marikoGpuVoltArray[i] = this->config->GetConfigValue((SysClkConfigValue)(KipConfigValue_g_volt_76800 + i));
     }
 
