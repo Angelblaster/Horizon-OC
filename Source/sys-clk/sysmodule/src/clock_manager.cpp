@@ -407,6 +407,9 @@ void ClockManager::GovernorThread(void* arg)
         {
             Board::SetHz(SysClkModule_GPU, newHz);
             mgr->context->freqs[SysClkModule_GPU] = newHz;
+            if((mgr->config->GetConfigValue(HocClkConfigValue_DVFSMode) == 1) && (Board::GetSocType() == SysClkSocType_Mariko)) {
+                mgr->DvfsHackHandler();
+            }
         }
 
         svcSleepThread(50'000'000);
@@ -537,6 +540,9 @@ void ClockManager::Tick()
 
                     Board::SetHz((SysClkModule)module, nearestHz);
                     this->context->freqs[module] = nearestHz;
+                }
+                if(module == SysClkModule_MEM && (this->config->GetConfigValue(HocClkConfigValue_DVFSMode) == 1) && (Board::GetSocType() == SysClkSocType_Mariko)) {
+                    DvfsHackHandler();
                 }
             }
         }
@@ -977,18 +983,18 @@ void ClockManager::UpdateRamTimings() {
     //     writeNotification("Horizon OC\nCritical values changed!\nUnable to write timings");
     //     return;
     // }
-    u32 t1_tRCD = initialConfigValues[KipConfigValue_t1_tRCD];
-    u32 t2_tRP = initialConfigValues[KipConfigValue_t2_tRP];
-    u32 t3_tRAS = initialConfigValues[KipConfigValue_t3_tRAS];
-    u32 t4_tRRD = initialConfigValues[KipConfigValue_t4_tRRD];
-    u32 t5_tRFC = initialConfigValues[KipConfigValue_t5_tRFC];
-    u32 t6_tRTW = initialConfigValues[KipConfigValue_t6_tRTW];
-    u32 t7_tWTR = initialConfigValues[KipConfigValue_t7_tWTR];
-    u32 t8_tREFI = initialConfigValues[KipConfigValue_t8_tREFI];
+    u32 t1_tRCD = this->config->GetConfigValue(KipConfigValue_t1_tRCD);
+    u32 t2_tRP = this->config->GetConfigValue(KipConfigValue_t2_tRP);
+    u32 t3_tRAS = this->config->GetConfigValue(KipConfigValue_t3_tRAS);
+    u32 t4_tRRD = this->config->GetConfigValue(KipConfigValue_t4_tRRD);
+    u32 t5_tRFC = this->config->GetConfigValue(KipConfigValue_t5_tRFC);
+    u32 t6_tRTW = this->config->GetConfigValue(KipConfigValue_t6_tRTW);
+    u32 t7_tWTR = this->config->GetConfigValue(KipConfigValue_t7_tWTR);
+    u32 t8_tREFI = this->config->GetConfigValue(KipConfigValue_t8_tREFI);
     u64 ramFreq = initialConfigValues[KipConfigValue_marikoEmcMaxClock];
     u32 rlAdd = initialConfigValues[KipConfigValue_mem_burst_read_latency];
     u32 wlAdd = initialConfigValues[KipConfigValue_mem_burst_write_latency];
-    bool hpMode = (bool)initialConfigValues[KipConfigValue_hpMode];
+    bool hpMode = (bool)this->config->GetConfigValue(KipConfigValue_hpMode);
 
     Board::UpdateShadowRegs(t1_tRCD, t2_tRP, t3_tRAS, t4_tRRD, t5_tRFC, t6_tRTW, t7_tWTR, t8_tREFI, ramFreq, rlAdd, wlAdd, hpMode);
 }
@@ -1042,5 +1048,80 @@ void ClockManager::calculateGpuVmin (void)
         int speedo = Board::getSpeedo(HorizonOCSpeedo_CPU), freq = this->config->GetConfigValue(KipConfigValue_marikoEmcMaxClock);
         configValues.values[KipConfigValue_marikoGpuVmin] = GetGpuVoltage(freq, speedo);
         this->config->SetConfigValues(&configValues, true);
+    }
+}
+
+// .marikoGpuDvfsTableHiOPT = {
+//     {   76800, { }, {  GPU_MIN_MIN_VOLT,                      } },
+//     {  153600, { }, {  GPU_MIN_MIN_VOLT,                      } },
+//     {  230400, { }, {  GPU_MIN_MIN_VOLT,                      } },
+//     {  307200, { }, {  738712,  -7304, -552,  119, -3750,  -2 } },
+//     {  384000, { }, {  758712,  -7304, -552,  119, -3750,  -2 } },
+//     {  460800, { }, {  778712,  -7304, -552,  119, -3750,  -2 } },
+//     {  537600, { }, {  798712,  -7304, -552,  119, -3750,  -2 } },
+//     {  614400, { }, {  818712,  -7304, -552,  119, -3750,  -2 } },
+//     {  691200, { }, {  838712,  -7304, -552,  119, -3750,  -2 } },
+//     {  768000, { }, {  880210,  -7955, -584,    0, -2849,  39 } },
+//     {  844800, { }, {  926398,  -8892, -602,  -60,  -384, -93 } },
+//     {  921600, { }, {  970060, -10108, -614, -179,  1508, -13 } },
+//     {  998400, { }, { 1060665, -16075, -497, -179,  3213,   9 } },
+//     { 1075200, { }, { 1061475, -12688, -648,    0,  1077,  40 } },
+//     { 1152000, { }, { 1094475, -12688, -648,    0,  1077,  40 } },
+//     { 1228800, { }, { 1124475, -12688, -648,    0,  1077,  40 } },
+//     { 1267200, { }, { 1142060, -12688, -648,    0,  1077,  40 } },
+//     { 1305600, { }, { 1163644, -12688, -648,    0,  1077,  40 } },
+//     { 1344000, { }, {       0,      0,    0,    0,     0,   0 } },
+//     { 1382400, { }, {       0,      0,    0,    0,     0,   0 } },
+//     { 1420800, { }, {       0,      0,    0,    0,     0,   0 } },
+//     { 1459200, { }, {       0,      0,    0,    0,     0,   0 } },
+//     { 1497600, { }, {       0,      0,    0,    0,     0,   0 } },
+//     { 1536000, { }, {       0,      0,    0,    0,     0,   0 } },
+// },
+
+void ClockManager::DvfsHackHandler() {
+    static u32 gpuClockspeeds[] = {
+        76800,
+        153600,
+        230400,
+        307200,
+        384000,
+        460800,
+        537600,
+        614400,
+        768000,
+        844800,
+        921600,
+        998400,
+        1075200,
+        1152000,
+        1228800,
+        1267200,
+        1305600,
+        1344000,
+        1382400,
+        1420800,
+        1459200,
+        1497600,
+        1536000
+    };
+    u32 clockIndex = 0;
+    for (unsigned int i = 0; i < sizeof(gpuClockspeeds) / sizeof(gpuClockspeeds[0]); i++) {
+        if((Board::GetHz(SysClkModule_GPU) / 1000) == gpuClockspeeds[i]) {
+            clockIndex = i;
+            break;
+        }
+    }
+
+    u32 voltage = this->config->GetConfigValue((SysClkConfigValue)(KipConfigValue_g_volt_76800 + clockIndex));
+    if(voltage < this->config->GetConfigValue(HocClkConfigValue_DVFSHackVmin))
+        voltage = this->config->GetConfigValue(HocClkConfigValue_DVFSHackVmin);
+    if(voltage > 1000 || voltage == 0) {
+        return; // Don't set if voltage is too high
+    }
+    if(Board::GetHz(SysClkModule_MEM) <= 1600000000) {
+        if(R_FAILED(I2c_BuckConverter_SetMvOut(&I2c_Mariko_GPU, voltage))) {
+            FileUtils::LogLine("[clock_manager] Failed set i2c gpu voltage in dvfs hack");
+            writeNotification("Horizon OC\nFailed to write I2C\nwhile setting gpu voltage");
+        }
     }
 }

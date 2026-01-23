@@ -66,6 +66,9 @@ typedef enum {
     HorizonOCConfigValue_EnableUnsafeDisplayFreqs,
     HocClkConfigValue_FixCpuVoltBug,
 
+    HocClkConfigValue_DVFSMode,
+    HocClkConfigValue_DVFSHackVmin,
+
     KipConfigValue_custRev,
     KipConfigValue_mtcConf,
     KipConfigValue_hpMode,
@@ -239,6 +242,10 @@ static inline const char* sysclkFormatConfigValue(SysClkConfigValue val, bool pr
         case HocClkConfigValue_FixCpuVoltBug:
             return pretty ? "Fix CPU Volt Bug" : "cpu_volt_bugfix";
 
+        case HocClkConfigValue_DVFSMode:
+            return pretty ? "DVFS Mode" : "dvfs_mode";
+        case HocClkConfigValue_DVFSHackVmin:
+            return pretty ? "DVFS Hack Vmin" : "dvfs_hack_vmin";
         case HorizonOCConfigValue_EnableUnsafeDisplayFreqs:
             return pretty ? "Enable Unsafe Display Frequencies" : "drr_unsafe";
 
@@ -411,6 +418,7 @@ static inline uint64_t sysclkDefaultConfigValue(SysClkConfigValue val)
         case HorizonOCConfigValue_BatteryChargeCurrent:
         case HorizonOCConfigValue_OverwriteRefreshRate:
         case HorizonOCConfigValue_EnableUnsafeDisplayFreqs:
+        case HocClkConfigValue_DVFSMode:
             return 0ULL;
         case HocClkConfigValue_EristaMaxCpuClock:
             return 1785ULL;
@@ -438,6 +446,8 @@ static inline uint64_t sysclkDefaultConfigValue(SysClkConfigValue val)
             return 8600ULL;
         case HocClkConfigValue_LiteTDPLimit:
             return 6400ULL;
+        case HocClkConfigValue_DVFSHackVmin:
+            return 610ULL;
         default:
             return 0ULL;
     }
@@ -564,6 +574,8 @@ static inline uint64_t sysclkValidConfigValue(SysClkConfigValue val, uint64_t in
         case KipConfigValue_g_volt_e_1075200:
         case KipConfigValue_eristaCpuVmin:
         case KipConfigValue_eristaCpuUnlock:
+        case HocClkConfigValue_DVFSMode:
+        case HocClkConfigValue_DVFSHackVmin:
             return true;
         case HorizonOCConfigValue_BatteryChargeCurrent:
             return ((input >= 1024) && (input <= 3072)) || !input;
