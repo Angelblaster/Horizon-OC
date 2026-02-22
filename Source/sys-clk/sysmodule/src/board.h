@@ -69,6 +69,12 @@ class Board
     static void SetCpuUvLevel(u32 levelLow, u32 levelHigh, u32 tbreakPoint);
     static u32 CalculateTbreak(u32 table);
   protected:
+    typedef enum _SocThermSensor {
+        SocThermSensor_CPU,
+        SocThermSensor_GPU,
+        SocThermSensor_MEM, // Erista only!
+        SocThermSensor_PLLX,
+    } SocThermSensor;
     static void FetchHardwareInfos();
     static PcvModule GetPcvModule(SysClkModule sysclkModule);
     static PcvModuleId GetPcvModuleId(SysClkModule sysclkModule);

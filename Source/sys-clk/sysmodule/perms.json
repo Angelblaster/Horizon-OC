@@ -235,6 +235,14 @@
 				"is_ro": false,
 				"is_io": true
 			}
+		}, 	{
+			"type": "map",
+			"value": {
+				"address": "0x700E2000",
+				"size": "0x1000",
+				"is_ro": false,
+				"is_io": true
+			}
 		}
 	]
 }

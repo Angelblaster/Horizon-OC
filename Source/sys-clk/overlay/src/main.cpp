@@ -42,7 +42,7 @@ class AppOverlay : public tsl::Overlay
         //}
 
         virtual void exitServices() override {
-            rgltrExit();
+            // rgltrExit();
             sysclkIpcExit();
         }
 

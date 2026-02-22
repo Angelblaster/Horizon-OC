@@ -249,7 +249,6 @@ void MiscGui::listUI()
     addConfigToggle(HocClkConfigValue_UncappedClocks, nullptr);
     addConfigToggle(HocClkConfigValue_ThermalThrottle, nullptr);
     addConfigToggle(HocClkConfigValue_HandheldTDP, nullptr);
-//  addConfigToggle(HocClkConfigValue_EnforceBoardLimit, nullptr);
 
     #if IS_MINIMAL == 0
         std::map<uint32_t, std::string> labels_pwr_l = {
@@ -405,8 +404,8 @@ void MiscGui::listUI()
         warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
         this->listElement->addItem(warningText);
         addConfigToggle(HorizonOCConfigValue_EnableUnsafeDisplayFreqs, nullptr);
-    }
-    #if IS_MINIMAL == 0
+
+        #if IS_MINIMAL == 0
         // std::vector<NamedValue> chargerCurrents = {
         //     NamedValue("Disabled", 0),
         //     NamedValue("1024mA", 1024),
@@ -500,9 +499,7 @@ void MiscGui::listUI()
             }
         }
     #endif
-
 }
-
 
 class RamSubmenuGui : public MiscGui {
 public:

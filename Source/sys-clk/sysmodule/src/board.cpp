@@ -121,6 +121,19 @@ static const u32 gpuDvfsArray[] = { 590, 600, 610, 620, 630, 640, 650, 660, 670,
 u32 dvfsTable[6][32] = {};
 u64 dvfsAddress;
 u32 ramVmin;
+u32 FUSE_TSENSOR0_CALIB_0 = 0;
+u32 FUSE_TSENSOR1_CALIB_0 = 0;
+u32 FUSE_TSENSOR2_CALIB_0 = 0;
+u32 FUSE_TSENSOR3_CALIB_0 = 0;
+u32 FUSE_TSENSOR4_CALIB_0 = 0;
+u32 FUSE_TSENSOR5_CALIB_0 = 0;
+u32 FUSE_TSENSOR6_CALIB_0 = 0;
+u32 FUSE_TSENSOR7_CALIB_0 = 0;
+u32 FUSE_TSENSOR_COMMON_0 = 0;
+u32 FUSE_TSENSOR9_CALIB_0 = 0;
+u32 FUSE_TSENSOR10_CALIB_0 = 0;
+u32 FUSE_SPARE_REALIGNMENT_REG_0 = 0;
+u32 fuse[0x400];
 
 const char* Board::GetModuleName(SysClkModule module, bool pretty)
 {
@@ -213,6 +226,17 @@ void miscThreadFunc(void*) {
     }
 }
 
+static u32 my_read(u64 base, u32 offset)
+{
+    return *(u32*)(base + offset);
+}
+static void my_write(u64 base, u32 offset, u32 value)
+{
+    *(u32*)(base + offset) = value;    
+}
+    
+struct tegra_soctherm_ctx ctx;
+
 void Board::Initialize()
 {
     Result rc = 0;
@@ -293,6 +317,7 @@ void Board::Initialize()
     }
 
     FetchHardwareInfos();
+
     rc = svcQueryMemoryMapping(&cldvfs, &cldvfs_temp, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
     ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (cldvfs)");
     if(Board::GetSocType() == SysClkSocType_Erista) {
@@ -303,6 +328,32 @@ void Board::Initialize()
         cachedMarikoUvHighTune0 = *(u32*)(cldvfs + CL_DVFS_TUNE0_0);
         Board::ResetToStockCpu();
     }
+
+    unsigned int num_sensors;
+
+    const struct tegra210_tsensor_info *sensors =
+        tegra_soctherm_get_sensors(g_socType == SysClkSocType_Mariko, &num_sensors);
+
+    struct tegra210_shared_calib shared;
+    tegra_soctherm_calc_shared_calib(*(u32*)(fuse + 0x180), &shared);
+
+    u32 calib[8];
+    for (unsigned int i = 0; i < num_sensors; i++) {
+        u32 fuse_val = *(u32*)(fuse + sensors[i].calib_fuse_offset); // TODO: do this in a method that is 10x better
+        tegra_soctherm_calc_tsensor_calib(
+                      &sensors[i], g_socType == SysClkSocType_Mariko, &shared, fuse_val, &calib[i]);
+        printf("  calib[%u] %-6s = 0x%08x\n", i, sensors[i].name, calib[i]);
+    }
+
+    u64 socthermVA, socthermSize;
+    rc = svcQueryMemoryMapping(&socthermVA, &socthermSize, SOCTHERM_REGION_BASE, SOCTHERM_REGION_SIZE);
+    ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (soctherm): %i", rc);
+
+    tegra_soctherm_init(&ctx, g_socType == SysClkSocType_Mariko, socthermVA,
+                        calib, my_read, my_write);
+
+
+
 }
 
 void Board::fuseReadSpeedos() {
@@ -346,6 +397,21 @@ void Board::fuseReadSpeedos() {
                 cpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_CPU_IDDQ_CALIB);
                 gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB);
                 socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB);
+
+                FUSE_TSENSOR1_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR1_CALIB_0);
+                FUSE_TSENSOR2_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR2_CALIB_0);
+                FUSE_TSENSOR0_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR0_CALIB_0);
+                FUSE_TSENSOR3_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR3_CALIB_0);
+                FUSE_TSENSOR4_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR4_CALIB_0);
+                FUSE_TSENSOR5_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR5_CALIB_0);
+                FUSE_TSENSOR6_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR6_CALIB_0);
+                FUSE_TSENSOR7_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR7_CALIB_0);
+                FUSE_TSENSOR_COMMON_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR_COMMON_0);
+                FUSE_TSENSOR9_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR9_CALIB_0);
+                FUSE_TSENSOR10_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR10_CALIB_0);
+                FUSE_SPARE_REALIGNMENT_REG_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_SPARE_REALIGNMENT_REG_0);
+
+                memcpy(fuse, dump, sizeof(dump));
 
                 svcCloseHandle(debug);
                 return;
@@ -756,7 +822,7 @@ std::uint32_t Board::GetTemperatureMilli(SysClkThermalSensor sensor)
     }
     else if(sensor == SysClkThermalSensor_PCB)
     {
-        millis = tmp451TempPcb();
+        tegra_soctherm_read_temp(&ctx, TEGRA210_SENSOR_CPU, &millis);
     }
     else if(sensor == SysClkThermalSensor_Skin)
     {
