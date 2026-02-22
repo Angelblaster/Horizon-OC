@@ -33,5 +33,4 @@
 #include "nxExt/max17050.h"
 #include "nxExt/tmp451.h"
 #include "nxExt/ipc_server.h"
-#include "nxExt/soctherm.h"
 #include "nxExt/cpp/lockable_mutex.h"

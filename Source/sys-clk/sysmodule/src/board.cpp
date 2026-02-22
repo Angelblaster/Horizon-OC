@@ -43,7 +43,7 @@
 #include <notification.h>
 #include <memmem.h>
 #include <minIni.h>
-
+#include "soctherm.h"
 #define MAX(A, B)   std::max(A, B)
 #define MIN(A, B)   std::min(A, B)
 #define CEIL(A)     std::ceil(A)
@@ -82,6 +82,7 @@ Thread cpuCore1Thread;
 Thread cpuCore2Thread;
 Thread cpuCore3Thread;
 Thread miscThread;
+Thread socthermThread;
 double temp = 0;
 
 PwmChannelSession g_ICon;
@@ -226,16 +227,32 @@ void miscThreadFunc(void*) {
     }
 }
 
-static u32 my_read(u64 base, u32 offset)
-{
-    return *(u32*)(base + offset);
+void socthermThreadFunc(void*) {
+    PscPmState state;
+    u32 flags;
+    PscPmModule pmModule;
+    Result rc;
+    for(;;) {
+        rc = eventWait(&pmModule.event, UINT64_MAX);
+        if (R_FAILED(rc)) break;
+        rc = pscPmModuleGetRequest(&pmModule, &state, &flags);
+        if (R_FAILED(rc)) continue;
+        switch (state) {
+            case PscPmState_ReadySleep:
+                socthermOnSleep();
+                break;
+            case PscPmState_ReadyAwaken:
+                socthermOnWake();
+                break;
+            case PscPmState_ReadyShutdown:
+                socthermOnSleep();
+                break;
+            default:
+                break;
+        }
+        pscPmModuleAcknowledge(&pmModule, state);
+    }
 }
-static void my_write(u64 base, u32 offset, u32 value)
-{
-    *(u32*)(base + offset) = value;    
-}
-    
-struct tegra_soctherm_ctx ctx;
 
 void Board::Initialize()
 {
@@ -293,6 +310,7 @@ void Board::Initialize()
     threadCreate(&cpuCore2Thread, CheckCore, &idletick2, NULL, 0x1000, 0x10, 2);
     // threadCreate(&cpuCore3Thread, CheckCore, &idletick3, NULL, 0x1000, 0x10, 3);
     threadCreate(&miscThread, miscThreadFunc, NULL, NULL, 0x1000, 0x10, 3);
+    threadCreate(&socthermThread, socthermThreadFunc, NULL, NULL, 0x1000, 0x10, 3);
 
     threadStart(&cpuCore0Thread);
     threadStart(&cpuCore1Thread);
@@ -329,30 +347,7 @@ void Board::Initialize()
         Board::ResetToStockCpu();
     }
 
-    unsigned int num_sensors;
-
-    const struct tegra210_tsensor_info *sensors =
-        tegra_soctherm_get_sensors(g_socType == SysClkSocType_Mariko, &num_sensors);
-
-    struct tegra210_shared_calib shared;
-    tegra_soctherm_calc_shared_calib(*(u32*)(fuse + 0x180), &shared);
-
-    u32 calib[8];
-    for (unsigned int i = 0; i < num_sensors; i++) {
-        u32 fuse_val = *(u32*)(fuse + sensors[i].calib_fuse_offset); // TODO: do this in a method that is 10x better
-        tegra_soctherm_calc_tsensor_calib(
-                      &sensors[i], g_socType == SysClkSocType_Mariko, &shared, fuse_val, &calib[i]);
-        printf("  calib[%u] %-6s = 0x%08x\n", i, sensors[i].name, calib[i]);
-    }
-
-    u64 socthermVA, socthermSize;
-    rc = svcQueryMemoryMapping(&socthermVA, &socthermSize, SOCTHERM_REGION_BASE, SOCTHERM_REGION_SIZE);
-    ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (soctherm): %i", rc);
-
-    tegra_soctherm_init(&ctx, g_socType == SysClkSocType_Mariko, socthermVA,
-                        calib, my_read, my_write);
-
-
+    socthermInit(fuse, +g_socType);
 
 }
 
@@ -481,6 +476,7 @@ void Board::Exit()
     threadClose(&cpuCore2Thread);
     // threadClose(&cpuCore3Thread);
     threadClose(&miscThread);
+    threadClose(&socthermThread);
 
     pwmChannelSessionClose(&g_ICon);
 	pwmExit();
@@ -490,6 +486,7 @@ void Board::Exit()
     nvExit();
     if(Board::GetConsoleType() != HorizonOCConsoleType_Hoag)
         DisplayRefresh_Shutdown();
+    socthermExit();
 }
 
 SysClkProfile Board::GetProfile()
@@ -822,7 +819,8 @@ std::uint32_t Board::GetTemperatureMilli(SysClkThermalSensor sensor)
     }
     else if(sensor == SysClkThermalSensor_PCB)
     {
-        tegra_soctherm_read_temp(&ctx, TEGRA210_SENSOR_CPU, &millis);
+        // millis = tmp451TempPcb();
+        millis = socthermReadCpuTemp();
     }
     else if(sensor == SysClkThermalSensor_Skin)
     {
