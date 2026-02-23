@@ -308,12 +308,12 @@ static inline u32 cust_get_gpu_speedo(const CustomizeTable* t) { return CUST_GET
 static inline u32 cust_get_marikoCpuMaxClock(const CustomizeTable* t) { return CUST_GET_FIELD(t, marikoCpuMaxClock); }
 
 static inline u32 cust_get_erista_gpu_volt(const CustomizeTable* t, int idx) {
-    if (!t || idx < 0 || idx >= 27) return 0;
+    if (!t || idx < 0 || idx >= 24) return 0;
     return t->eristaGpuVoltArray[idx];
 }
 
 static inline u32 cust_get_mariko_gpu_volt(const CustomizeTable* t, int idx) {
-    if (!t || idx < 0 || idx >= 24) return 0;
+    if (!t || idx < 0 || idx >= 31) return 0;
     return t->marikoGpuVoltArray[idx];
 }
 
