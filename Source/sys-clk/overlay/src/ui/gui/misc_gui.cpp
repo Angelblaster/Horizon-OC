@@ -396,14 +396,6 @@ void MiscGui::listUI()
     if(!IsHoag()) {
     this->listElement->addItem(new tsl::elm::CategoryHeader("Display"));
         addConfigToggle(HorizonOCConfigValue_OverwriteRefreshRate, nullptr);
-        tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-            renderer->drawString("\uE150 Enabling unsafe display", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-            renderer->drawString("refresh rates may cause stress", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-            renderer->drawString("or damage to your display! ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-            renderer->drawString("Proceed at your own risk!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
-        });
-        warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
-        this->listElement->addItem(warningText);
         addConfigToggle(HorizonOCConfigValue_EnableUnsafeDisplayFreqs, nullptr);
     }
     #if IS_MINIMAL == 0
@@ -437,67 +429,37 @@ void MiscGui::listUI()
                 gpuSchedMethodValues,
                 false
             );
-            tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-                renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-                renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-                renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-            });
-            chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
-            this->listElement->addItem(chargeWarningText);
 
-            if(!IsHoag()) {
-                    std::vector<NamedValue> chargerCurrents = {
-                        NamedValue("Disabled", 0),
-                        NamedValue("1024mA", 1024),
-                        NamedValue("1280mA", 1280),
-                        NamedValue("1536mA", 1536),
-                        NamedValue("1792mA", 1792),
-                        NamedValue("2048mA", 2048),
-                        NamedValue("2304mA", 2304),
-                        NamedValue("2560mA", 2560),
-                        NamedValue("2816mA", 2816),
-                        NamedValue("3072mA", 3072),
-                    };
+            std::vector<NamedValue> chargerCurrents = {
+                NamedValue("Disabled", 0),
+                NamedValue("1024mA", 1024),
+                NamedValue("1280mA", 1280),
+                NamedValue("1536mA", 1536),
+                NamedValue("1792mA", 1792),
+                NamedValue("2048mA", 2048),
+                NamedValue("2304mA", 2304),
+                NamedValue("2560mA", 2560),
+                NamedValue("2816mA", 2816),
+                NamedValue("3072mA", 3072),
+                NamedValue("3328mA", 3328),
+                NamedValue("3840mA", 3840),
+                NamedValue("4096mA", 4096),
+                NamedValue("4352mA", 4352),
+                NamedValue("4608mA", 4608),
+            };
 
-                    ValueThresholds chargerThresholds(2048, 2049);
+            ValueThresholds chargerThresholds(2048, 2049);
 
-                    addConfigButton(
-                        HorizonOCConfigValue_BatteryChargeCurrent,
-                        "Charge Current Override",
-                        ValueRange(0, 0, 1, "", 0),
-                        "Charge Current Override",
-                        &chargerThresholds,
-                        {},
-                        chargerCurrents,
-                        false
-                    );
-            }
-            else {
-                std::vector<NamedValue> chargerCurrents = {
-                    NamedValue("Disabled", 0),
-                    NamedValue("1024mA", 1024),
-                    NamedValue("1280mA", 1280),
-                    NamedValue("1536mA", 1536),
-                    NamedValue("1792mA", 1792),
-                    NamedValue("2048mA", 2048),
-                    NamedValue("2304mA", 2304),
-                    NamedValue("2560mA", 2560),
-                };
-
-                ValueThresholds chargerThresholds(1792, 1793);
-
-                addConfigButton(
-                    HorizonOCConfigValue_BatteryChargeCurrent,
-                    "Charge Current Override",
-                    ValueRange(0, 0, 1, "", 0),
-                    "Charge Current Override",
-                    &chargerThresholds,
-                    {},
-                    chargerCurrents,
-                    false
-                );
-
-            }
+            addConfigButton(
+                HorizonOCConfigValue_BatteryChargeCurrent,
+                "Charge Current Override",
+                ValueRange(0, 0, 1, "", 0),
+                "Charge Current Override",
+                &chargerThresholds,
+                {},
+                chargerCurrents,
+                false
+            );
         }
     #endif
 }
@@ -572,12 +534,12 @@ protected:
             NamedValue("3233MHz", 3233000, "High speedo needed!"),
             NamedValue("3266MHz", 3266000, "High speedo needed!"),
             NamedValue("3300MHz", 3300000, "High speedo needed!"),
-            // NamedValue("3333MHz (Needs extreme Speedo/PLL)", 3333000),
-            // NamedValue("3366MHz (Needs extreme Speedo/PLL)", 3366000),
-            // NamedValue("3400MHz (Needs extreme Speedo/PLL)", 3400000),
-            // NamedValue("3433MHz (Needs ridiculous Speedo/PLL)", 3433000),
-            // NamedValue("3466MHz (Needs ridiculous Speedo/PLL)", 3466000),
-            // NamedValue("3500MHz (Needs ridiculous Speedo/PLL)", 3500000),
+            NamedValue("3333MHz", 3333000, "High speedo needed!"),
+            NamedValue("3366MHz", 3366000, "High speedo needed!"),
+            NamedValue("3400MHz", 3400000, "High speedo needed!"),
+            NamedValue("3433MHz", 3433000, "High speedo needed!"),
+            NamedValue("3466MHz", 3466000, "High speedo needed!"),
+            NamedValue("3500MHz", 3500000, "High speedo needed!"),
         };
 
         std::vector<NamedValue> eristaMaxEmcClock = {
@@ -618,6 +580,21 @@ protected:
             NamedValue("2361MHz", 2361600),
             NamedValue("2380MHz", 2380800),
             NamedValue("2400MHz", 2400000, "JEDEC."),
+            NamedValue("2423MHz", 2423200),
+            NamedValue("2442MHz", 2442400),
+            NamedValue("2461MHz", 2461600),
+            NamedValue("2480MHz", 2480800),
+            NamedValue("2500MHz", 2500000),
+            NamedValue("2523MHz", 2523200),
+            NamedValue("2542MHz", 2542400),
+            NamedValue("2561MHz", 2561600),
+            NamedValue("2580MHz", 2580800),
+            NamedValue("2600MHz", 2600000),
+            NamedValue("2623MHz", 2623200),
+            NamedValue("2642MHz", 2642400),
+            NamedValue("2661MHz", 2661600),
+            NamedValue("2680MHz", 2680800),
+            NamedValue("2700MHz", 2700000),
         };
 
         if(IsErista()) {
@@ -650,7 +627,7 @@ protected:
         addConfigButton(
             KipConfigValue_commonEmcMemVolt,
             "RAM VDD2 Voltage",
-            ValueRange(912500, 1350000, 12500, "mV", 1000, 1),
+            ValueRange(912500, 1500000, 12500, "mV", 1000, 1),
             "Voltage",
             &vdd2Thresholds,
             emc_voltage_label,
@@ -662,7 +639,7 @@ protected:
             addConfigButton(
                 KipConfigValue_marikoEmcVddqVolt,
                 "RAM VDDQ Voltage",
-                ValueRange(400000, 700000, 5000, "mV", 1000),
+                ValueRange(400000, 1500000, 5000, "mV", 1000),
                 "RAM VDDQ Voltage",
                 &thresholdsDisabled,
                 {},
@@ -834,6 +811,10 @@ protected:
                 NamedValue("2091 MHz", 2091000),
                 NamedValue("2193 MHz", 2193000),
                 NamedValue("2295 MHz", 2295000),
+                NamedValue("2397 MHz", 2797000),
+                NamedValue("2499 MHz", 2499000),
+                NamedValue("2601 MHz", 2601000),
+                NamedValue("2703 MHz", 2703000),
             };
             ValueThresholds eCpuClockThresholds(1785000, 2091000);
             addConfigButton(
@@ -873,7 +854,7 @@ protected:
             addConfigButton(
                 KipConfigValue_eristaCpuMaxVolt,
                 "CPU Max Voltage",
-                ValueRange(1120, 1235, 5, "mV", 1),
+                ValueRange(1120, 1525, 5, "mV", 1),
                 "CPU Max Voltage",
                 &thresholdsDisabled,
                 {},
@@ -931,6 +912,9 @@ protected:
                 NamedValue("2499 MHz", 2499000),
                 NamedValue("2601 MHz", 2601000),
                 NamedValue("2703 MHz", 2703000),
+                NamedValue("2805 MHz", 2805000),
+                NamedValue("2907 MHz", 2907000),
+                NamedValue("3009 MHz", 3009000),
             };
             ValueThresholds mCpuMaxClockThresholds(1963000, 2397000);
             addConfigButton(
@@ -970,7 +954,7 @@ protected:
             addConfigButton(
                 KipConfigValue_marikoCpuMaxVolt,
                 "CPU Max Voltage",
-                ValueRange(1000, 1235, 5, "mV", 1),
+                ValueRange(1000, 1525, 5, "mV", 1),
                 "CPU Max Voltage",
                 &mCpuVoltThresholds,
                 {},
@@ -1075,7 +1059,7 @@ protected:
             addConfigButton(
                 KipConfigValue_marikoGpuVmax,
                 "GPU Maximum Voltage",
-                ValueRange(750, 960, 5, "mV", 1),
+                ValueRange(750, 1525, 5, "mV", 1),
                 "GPU Maximum Voltage",
                 &MgpuVmaxThresholds,
                 {},
@@ -1160,32 +1144,119 @@ protected:
             NamedValue("915mV", 915), NamedValue("920mV", 920), NamedValue("925mV", 925),
             NamedValue("930mV", 930), NamedValue("935mV", 935), NamedValue("940mV", 940),
             NamedValue("945mV", 945), NamedValue("950mV", 950), NamedValue("955mV", 955),
-            NamedValue("960mV", 960),
+            NamedValue("960mV", 960), NamedValue("965mV", 965), NamedValue("970mV", 970),
+            NamedValue("975mV", 975), NamedValue("980mV", 980), NamedValue("985mV", 985),
+            NamedValue("990mV", 990), NamedValue("995mV", 995), NamedValue("1000mV", 1000),
+            NamedValue("1005mV", 1005), NamedValue("1010mV", 1010), NamedValue("1015mV", 1015),
+            NamedValue("1020mV", 1020), NamedValue("1025mV", 1025), NamedValue("1030mV", 1030),
+            NamedValue("1035mV", 1035), NamedValue("1040mV", 1040), NamedValue("1045mV", 1045),
+            NamedValue("1050mV", 1050), NamedValue("1055mV", 1055), NamedValue("1060mV", 1060),
+            NamedValue("1065mV", 1065), NamedValue("1070mV", 1070), NamedValue("1075mV", 1075),
+            NamedValue("1080mV", 1080), NamedValue("1085mV", 1085), NamedValue("1090mV", 1090),
+            NamedValue("1095mV", 1095), NamedValue("1100mV", 1100), NamedValue("1105mV", 1105),
+            NamedValue("1110mV", 1110), NamedValue("1115mV", 1115), NamedValue("1120mV", 1120),
+            NamedValue("1125mV", 1125), NamedValue("1130mV", 1130), NamedValue("1135mV", 1135),
+            NamedValue("1140mV", 1140), NamedValue("1145mV", 1145), NamedValue("1150mV", 1150),
+            NamedValue("1155mV", 1155), NamedValue("1160mV", 1160), NamedValue("1165mV", 1165),
+            NamedValue("1170mV", 1170), NamedValue("1175mV", 1175), NamedValue("1180mV", 1180),
+            NamedValue("1185mV", 1185), NamedValue("1190mV", 1190), NamedValue("1195mV", 1195),
+            NamedValue("1200mV", 1200), NamedValue("1205mV", 1205), NamedValue("1210mV", 1210),
+            NamedValue("1215mV", 1215), NamedValue("1220mV", 1220), NamedValue("1225mV", 1225),
+            NamedValue("1230mV", 1230), NamedValue("1235mV", 1235), NamedValue("1240mV", 1240),
+            NamedValue("1245mV", 1245), NamedValue("1250mV", 1250), NamedValue("1255mV", 1255),
+            NamedValue("1260mV", 1260), NamedValue("1265mV", 1265), NamedValue("1270mV", 1270),
+            NamedValue("1275mV", 1275), NamedValue("1280mV", 1280), NamedValue("1285mV", 1285),
+            NamedValue("1290mV", 1290), NamedValue("1295mV", 1295), NamedValue("1300mV", 1300),
+            NamedValue("1305mV", 1305), NamedValue("1310mV", 1310), NamedValue("1315mV", 1315),
+            NamedValue("1320mV", 1320), NamedValue("1325mV", 1325), NamedValue("1330mV", 1330),
+            NamedValue("1335mV", 1335), NamedValue("1340mV", 1340), NamedValue("1345mV", 1345),
+            NamedValue("1350mV", 1350), NamedValue("1355mV", 1355), NamedValue("1360mV", 1360),
+            NamedValue("1365mV", 1365), NamedValue("1370mV", 1370), NamedValue("1375mV", 1375),
+            NamedValue("1380mV", 1380), NamedValue("1385mV", 1385), NamedValue("1390mV", 1390),
+            NamedValue("1395mV", 1395), NamedValue("1400mV", 1400), NamedValue("1405mV", 1405),
+            NamedValue("1410mV", 1410), NamedValue("1415mV", 1415), NamedValue("1420mV", 1420),
+            NamedValue("1425mV", 1425), NamedValue("1430mV", 1430), NamedValue("1435mV", 1435),
+            NamedValue("1440mV", 1440), NamedValue("1445mV", 1445), NamedValue("1450mV", 1450),
+            NamedValue("1455mV", 1455), NamedValue("1460mV", 1460), NamedValue("1465mV", 1465),
+            NamedValue("1470mV", 1470), NamedValue("1475mV", 1475), NamedValue("1480mV", 1480),
+            NamedValue("1485mV", 1485), NamedValue("1490mV", 1490), NamedValue("1495mV", 1495),
+            NamedValue("1500mV", 1500), NamedValue("1505mV", 1505), NamedValue("1510mV", 1510),
+            NamedValue("1515mV", 1515), NamedValue("1520mV", 1520), NamedValue("1525mV", 1525),
         };
 
         std::vector<NamedValue> eGpuVolts = {
             NamedValue("Disabled", 2000),
             NamedValue("Auto", 0),
-            NamedValue("700mV", 700), NamedValue("705mV", 705), NamedValue("710mV", 710),
-            NamedValue("715mV", 715), NamedValue("720mV", 720), NamedValue("725mV", 725),
-            NamedValue("730mV", 730), NamedValue("735mV", 735), NamedValue("740mV", 740),
-            NamedValue("745mV", 745), NamedValue("750mV", 750), NamedValue("755mV", 755),
-            NamedValue("760mV", 760), NamedValue("765mV", 765), NamedValue("770mV", 770),
-            NamedValue("775mV", 775), NamedValue("780mV", 780), NamedValue("785mV", 785),
-            NamedValue("790mV", 790), NamedValue("795mV", 795), NamedValue("800mV", 800),
-            NamedValue("805mV", 805), NamedValue("810mV", 810), NamedValue("815mV", 815),
-            NamedValue("820mV", 820), NamedValue("825mV", 825), NamedValue("830mV", 830),
-            NamedValue("835mV", 835), NamedValue("840mV", 840), NamedValue("845mV", 845),
-            NamedValue("850mV", 850), NamedValue("855mV", 855), NamedValue("860mV", 860),
-            NamedValue("865mV", 865), NamedValue("870mV", 870), NamedValue("875mV", 875),
-            NamedValue("880mV", 880), NamedValue("885mV", 885), NamedValue("890mV", 890),
-            NamedValue("895mV", 895), NamedValue("900mV", 900), NamedValue("905mV", 905),
-            NamedValue("910mV", 910), NamedValue("915mV", 915), NamedValue("920mV", 920),
-            NamedValue("925mV", 925), NamedValue("930mV", 930), NamedValue("935mV", 935),
-            NamedValue("940mV", 940), NamedValue("945mV", 945), NamedValue("950mV", 950),
-            NamedValue("955mV", 955), NamedValue("960mV", 960), NamedValue("965mV", 965),
-            NamedValue("970mV", 970), NamedValue("975mV", 975), NamedValue("980mV", 980),
-            NamedValue("985mV", 985), NamedValue("990mV", 990), NamedValue("995mV", 995),
+            NamedValue("480mV", 480), NamedValue("485mV", 485), NamedValue("490mV", 490),
+            NamedValue("495mV", 495), NamedValue("500mV", 500), NamedValue("505mV", 505),
+            NamedValue("510mV", 510), NamedValue("515mV", 515), NamedValue("520mV", 520),
+            NamedValue("525mV", 525), NamedValue("530mV", 530), NamedValue("535mV", 535),
+            NamedValue("540mV", 540), NamedValue("545mV", 545), NamedValue("550mV", 550),
+            NamedValue("555mV", 555), NamedValue("560mV", 560), NamedValue("565mV", 565),
+            NamedValue("570mV", 570), NamedValue("575mV", 575), NamedValue("580mV", 580),
+            NamedValue("585mV", 585), NamedValue("590mV", 590), NamedValue("595mV", 595),
+            NamedValue("600mV", 600), NamedValue("605mV", 605), NamedValue("610mV", 610),
+            NamedValue("615mV", 615), NamedValue("620mV", 620), NamedValue("625mV", 625),
+            NamedValue("630mV", 630), NamedValue("635mV", 635), NamedValue("640mV", 640),
+            NamedValue("645mV", 645), NamedValue("650mV", 650), NamedValue("655mV", 655),
+            NamedValue("660mV", 660), NamedValue("665mV", 665), NamedValue("670mV", 670),
+            NamedValue("675mV", 675), NamedValue("680mV", 680), NamedValue("685mV", 685),
+            NamedValue("690mV", 690), NamedValue("695mV", 695), NamedValue("700mV", 700),
+            NamedValue("705mV", 705), NamedValue("710mV", 710), NamedValue("715mV", 715),
+            NamedValue("720mV", 720), NamedValue("725mV", 725), NamedValue("730mV", 730),
+            NamedValue("735mV", 735), NamedValue("740mV", 740), NamedValue("745mV", 745),
+            NamedValue("750mV", 750), NamedValue("755mV", 755), NamedValue("760mV", 760),
+            NamedValue("765mV", 765), NamedValue("770mV", 770), NamedValue("775mV", 775),
+            NamedValue("780mV", 780), NamedValue("785mV", 785), NamedValue("790mV", 790),
+            NamedValue("795mV", 795), NamedValue("800mV", 800), NamedValue("805mV", 805),
+            NamedValue("810mV", 810), NamedValue("815mV", 815), NamedValue("820mV", 820),
+            NamedValue("825mV", 825), NamedValue("830mV", 830), NamedValue("835mV", 835),
+            NamedValue("840mV", 840), NamedValue("845mV", 845), NamedValue("850mV", 850),
+            NamedValue("855mV", 855), NamedValue("860mV", 860), NamedValue("865mV", 865),
+            NamedValue("870mV", 870), NamedValue("875mV", 875), NamedValue("880mV", 880),
+            NamedValue("885mV", 885), NamedValue("890mV", 890), NamedValue("895mV", 895),
+            NamedValue("900mV", 900), NamedValue("905mV", 905), NamedValue("910mV", 910),
+            NamedValue("915mV", 915), NamedValue("920mV", 920), NamedValue("925mV", 925),
+            NamedValue("930mV", 930), NamedValue("935mV", 935), NamedValue("940mV", 940),
+            NamedValue("945mV", 945), NamedValue("950mV", 950), NamedValue("955mV", 955),
+            NamedValue("960mV", 960), NamedValue("965mV", 965), NamedValue("970mV", 970),
+            NamedValue("975mV", 975), NamedValue("980mV", 980), NamedValue("985mV", 985),
+            NamedValue("990mV", 990), NamedValue("995mV", 995), NamedValue("1000mV", 1000),
+            NamedValue("1005mV", 1005), NamedValue("1010mV", 1010), NamedValue("1015mV", 1015),
+            NamedValue("1020mV", 1020), NamedValue("1025mV", 1025), NamedValue("1030mV", 1030),
+            NamedValue("1035mV", 1035), NamedValue("1040mV", 1040), NamedValue("1045mV", 1045),
+            NamedValue("1050mV", 1050), NamedValue("1055mV", 1055), NamedValue("1060mV", 1060),
+            NamedValue("1065mV", 1065), NamedValue("1070mV", 1070), NamedValue("1075mV", 1075),
+            NamedValue("1080mV", 1080), NamedValue("1085mV", 1085), NamedValue("1090mV", 1090),
+            NamedValue("1095mV", 1095), NamedValue("1100mV", 1100), NamedValue("1105mV", 1105),
+            NamedValue("1110mV", 1110), NamedValue("1115mV", 1115), NamedValue("1120mV", 1120),
+            NamedValue("1125mV", 1125), NamedValue("1130mV", 1130), NamedValue("1135mV", 1135),
+            NamedValue("1140mV", 1140), NamedValue("1145mV", 1145), NamedValue("1150mV", 1150),
+            NamedValue("1155mV", 1155), NamedValue("1160mV", 1160), NamedValue("1165mV", 1165),
+            NamedValue("1170mV", 1170), NamedValue("1175mV", 1175), NamedValue("1180mV", 1180),
+            NamedValue("1185mV", 1185), NamedValue("1190mV", 1190), NamedValue("1195mV", 1195),
+            NamedValue("1200mV", 1200), NamedValue("1205mV", 1205), NamedValue("1210mV", 1210),
+            NamedValue("1215mV", 1215), NamedValue("1220mV", 1220), NamedValue("1225mV", 1225),
+            NamedValue("1230mV", 1230), NamedValue("1235mV", 1235), NamedValue("1240mV", 1240),
+            NamedValue("1245mV", 1245), NamedValue("1250mV", 1250), NamedValue("1255mV", 1255),
+            NamedValue("1260mV", 1260), NamedValue("1265mV", 1265), NamedValue("1270mV", 1270),
+            NamedValue("1275mV", 1275), NamedValue("1280mV", 1280), NamedValue("1285mV", 1285),
+            NamedValue("1290mV", 1290), NamedValue("1295mV", 1295), NamedValue("1300mV", 1300),
+            NamedValue("1305mV", 1305), NamedValue("1310mV", 1310), NamedValue("1315mV", 1315),
+            NamedValue("1320mV", 1320), NamedValue("1325mV", 1325), NamedValue("1330mV", 1330),
+            NamedValue("1335mV", 1335), NamedValue("1340mV", 1340), NamedValue("1345mV", 1345),
+            NamedValue("1350mV", 1350), NamedValue("1355mV", 1355), NamedValue("1360mV", 1360),
+            NamedValue("1365mV", 1365), NamedValue("1370mV", 1370), NamedValue("1375mV", 1375),
+            NamedValue("1380mV", 1380), NamedValue("1385mV", 1385), NamedValue("1390mV", 1390),
+            NamedValue("1395mV", 1395), NamedValue("1400mV", 1400), NamedValue("1405mV", 1405),
+            NamedValue("1410mV", 1410), NamedValue("1415mV", 1415), NamedValue("1420mV", 1420),
+            NamedValue("1425mV", 1425), NamedValue("1430mV", 1430), NamedValue("1435mV", 1435),
+            NamedValue("1440mV", 1440), NamedValue("1445mV", 1445), NamedValue("1450mV", 1450),
+            NamedValue("1455mV", 1455), NamedValue("1460mV", 1460), NamedValue("1465mV", 1465),
+            NamedValue("1470mV", 1470), NamedValue("1475mV", 1475), NamedValue("1480mV", 1480),
+            NamedValue("1485mV", 1485), NamedValue("1490mV", 1490), NamedValue("1495mV", 1495),
+            NamedValue("1500mV", 1500), NamedValue("1505mV", 1505), NamedValue("1510mV", 1510),
+            NamedValue("1515mV", 1515), NamedValue("1520mV", 1520), NamedValue("1525mV", 1525),
         };
 
         std::vector<NamedValue> mGpuVolts_noAuto = {
@@ -1222,45 +1293,121 @@ protected:
             NamedValue("915mV", 915), NamedValue("920mV", 920), NamedValue("925mV", 925),
             NamedValue("930mV", 930), NamedValue("935mV", 935), NamedValue("940mV", 940),
             NamedValue("945mV", 945), NamedValue("950mV", 950), NamedValue("955mV", 955),
-            NamedValue("960mV", 960),
+            NamedValue("960mV", 960), NamedValue("965mV", 965), NamedValue("970mV", 970),
+            NamedValue("975mV", 975), NamedValue("980mV", 980), NamedValue("985mV", 985),
+            NamedValue("990mV", 990), NamedValue("995mV", 995), NamedValue("1000mV", 1000),
+            NamedValue("1005mV", 1005), NamedValue("1010mV", 1010), NamedValue("1015mV", 1015),
+            NamedValue("1020mV", 1020), NamedValue("1025mV", 1025), NamedValue("1030mV", 1030),
+            NamedValue("1035mV", 1035), NamedValue("1040mV", 1040), NamedValue("1045mV", 1045),
+            NamedValue("1050mV", 1050), NamedValue("1055mV", 1055), NamedValue("1060mV", 1060),
+            NamedValue("1065mV", 1065), NamedValue("1070mV", 1070), NamedValue("1075mV", 1075),
+            NamedValue("1080mV", 1080), NamedValue("1085mV", 1085), NamedValue("1090mV", 1090),
+            NamedValue("1095mV", 1095), NamedValue("1100mV", 1100), NamedValue("1105mV", 1105),
+            NamedValue("1110mV", 1110), NamedValue("1115mV", 1115), NamedValue("1120mV", 1120),
+            NamedValue("1125mV", 1125), NamedValue("1130mV", 1130), NamedValue("1135mV", 1135),
+            NamedValue("1140mV", 1140), NamedValue("1145mV", 1145), NamedValue("1150mV", 1150),
+            NamedValue("1155mV", 1155), NamedValue("1160mV", 1160), NamedValue("1165mV", 1165),
+            NamedValue("1170mV", 1170), NamedValue("1175mV", 1175), NamedValue("1180mV", 1180),
+            NamedValue("1185mV", 1185), NamedValue("1190mV", 1190), NamedValue("1195mV", 1195),
+            NamedValue("1200mV", 1200), NamedValue("1205mV", 1205), NamedValue("1210mV", 1210),
+            NamedValue("1215mV", 1215), NamedValue("1220mV", 1220), NamedValue("1225mV", 1225),
+            NamedValue("1230mV", 1230), NamedValue("1235mV", 1235), NamedValue("1240mV", 1240),
+            NamedValue("1245mV", 1245), NamedValue("1250mV", 1250), NamedValue("1255mV", 1255),
+            NamedValue("1260mV", 1260), NamedValue("1265mV", 1265), NamedValue("1270mV", 1270),
+            NamedValue("1275mV", 1275), NamedValue("1280mV", 1280), NamedValue("1285mV", 1285),
+            NamedValue("1290mV", 1290), NamedValue("1295mV", 1295), NamedValue("1300mV", 1300),
+            NamedValue("1305mV", 1305), NamedValue("1310mV", 1310), NamedValue("1315mV", 1315),
+            NamedValue("1320mV", 1320), NamedValue("1325mV", 1325), NamedValue("1330mV", 1330),
+            NamedValue("1335mV", 1335), NamedValue("1340mV", 1340), NamedValue("1345mV", 1345),
+            NamedValue("1350mV", 1350), NamedValue("1355mV", 1355), NamedValue("1360mV", 1360),
+            NamedValue("1365mV", 1365), NamedValue("1370mV", 1370), NamedValue("1375mV", 1375),
+            NamedValue("1380mV", 1380), NamedValue("1385mV", 1385), NamedValue("1390mV", 1390),
+            NamedValue("1395mV", 1395), NamedValue("1400mV", 1400), NamedValue("1405mV", 1405),
+            NamedValue("1410mV", 1410), NamedValue("1415mV", 1415), NamedValue("1420mV", 1420),
+            NamedValue("1425mV", 1425), NamedValue("1430mV", 1430), NamedValue("1435mV", 1435),
+            NamedValue("1440mV", 1440), NamedValue("1445mV", 1445), NamedValue("1450mV", 1450),
+            NamedValue("1455mV", 1455), NamedValue("1460mV", 1460), NamedValue("1465mV", 1465),
+            NamedValue("1470mV", 1470), NamedValue("1475mV", 1475), NamedValue("1480mV", 1480),
+            NamedValue("1485mV", 1485), NamedValue("1490mV", 1490), NamedValue("1495mV", 1495),
+            NamedValue("1500mV", 1500), NamedValue("1505mV", 1505), NamedValue("1510mV", 1510),
+            NamedValue("1515mV", 1515), NamedValue("1520mV", 1520), NamedValue("1525mV", 1525),
         };
 
         std::vector<NamedValue> eGpuVolts_noAuto = {
             NamedValue("Disabled", 2000),
-            NamedValue("700mV", 700), NamedValue("705mV", 705), NamedValue("710mV", 710),
-            NamedValue("715mV", 715), NamedValue("720mV", 720), NamedValue("725mV", 725),
-            NamedValue("730mV", 730), NamedValue("735mV", 735), NamedValue("740mV", 740),
-            NamedValue("745mV", 745), NamedValue("750mV", 750), NamedValue("755mV", 755),
-            NamedValue("760mV", 760), NamedValue("765mV", 765), NamedValue("770mV", 770),
-            NamedValue("775mV", 775), NamedValue("780mV", 780), NamedValue("785mV", 785),
-            NamedValue("790mV", 790), NamedValue("795mV", 795), NamedValue("800mV", 800),
-            NamedValue("805mV", 805), NamedValue("810mV", 810), NamedValue("815mV", 815),
-            NamedValue("820mV", 820), NamedValue("825mV", 825), NamedValue("830mV", 830),
-            NamedValue("835mV", 835), NamedValue("840mV", 840), NamedValue("845mV", 845),
-            NamedValue("850mV", 850), NamedValue("855mV", 855), NamedValue("860mV", 860),
-            NamedValue("865mV", 865), NamedValue("870mV", 870), NamedValue("875mV", 875),
-            NamedValue("880mV", 880), NamedValue("885mV", 885), NamedValue("890mV", 890),
-            NamedValue("895mV", 895), NamedValue("900mV", 900), NamedValue("905mV", 905),
-            NamedValue("910mV", 910), NamedValue("915mV", 915), NamedValue("920mV", 920),
-            NamedValue("925mV", 925), NamedValue("930mV", 930), NamedValue("935mV", 935),
-            NamedValue("940mV", 940), NamedValue("945mV", 945), NamedValue("950mV", 950),
-            NamedValue("955mV", 955), NamedValue("960mV", 960), NamedValue("965mV", 965),
-            NamedValue("970mV", 970), NamedValue("975mV", 975), NamedValue("980mV", 980),
-            NamedValue("985mV", 985), NamedValue("990mV", 990), NamedValue("995mV", 995),
+            NamedValue("480mV", 480), NamedValue("485mV", 485), NamedValue("490mV", 490),
+            NamedValue("495mV", 495), NamedValue("500mV", 500), NamedValue("505mV", 505),
+            NamedValue("510mV", 510), NamedValue("515mV", 515), NamedValue("520mV", 520),
+            NamedValue("525mV", 525), NamedValue("530mV", 530), NamedValue("535mV", 535),
+            NamedValue("540mV", 540), NamedValue("545mV", 545), NamedValue("550mV", 550),
+            NamedValue("555mV", 555), NamedValue("560mV", 560), NamedValue("565mV", 565),
+            NamedValue("570mV", 570), NamedValue("575mV", 575), NamedValue("580mV", 580),
+            NamedValue("585mV", 585), NamedValue("590mV", 590), NamedValue("595mV", 595),
+            NamedValue("600mV", 600), NamedValue("605mV", 605), NamedValue("610mV", 610),
+            NamedValue("615mV", 615), NamedValue("620mV", 620), NamedValue("625mV", 625),
+            NamedValue("630mV", 630), NamedValue("635mV", 635), NamedValue("640mV", 640),
+            NamedValue("645mV", 645), NamedValue("650mV", 650), NamedValue("655mV", 655),
+            NamedValue("660mV", 660), NamedValue("665mV", 665), NamedValue("670mV", 670),
+            NamedValue("675mV", 675), NamedValue("680mV", 680), NamedValue("685mV", 685),
+            NamedValue("690mV", 690), NamedValue("695mV", 695), NamedValue("700mV", 700),
+            NamedValue("705mV", 705), NamedValue("710mV", 710), NamedValue("715mV", 715),
+            NamedValue("720mV", 720), NamedValue("725mV", 725), NamedValue("730mV", 730),
+            NamedValue("735mV", 735), NamedValue("740mV", 740), NamedValue("745mV", 745),
+            NamedValue("750mV", 750), NamedValue("755mV", 755), NamedValue("760mV", 760),
+            NamedValue("765mV", 765), NamedValue("770mV", 770), NamedValue("775mV", 775),
+            NamedValue("780mV", 780), NamedValue("785mV", 785), NamedValue("790mV", 790),
+            NamedValue("795mV", 795), NamedValue("800mV", 800), NamedValue("805mV", 805),
+            NamedValue("810mV", 810), NamedValue("815mV", 815), NamedValue("820mV", 820),
+            NamedValue("825mV", 825), NamedValue("830mV", 830), NamedValue("835mV", 835),
+            NamedValue("840mV", 840), NamedValue("845mV", 845), NamedValue("850mV", 850),
+            NamedValue("855mV", 855), NamedValue("860mV", 860), NamedValue("865mV", 865),
+            NamedValue("870mV", 870), NamedValue("875mV", 875), NamedValue("880mV", 880),
+            NamedValue("885mV", 885), NamedValue("890mV", 890), NamedValue("895mV", 895),
+            NamedValue("900mV", 900), NamedValue("905mV", 905), NamedValue("910mV", 910),
+            NamedValue("915mV", 915), NamedValue("920mV", 920), NamedValue("925mV", 925),
+            NamedValue("930mV", 930), NamedValue("935mV", 935), NamedValue("940mV", 940),
+            NamedValue("945mV", 945), NamedValue("950mV", 950), NamedValue("955mV", 955),
+            NamedValue("960mV", 960), NamedValue("965mV", 965), NamedValue("970mV", 970),
+            NamedValue("975mV", 975), NamedValue("980mV", 980), NamedValue("985mV", 985),
+            NamedValue("990mV", 990), NamedValue("995mV", 995), NamedValue("1000mV", 1000),
+            NamedValue("1005mV", 1005), NamedValue("1010mV", 1010), NamedValue("1015mV", 1015),
+            NamedValue("1020mV", 1020), NamedValue("1025mV", 1025), NamedValue("1030mV", 1030),
+            NamedValue("1035mV", 1035), NamedValue("1040mV", 1040), NamedValue("1045mV", 1045),
+            NamedValue("1050mV", 1050), NamedValue("1055mV", 1055), NamedValue("1060mV", 1060),
+            NamedValue("1065mV", 1065), NamedValue("1070mV", 1070), NamedValue("1075mV", 1075),
+            NamedValue("1080mV", 1080), NamedValue("1085mV", 1085), NamedValue("1090mV", 1090),
+            NamedValue("1095mV", 1095), NamedValue("1100mV", 1100), NamedValue("1105mV", 1105),
+            NamedValue("1110mV", 1110), NamedValue("1115mV", 1115), NamedValue("1120mV", 1120),
+            NamedValue("1125mV", 1125), NamedValue("1130mV", 1130), NamedValue("1135mV", 1135),
+            NamedValue("1140mV", 1140), NamedValue("1145mV", 1145), NamedValue("1150mV", 1150),
+            NamedValue("1155mV", 1155), NamedValue("1160mV", 1160), NamedValue("1165mV", 1165),
+            NamedValue("1170mV", 1170), NamedValue("1175mV", 1175), NamedValue("1180mV", 1180),
+            NamedValue("1185mV", 1185), NamedValue("1190mV", 1190), NamedValue("1195mV", 1195),
+            NamedValue("1200mV", 1200), NamedValue("1205mV", 1205), NamedValue("1210mV", 1210),
+            NamedValue("1215mV", 1215), NamedValue("1220mV", 1220), NamedValue("1225mV", 1225),
+            NamedValue("1230mV", 1230), NamedValue("1235mV", 1235), NamedValue("1240mV", 1240),
+            NamedValue("1245mV", 1245), NamedValue("1250mV", 1250), NamedValue("1255mV", 1255),
+            NamedValue("1260mV", 1260), NamedValue("1265mV", 1265), NamedValue("1270mV", 1270),
+            NamedValue("1275mV", 1275), NamedValue("1280mV", 1280), NamedValue("1285mV", 1285),
+            NamedValue("1290mV", 1290), NamedValue("1295mV", 1295), NamedValue("1300mV", 1300),
+            NamedValue("1305mV", 1305), NamedValue("1310mV", 1310), NamedValue("1315mV", 1315),
+            NamedValue("1320mV", 1320), NamedValue("1325mV", 1325), NamedValue("1330mV", 1330),
+            NamedValue("1335mV", 1335), NamedValue("1340mV", 1340), NamedValue("1345mV", 1345),
+            NamedValue("1350mV", 1350), NamedValue("1355mV", 1355), NamedValue("1360mV", 1360),
+            NamedValue("1365mV", 1365), NamedValue("1370mV", 1370), NamedValue("1375mV", 1375),
+            NamedValue("1380mV", 1380), NamedValue("1385mV", 1385), NamedValue("1390mV", 1390),
+            NamedValue("1395mV", 1395), NamedValue("1400mV", 1400), NamedValue("1405mV", 1405),
+            NamedValue("1410mV", 1410), NamedValue("1415mV", 1415), NamedValue("1420mV", 1420),
+            NamedValue("1425mV", 1425), NamedValue("1430mV", 1430), NamedValue("1435mV", 1435),
+            NamedValue("1440mV", 1440), NamedValue("1445mV", 1445), NamedValue("1450mV", 1450),
+            NamedValue("1455mV", 1455), NamedValue("1460mV", 1460), NamedValue("1465mV", 1465),
+            NamedValue("1470mV", 1470), NamedValue("1475mV", 1475), NamedValue("1480mV", 1480),
+            NamedValue("1485mV", 1485), NamedValue("1490mV", 1490), NamedValue("1495mV", 1495),
+            NamedValue("1500mV", 1500), NamedValue("1505mV", 1505), NamedValue("1510mV", 1510),
+            NamedValue("1515mV", 1515), NamedValue("1520mV", 1520), NamedValue("1525mV", 1525),
         };
 
         if (IsMariko()) {
-
-            tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-                renderer->drawString("\uE150 Setting GPU Clocks past", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-                renderer->drawString("1075MHz without UV, 1152MHz on SLT", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-                renderer->drawString("or 1228MHz on HiOPT can cause ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-                renderer->drawString("permanent damage to your Switch!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
-                renderer->drawString("Proceed at your own risk!", false, x + 20, y + 110, 18, tsl::style::color::ColorText);
-            });
-            warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 130);
-            this->listElement->addItem(warningText);
-
             addConfigButton(KipConfigValue_g_volt_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_153600, "153.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_230400, "230.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
@@ -1275,62 +1422,49 @@ protected:
             addConfigButton(KipConfigValue_g_volt_921600, "921.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            if(this->configList->values[KipConfigValue_marikoGpuUV] >= GPUUVLevel_SLT)
-                addConfigButton(KipConfigValue_g_volt_1152000, "1152.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            if(this->configList->values[KipConfigValue_marikoGpuUV] >= GPUUVLevel_HiOPT) {
-                addConfigButton(KipConfigValue_g_volt_1228800, "1228.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_1267200, "1267.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_1305600, "1305.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_1344000, "1344.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1382400, "1382.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1420800, "1420.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1459200, "1459.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1497600, "1497.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1536000, "1536.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-            }
+            addConfigButton(KipConfigValue_g_volt_1152000, "1152.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1228800, "1228.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1267200, "1267.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1305600, "1305.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_1344000, "1344.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1382400, "1382.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1420800, "1420.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1459200, "1459.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1497600, "1497.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1536000, "1536.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1574400, "1574.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1612800, "1612.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1651200, "1651.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1689600, "1689.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1728000, "1728.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1766400, "1766.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_1804800, "1804.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
 
         } else {
-
-            tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-                renderer->drawString("\uE150 Setting GPU Clocks past", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-                renderer->drawString("921MHz without UV and 960MHz on", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-                renderer->drawString("SLT or HiOPT can cause ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-                renderer->drawString("permanent damage to your Switch!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
-                renderer->drawString("Proceed at your own risk!", false, x + 20, y + 110, 18, tsl::style::color::ColorText);
-            });
-            warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 130);
-            this->listElement->addItem(warningText);
-
             addConfigButton(KipConfigValue_g_volt_e_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_115200, "115.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_153600, "153.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_192000, "192.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_230400, "230.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_268800, "268.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_307200, "307.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_345600, "345.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_384000, "384.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_422400, "422.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_460800, "460.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_499200, "499.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_537600, "537.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_576000, "576.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_614400, "614.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_652800, "652.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_691200, "691.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_729600, "729.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_768000, "768.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_806400, "806.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_844800, "844.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_883200, "883.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
             addConfigButton(KipConfigValue_g_volt_e_921600, "921.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            if(this->configList->values[KipConfigValue_eristaGpuUV] >= GPUUVLevel_SLT)
-                addConfigButton(KipConfigValue_g_volt_e_960000, "960.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            if(this->configList->values[KipConfigValue_eristaGpuUV] >= GPUUVLevel_HiOPT) {
-                addConfigButton(KipConfigValue_g_volt_e_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_e_1036800, "1036.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_e_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false);
-            }
+            addConfigButton(KipConfigValue_g_volt_e_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_e_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_e_1152000, "1152.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_e_1228800, "1228.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_e_1267200, "1267.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_e_1305600, "1305.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_e_1344000, "1344.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_e_1382400, "1382.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_e_1420800, "1420.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_e_1459200, "1459.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_e_1497600, "1497.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+            addConfigButton(KipConfigValue_g_volt_e_1536000, "1536.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
         }
     }
 };

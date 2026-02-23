@@ -40,6 +40,7 @@
 #include <cstdio>
 #include <crc32.h>
 
+
 #define HOSPPC_HAS_BOOST (hosversionAtLeast(7,0,0))
 bool isGpuGovernorEnabled = false;
 bool isCpuGovernorEnabled = false;
@@ -1125,11 +1126,11 @@ void ClockManager::SetKipData() {
     CUST_WRITE_FIELD_BATCH(&table, commonGpuVoltOffset, this->config->GetConfigValue(KipConfigValue_commonGpuVoltOffset));
     CUST_WRITE_FIELD_BATCH(&table, gpuSpeedo, this->config->GetConfigValue(KipConfigValue_gpuSpeedo));
 
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 31; i++) {
         table.marikoGpuVoltArray[i] = this->config->GetConfigValue((SysClkConfigValue)(KipConfigValue_g_volt_76800 + i));
     }
 
-    for (int i = 0; i < 27; i++) {
+    for (int i = 0; i < 24; i++) {
         table.eristaGpuVoltArray[i] = this->config->GetConfigValue((SysClkConfigValue)(KipConfigValue_g_volt_e_76800 + i));
     }
 
@@ -1297,12 +1298,12 @@ void ClockManager::GetKipData() {
         configValues.values[KipConfigValue_commonGpuVoltOffset] = cust_get_common_gpu_offset(&table);
         configValues.values[KipConfigValue_gpuSpeedo] = Board::getSpeedo(HorizonOCSpeedo_GPU); // cust_get_gpu_speedo(&table);
 
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 31; i++) {
             configValues.values[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);
             initialConfigValues[KipConfigValue_g_volt_76800 + i] = cust_get_mariko_gpu_volt(&table, i);
         }
 
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 24; i++) {
             configValues.values[KipConfigValue_g_volt_e_76800 + i] = cust_get_erista_gpu_volt(&table, i);
             initialConfigValues[KipConfigValue_g_volt_e_76800 + i] = cust_get_erista_gpu_volt(&table, i);
         }
