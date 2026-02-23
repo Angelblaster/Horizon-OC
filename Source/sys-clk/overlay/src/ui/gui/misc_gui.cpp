@@ -393,7 +393,7 @@ void MiscGui::listUI()
         return false;
     });
     this->listElement->addItem(gpuSubmenu);
-    if(!IsHoag())
+    if(!IsHoag()) {
     this->listElement->addItem(new tsl::elm::CategoryHeader("Display"));
         addConfigToggle(HorizonOCConfigValue_OverwriteRefreshRate, nullptr);
         tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
@@ -500,7 +500,6 @@ void MiscGui::listUI()
             }
         }
     #endif
-
 }
 
 
