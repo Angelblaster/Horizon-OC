@@ -167,20 +167,6 @@ namespace ams::ldr::hoc::pcv::erista {
         R_SUCCEED();
     }
 
-    Result GpuFreqPllLimit(u32 *ptr) {
-        clk_pll_param *entry = reinterpret_cast<clk_pll_param *>(ptr);
-
-        // All zero except for freq
-        for (size_t i = 1; i < sizeof(clk_pll_param) / sizeof(u32); i++) {
-            R_UNLESS(*(ptr + i) == 0, ldr::ResultInvalidGpuPllEntry());
-        }
-
-        // Double the max clk simply
-        u32 max_clk = entry->freq * 2;
-        entry->freq = max_clk;
-        R_SUCCEED();
-    }
-
     /* Note: This does not have proper timings, so base latency adjustment will not work.             */
     /* However, it may still achieve a slightly higher frequency, but not as much as it could be.     */
     /* I'm certainly not insane enough to attempt this pain again, so this will have to do *for now*. */
@@ -422,6 +408,33 @@ namespace ams::ldr::hoc::pcv::erista {
         R_SUCCEED();
     }
 
+    Result GpuFreqPllMax(u32 *ptr) {
+        clk_pll_param *entry = reinterpret_cast<clk_pll_param *>(ptr);
+
+        // All zero except for freq
+        for (size_t i = 1; i < sizeof(clk_pll_param) / sizeof(u32); i++) {
+            R_UNLESS(*(ptr + i) == 0, ldr::ResultInvalidGpuPllEntry());
+        }
+
+        // Double the max clk simply
+        u32 max_clk = entry->freq * 2;
+        entry->freq = max_clk;
+        R_SUCCEED();
+    }
+
+    // patch out 1305MHz limit on erista, don't use this!
+    // Result GpuFreqPllLimit(u32 *ptr) {
+    //     u32 prev_freq = *(ptr - 1);
+
+    //     if (prev_freq != 128000 && prev_freq != 1300000 && prev_freq != 76800) {
+    //         R_THROW(ldr::ResultInvalidGpuPllEntry());
+    //     }
+
+    //     PATCH_OFFSET(ptr, 3600000);
+
+    //     R_SUCCEED();
+    // }
+
     void Patch(uintptr_t mapped_nso, size_t nso_size) {
         PatcherEntry<u32> patches[] = {
             {"CPU Freq Table", CpuFreqCvbTable<false>, 1, nullptr, static_cast<u32>(GetDvfsTableLastEntry(CpuCvbTableDefault)->freq)},
@@ -432,7 +445,8 @@ namespace ams::ldr::hoc::pcv::erista {
             {"GPU Volt Thermals", &GpuVoltThermals, 1, nullptr, 810},
             {"GPU Freq Table", GpuFreqCvbTable<false>, 1, nullptr, static_cast<u32>(GetDvfsTableLastEntry(GpuCvbTableDefault)->freq)},
             {"GPU Freq Asm", &GpuFreqMaxAsm, 2, &GpuMaxClockPatternFn},
-            {"GPU Freq PLL", &GpuFreqPllLimit, 1, nullptr, GpuClkPllLimit},
+            {"GPU PLL Max", &GpuFreqPllMax, 1, nullptr, GpuClkPllMax},
+            // {"GPU PLL Limit", &GpuFreqPllLimit, 4, nullptr, GpuClkPllLimit},
             {"MEM Freq Mtc", &MemFreqMtcTable, 0, nullptr, EmcClkOSLimit},
             {"MEM Freq Max", &MemFreqMax, 0, nullptr, EmcClkOSLimit},
             {"MEM Freq PLLM", &MemFreqPllmLimit, 2, nullptr, EmcClkPllmLimit},
