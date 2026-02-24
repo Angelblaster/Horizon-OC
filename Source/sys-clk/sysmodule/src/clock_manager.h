@@ -36,15 +36,48 @@ class SysDockIntegration;
 class ClockManager
 {
   public:
+     /**
+     * Get instance
+     * @return Pointer to a ClockManager instance
+     */
     static ClockManager* GetInstance();
     static void Initialize();
     static void Exit();
     ClockManager();
     virtual ~ClockManager();
+
+    /**
+     * Get context object
+     * @return Context instance
+     */
     SysClkContext GetCurrentContext();
+
+    /**
+     * Get config object
+     * @return Pointer to a config instance
+     */
     Config* GetConfig();
+
+    /**
+     * Set clock manager running
+     * @param running Is running or not?
+     */
     void SetRunning(bool running);
+
+    /**
+     * Is clock manager running
+     * @return running or not?
+     */
     bool Running();
+
+    /**
+     * Get frequency list from clkrst
+     *
+     * @param module Module to get frequency list for
+     * @param list List of frequencies
+     * @param maxCount How many entries to expect in list. Usually 32
+     * @param outCount How many entries were retrived
+     */
     void GetFreqList(SysClkModule module, std::uint32_t* list, std::uint32_t maxCount, std::uint32_t* outCount);
 
     /**
