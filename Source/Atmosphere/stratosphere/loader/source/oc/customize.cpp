@@ -71,16 +71,16 @@ volatile CustomizeTable C = {
 .mem_burst_read_latency = RL_1866,
 .mem_burst_write_latency = WL_1866,
 
-.eristaCpuUV = 5,
+.eristaCpuUV = 0,
 .eristaCpuVmin = 800,
 .eristaCpuMaxVolt = 1200,
 /* Unlocks up to 2295 Mhz CPU, usage is not recommended. */
-.eristaCpuUnlock = ENABLED,
+.eristaCpuUnlock = DISABLED,
 
 .marikoCpuUVLow = 0, // No undervolt
 .marikoCpuUVHigh = 0, // No undervolt
 
-.tableConf = DEFAULT_TABLE,
+.tableConf = TBREAK_1683,
 .marikoCpuLowVmin = 620,
 .marikoCpuHighVmin = 750,
 /* 1120mV is NVIDIA rating */
