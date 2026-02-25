@@ -122,19 +122,8 @@ static const u32 gpuDvfsArray[] = { 590, 600, 610, 620, 630, 640, 650, 660, 670,
 u32 dvfsTable[6][32] = {};
 u64 dvfsAddress;
 u32 ramVmin;
-u32 FUSE_TSENSOR0_CALIB_0 = 0;
-u32 FUSE_TSENSOR1_CALIB_0 = 0;
-u32 FUSE_TSENSOR2_CALIB_0 = 0;
-u32 FUSE_TSENSOR3_CALIB_0 = 0;
-u32 FUSE_TSENSOR4_CALIB_0 = 0;
-u32 FUSE_TSENSOR5_CALIB_0 = 0;
-u32 FUSE_TSENSOR6_CALIB_0 = 0;
-u32 FUSE_TSENSOR7_CALIB_0 = 0;
-u32 FUSE_TSENSOR_COMMON_0 = 0;
-u32 FUSE_TSENSOR9_CALIB_0 = 0;
-u32 FUSE_TSENSOR10_CALIB_0 = 0;
-u32 FUSE_SPARE_REALIGNMENT_REG_0 = 0;
-u32 fuse[0x400];
+
+u32 fuse[0x100];   // 256 u32s = 0x400 bytes, covers all R_FUSE_* offsets up to 0x37c
 
 const char* Board::GetModuleName(SysClkModule module, bool pretty)
 {
@@ -226,7 +215,9 @@ void miscThreadFunc(void*) {
         svcSleepThread(300'000'000);
     }
 }
-
+/*
+ * System will hang if sleep mode is handled incorrectly
+ */
 void socthermThreadFunc(void*) {
     PscPmState state;
     u32 flags;
@@ -346,9 +337,6 @@ void Board::Initialize()
         cachedMarikoUvHighTune0 = *(u32*)(cldvfs + CL_DVFS_TUNE0_0);
         Board::ResetToStockCpu();
     }
-
-    socthermInit(fuse, +g_socType);
-
 }
 
 void Board::fuseReadSpeedos() {
@@ -392,21 +380,6 @@ void Board::fuseReadSpeedos() {
                 cpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_CPU_IDDQ_CALIB);
                 gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB);
                 socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB);
-
-                FUSE_TSENSOR1_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR1_CALIB_0);
-                FUSE_TSENSOR2_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR2_CALIB_0);
-                FUSE_TSENSOR0_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR0_CALIB_0);
-                FUSE_TSENSOR3_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR3_CALIB_0);
-                FUSE_TSENSOR4_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR4_CALIB_0);
-                FUSE_TSENSOR5_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR5_CALIB_0);
-                FUSE_TSENSOR6_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR6_CALIB_0);
-                FUSE_TSENSOR7_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR7_CALIB_0);
-                FUSE_TSENSOR_COMMON_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR_COMMON_0);
-                FUSE_TSENSOR9_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR9_CALIB_0);
-                FUSE_TSENSOR10_CALIB_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_TSENSOR10_CALIB_0);
-                FUSE_SPARE_REALIGNMENT_REG_0 = *reinterpret_cast<const u32*>(dump + R_FUSE_SPARE_REALIGNMENT_REG_0);
-
-                memcpy(fuse, dump, sizeof(dump));
 
                 svcCloseHandle(debug);
                 return;
@@ -813,38 +786,60 @@ std::uint32_t Board::GetTemperatureMilli(SysClkThermalSensor sensor)
 {
     std::int32_t millis = 0;
 
-    if(sensor == SysClkThermalSensor_SOC)
-    {
-        millis = tmp451TempSoc();
-    }
-    else if(sensor == SysClkThermalSensor_PCB)
-    {
-        // millis = tmp451TempPcb();
-        millis = socthermReadCpuTemp();
-    }
-    else if(sensor == SysClkThermalSensor_Skin)
-    {
-        if(HOSSVC_HAS_TC)
-        {
-            Result rc;
-            rc = tcGetSkinTemperatureMilliC(&millis);
-            ASSERT_RESULT_OK(rc, "tcGetSkinTemperatureMilliC");
+    switch(sensor) {
+        case SysClkThermalSensor_SOC: {
+            millis = tmp451TempSoc();
+            break;
         }
-    }
-    else if (sensor == HorizonOCThermalSensor_Battery) {
-        batteryInfoGetChargeInfo(&info);
-        millis = batteryInfoGetTemperatureMiliCelsius(&info);
-    }
-    else if (sensor == HorizonOCThermalSensor_PMIC) {
-        millis = 50000;
-    }
-    else
-    {
-        ASSERT_ENUM_VALID(SysClkThermalSensor, sensor);
+        case SysClkThermalSensor_PCB: {
+            millis = tmp451TempPcb();
+            break;
+        }
+        case SysClkThermalSensor_Skin: {
+            if(HOSSVC_HAS_TC)
+            {
+                Result rc;
+                rc = tcGetSkinTemperatureMilliC(&millis);
+                ASSERT_RESULT_OK(rc, "tcGetSkinTemperatureMilliC");
+            }
+            break;
+        }
+        case HorizonOCThermalSensor_Battery: {
+            batteryInfoGetChargeInfo(&info);
+            millis = batteryInfoGetTemperatureMiliCelsius(&info);
+            break;
+        }
+        case HorizonOCThermalSensor_PMIC: {
+            millis = 50000;
+            break;
+        }
+        case HorizonOCThermalSensor_CPU: {
+            millis = socthermReadCpuTemp();
+            break;
+        }
+        case HorizonOCThermalSensor_GPU: {
+            millis = socthermReadGpuTemp();
+            break;
+        }
+        case HorizonOCThermalSensor_PLLX: {
+            millis = socthermReadPllTemp();
+            break;
+        }
+        case HorizonOCThermalSensor_MEM: {
+            if(Board::GetSocType() == SysClkSocType_Erista)
+                millis = socthermReadMemTemp(); // mem sensor is erista only!
+            else
+                millis = socthermReadPllTemp();
+            break;
+        }
+        default: {
+            ASSERT_ENUM_VALID(SysClkThermalSensor, sensor);
+        }
     }
 
     return std::max(0, millis);
 }
+
 
 std::int32_t Board::GetPowerMw(SysClkPowerSensor sensor)
 {
@@ -1313,6 +1308,7 @@ MarikoCpuUvEntry marikoCpuUvHigh[12] = {
     {0x0, 0xdfff, 0, 0x27f07ff},
 };
 void Board::SetCpuUvLevel(u32 levelLow, u32 levelHigh, u32 tbreakPoint) {
+
 
     u32* tune0_ptr = (u32*)(cldvfs + CL_DVFS_TUNE0_0);
     u32* tune1_ptr = (u32*)(cldvfs + CL_DVFS_TUNE1_0);

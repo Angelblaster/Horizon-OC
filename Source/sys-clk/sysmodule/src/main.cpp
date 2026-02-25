@@ -36,7 +36,7 @@
 #include "process_management.h"
 #include "clock_manager.h"
 #include "ipc_service.h"
-#define INNER_HEAP_SIZE 0x40000
+#define INNER_HEAP_SIZE 0x45000
 
 extern "C"
 {

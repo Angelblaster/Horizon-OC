@@ -30,7 +30,7 @@
 
 // Cache hardware model to avoid repeated syscalls
 
-BaseMenuGui::BaseMenuGui() : tempColors{ tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), }
+BaseMenuGui::BaseMenuGui() : tempColors{ tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0), tsl::Color(0)}
 {
     tsl::initializeThemeVars();
     this->context = nullptr;
@@ -58,7 +58,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     // All constants pre-calculated and cached
     static constexpr const char* const labels[] = {
-        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "FAN", "DISP"
+        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "FAN", "DISP", "CPU", "GPU", "PLL", "MEM"
     };
 
     static constexpr u32 dataPositions[6] = {63-3+3, 200-1, 344-1-3, 200-1, 342-1, 321-1};
@@ -89,7 +89,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(labels[1], false, 423 - maxProfileValueWidth - labelWidths[1] - 9, y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
     renderer->drawString(displayStrings[1], false, 423 - maxProfileValueWidth, y, SMALL_TEXT_SIZE, tsl::infoTextColor);
 
-    y = 129; // Direct assignment instead of += 38
+    y += 38; // Direct assignment instead of += 38
 
     // === MAIN DATA SECTION ===
     renderer->drawRoundedRect(14, 106, 420, 156, 10.0f, renderer->aWithOpacity(tsl::tableBGColor));
@@ -105,7 +105,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(displayStrings[3], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // GPU
     renderer->drawString(displayStrings[4], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // MEM
 
-    y = 149; // Direct assignment (129 + 20)
+    y += 20; // Direct assignment (129 + 20)
 
     renderer->drawString(displayStrings[19], false, positions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // CPU Usage
     renderer->drawString(displayStrings[17], false, positions[3], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // GPU Usage
@@ -116,7 +116,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(displayStrings[6], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // GPU real
     renderer->drawString(displayStrings[7], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // MEM real
 
-    y = 169; // Direct assignment (149 + 20)
+    y += 20; // Direct assignment (149 + 20)
 
     // === VOLTAGES ===
     renderer->drawString(displayStrings[8], false, dataPositions[0], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // CPU voltage
@@ -124,7 +124,18 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     renderer->drawStringWithColoredSections(displayStrings[10], false, {""}, dataPositions[5]-16, y, SMALL_TEXT_SIZE, tsl::infoTextColor, tsl::separatorColor);
 
-    y = 191; // Direct assignment (169 + 22)
+    y += 20;
+
+    renderer->drawString("CPU", false, positions[5], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
+    renderer->drawString("GPU", false, positions[6]-1, y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
+    renderer->drawString("PLLX", false, positions[7], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
+
+    // Temperatures with color - use pre-computed colors
+    renderer->drawString(displayStrings[27], false, dataPositions[0], y, SMALL_TEXT_SIZE, tempColors[HorizonOCThermalSensor_CPU]);  // SOC
+    renderer->drawString(displayStrings[28], false, dataPositions[1], y, SMALL_TEXT_SIZE, tempColors[HorizonOCThermalSensor_GPU]);  // PCB
+    renderer->drawString(displayStrings[29], false, dataPositions[2], y, SMALL_TEXT_SIZE, tempColors[HorizonOCThermalSensor_PLLX]);  // Skin
+
+    y += 22; // Direct assignment (169 + 22)
 
     // === TEMPERATURE SECTION ===
     // Labels
@@ -137,7 +148,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(displayStrings[12], false, dataPositions[1], y, SMALL_TEXT_SIZE, tempColors[SysClkThermalSensor_PCB]);  // PCB
     renderer->drawString(displayStrings[13], false, dataPositions[2], y, SMALL_TEXT_SIZE, tempColors[SysClkThermalSensor_Skin]);  // Skin
 
-    y = 211; // Direct assignment (191 + 20)
+    y += 20; // Direct assignment (191 + 20)
 
     renderer->drawString(displayStrings[14], false, dataPositions[0], y, SMALL_TEXT_SIZE, tsl::infoTextColor);
 
@@ -168,7 +179,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(displayStrings[23], false, positions[2] - 2, y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // Bat Age
 
 
-    renderer->drawString(displayStrings[26], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // disp volt
+    // renderer->drawString(displayStrings[26], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // disp volt
 
     y+=20;
 }
@@ -281,6 +292,18 @@ void BaseMenuGui::refresh()
     sprintf(displayStrings[25], "%u Hz", context->realFreqs[HorizonOCModule_Display]);
 
     //sprintf(displayStrings[26], "%u", context->speedos[HorizonOCSpeedo_CPU]);
+
+    millis = context->temps[HorizonOCThermalSensor_CPU];
+    sprintf(displayStrings[27], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
+    tempColors[HorizonOCThermalSensor_CPU] = tsl::GradientColor(millis * 0.001f);
+
+    millis = context->temps[HorizonOCThermalSensor_GPU];
+    sprintf(displayStrings[28], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
+    tempColors[HorizonOCThermalSensor_GPU] = tsl::GradientColor(millis * 0.001f);
+
+    millis = context->temps[HorizonOCThermalSensor_PLLX];
+    sprintf(displayStrings[29], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
+    tempColors[HorizonOCThermalSensor_PLLX] = tsl::GradientColor(millis * 0.001f);
 
 }
 

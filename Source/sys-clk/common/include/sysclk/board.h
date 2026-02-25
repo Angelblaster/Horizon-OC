@@ -87,6 +87,10 @@ typedef enum
     SysClkThermalSensor_Skin,
     HorizonOCThermalSensor_Battery,
     HorizonOCThermalSensor_PMIC,
+    HorizonOCThermalSensor_CPU,
+    HorizonOCThermalSensor_GPU,
+    HorizonOCThermalSensor_PLLX,
+    HorizonOCThermalSensor_MEM,
     SysClkThermalSensor_EnumMax
 } SysClkThermalSensor;
 
@@ -187,7 +191,14 @@ static inline const char* sysclkFormatThermalSensor(SysClkThermalSensor thermSen
             return pretty ? "BAT" : "battery";
         case HorizonOCThermalSensor_PMIC:
             return pretty ? "PMIC" : "pmic";
-
+        case HorizonOCThermalSensor_CPU:
+            return pretty ? "CPU" : "cpu";
+        case HorizonOCThermalSensor_GPU:
+            return pretty ? "GPU" : "gpu";
+        case HorizonOCThermalSensor_PLLX:
+            return pretty ? "PLLX" : "pllx";
+        case HorizonOCThermalSensor_MEM:
+            return pretty ? "MEM" : "mem";
         default:
             return NULL;
     }
