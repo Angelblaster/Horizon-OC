@@ -337,6 +337,7 @@ void Board::Initialize()
         cachedMarikoUvHighTune0 = *(u32*)(cldvfs + CL_DVFS_TUNE0_0);
         Board::ResetToStockCpu();
     }
+    socthermInit(fuse, g_socType == SysClkSocType_Mariko);
 }
 
 void Board::fuseReadSpeedos() {
@@ -380,6 +381,8 @@ void Board::fuseReadSpeedos() {
                 cpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_CPU_IDDQ_CALIB);
                 gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB);
                 socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB);
+                
+                memcpy(fuse, dump, sizeof(fuse));  // fuse is u32[0x100] = 1024 bytes, same as dump
 
                 svcCloseHandle(debug);
                 return;
