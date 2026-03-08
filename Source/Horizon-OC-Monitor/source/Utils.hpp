@@ -685,7 +685,7 @@ void Misc2(void*) {
 
 void Misc3(void*) {
     const bool isUsingEOS = usingEOS();
-    
+
     // Initialize voltage reading if needed
     bool canReadVoltages = false;
     if (!isUsingEOS && realVoltsPolling) {
@@ -694,7 +694,7 @@ void Misc3(void*) {
             realVoltsPolling = false;
         }
     }
-    
+
     do {
         mutexLock(&mutex_Misc);
 
@@ -706,7 +706,7 @@ void Misc3(void*) {
         if (R_SUCCEEDED(tcCheck)) {
             tcGetSkinTemperatureMilliC(&skin_temperaturemiliC);
         }
-        
+
         // Fan
         if (R_SUCCEEDED(pwmCheck)) {
             double temp = 0;
@@ -720,16 +720,21 @@ void Misc3(void*) {
                 }
             }
         }
-        
+
         // GPU Load
         if (R_SUCCEEDED(nvCheck)) {
             nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
         }
-        
+
+        SysClkContext sysclkCTX;
+        if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
+            partLoad[SysClkPartLoad_EMC] = sysclkCTX.partLoad[SysClkPartLoad_EMC];
+        }
+
         mutexUnlock(&mutex_Misc);
-        
+
     } while (!leventWait(&threadexit, 1'000'000'000)); // 1 second timeout
-    
+
     // Cleanup voltage reading if initialized
     if (canReadVoltages) {
         rgltrExit();
