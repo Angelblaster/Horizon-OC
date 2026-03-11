@@ -41,6 +41,12 @@
 #include <crc32.h>
 
 #define HOSPPC_HAS_BOOST (hosversionAtLeast(7,0,0))
+
+// governor constants
+#define POLL_NS         = 5'000'000;  // 5 ms  – governor poll rate
+#define DOWN_HOLD_TICKS = 10;         // 50 ms – how long to in POLL_NS to hold while ramping down
+#define STEP_UTIL    = 900;        // multiplier for step calculations
+
 bool isGpuGovernorEnabled = false;
 bool isCpuGovernorEnabled = false;
 bool lastGpuGovernorState = false;
@@ -52,6 +58,7 @@ Thread gpuGovernorTHREAD;
 u32 initialConfigValues[SysClkConfigValue_EnumMax]; // initial config. used for safety checks
 bool kipAvailable = false;
 bool isCpuGovernorInBoostMode = false;
+
 
 ClockManager *ClockManager::GetInstance()
 {
@@ -308,319 +315,150 @@ void ClockManager::RefreshFreqTableRow(SysClkModule module)
     FileUtils::LogLine("[mgr] count = %u", this->freqTable[module].count);
 }
 
-u32 findIndex(u32 arr[], u32 size, u32 value) {
-    for (u32 i = 0; i < size; i++) {
-        if (arr[i] == value) {
-            return i;
-        }
-    }
-    return 0;
+u32 ClockManager::SchedutilTargetHz(u32 util, u32 tableMaxHz) {
+    u64 hz = (u64)tableMaxHz * util / STEP_UTIL;
+    return (u32)(std::min(hz, static_cast<u64>(tableMaxHz)));
 }
 
-u32 findIndexMHz(u32 arr[], u32 size, u32 value) {
-    for (u32 i = 0; i < size; i++) {
-        if (arr[i] / 1000000 == value) {
+u32 ClockManager::TableIndexForHz(const FreqTable& table, u32 targetHz) { // must pass in a freqTable as tables are different for cpu/gpu
+    for (u32 i = 0; i < table.count; i++)
+        if (this->freqTable.list[i] >= targetHz)
             return i;
-        }
-    }
-    return 0;
+    return table.count - 1;
 }
 
-void ClockManager::CpuGovernorThread(void* arg)
-{
+u32 ClockManager::ResolveTargetHz(ClockManager* mgr, SysClkModule module) {
+    u32 hz = mgr->context->overrideFreqs[module];
+    if (!hz)
+        hz = mgr->config->GetAutoClockHz(
+                mgr->context->applicationId, module,
+                mgr->context->profile, false);
+    if (!hz)
+        hz = mgr->config->GetAutoClockHz(
+                GLOBAL_PROFILE_ID, module,
+                mgr->context->profile, false);
+    return hz;
+}
+
+void ClockManager::CpuGovernorThread(void* arg) {
     ClockManager* mgr = static_cast<ClockManager*>(arg);
 
-    for (;;)
-    {
-        if (!mgr->running)
-        {
-            svcSleepThread(50'000'000);
+    u32 downHoldRemaining = 0;
+    u32 lastHz            = 0;
+
+    for (;;) {
+        if (!mgr->running || !isCpuGovernorEnabled) {
+            downHoldRemaining = 0;
+            lastHz            = 0;
             continue;
         }
 
-        if (!isCpuGovernorEnabled)
-        {
-            svcSleepThread(50'000'000);
-            continue;
-        }
+        u32 mode = 0;
+        Result rc   = apmExtGetCurrentPerformanceConfiguration(&mode);
 
-        std::uint32_t mode = 0;
-        Result rc = apmExtGetCurrentPerformanceConfiguration(&mode);
-        bool isInBoostMode = R_SUCCEEDED(rc) && apmExtIsBoostMode(mode);
-
-        if (isInBoostMode)
-        {
+        if (R_SUCCEEDED(rc) && apmExtIsBoostMode(mode)) {
             isCpuGovernorInBoostMode = true;
-            svcSleepThread(50'000'000);
-            continue;
+            downHoldRemaining        = 0;
+            lastHz                   = 0;
+            continue; // TODO: figure out a way to get boost clock easily and set it instead of just skipping the governor
+        } else if(!apmExtIsBoostMode(mode)) {
+            isCpuGovernorInBoostMode = false;
         }
-
-        isCpuGovernorInBoostMode = false;
 
         auto& table = mgr->freqTable[SysClkModule_CPU];
+
         if (table.count == 0)
-        {
-            svcSleepThread(50'000'000);
             continue;
-        }
 
         std::scoped_lock lock{mgr->contextMutex};
 
-        u32 currentHz = Board::GetHz(SysClkModule_CPU);
+        u32 cpuLoad    = Board::GetPartLoad(HocClkPartLoad_CPUMax);
 
-        u32 index = table.count - 1;
-        for (u32 i = 0; i < table.count; i++)
-        {
-            if (table.list[i] == currentHz)
-            {
-                index = i;
-                break;
-            }
-        }
-
-        if (table.list[index] != currentHz)
-        {
-            for (u32 i = 0; i < table.count; i++)
-            {
-                if (table.list[i] >= currentHz)
-                {
-                    index = i;
-                    break;
-                }
-            }
-        }
-
-        u32 targetHz = mgr->context->overrideFreqs[SysClkModule_CPU];
-        if (!targetHz)
-        {
-            targetHz = mgr->config->GetAutoClockHz(
-                mgr->context->applicationId,
-                SysClkModule_CPU,
-                mgr->context->profile,
-                false
-            );
-
-            if (!targetHz)
-            {
-                targetHz = mgr->config->GetAutoClockHz(
-                    GLOBAL_PROFILE_ID,
-                    SysClkModule_CPU,
-                    mgr->context->profile,
-                    false
-                );
-            }
-        }
-
-        int gpuLoad = Board::GetPartLoad(HocClkPartLoad_GPU);
-        int cpuLoad = Board::GetPartLoad(HocClkPartLoad_CPUMax);
-
-        if (isGpuGovernorEnabled && gpuLoad < 800)
-        {
-            if (cpuLoad < 600 && index > 0)
-            {
-                index--;
-            }
-            else if (cpuLoad > 800 && index + 1 < table.count)
-            {
-                index++;
-            }
-        }
-        else
-        {
-            if (cpuLoad < 600 && index > 0)
-            {
-                index--;
-            }
-            else if (cpuLoad > 800 && index + 1 < table.count)
-            {
-                index++;
-            }
-        }
-
+        u32 tableMaxHz = table.list[table.count - 1];
+        u32 desiredHz  = ClockManager::SchedutilTargetHz(cpuLoad, tableMaxHz);
+        u32 targetHz = ClockManager::ResolveTargetHz(mgr, SysClkModule_CPU);
         u32 maxHz = mgr->GetMaxAllowedHz(SysClkModule_CPU, mgr->context->profile);
 
-        if (targetHz)
-        {
-            u32 targetIndex = table.count - 1;
-            for (u32 i = 0; i < table.count; i++)
-            {
-                if (table.list[i] >= targetHz)
-                {
-                    targetIndex = i;
-                    break;
-                }
-            }
+        if (targetHz && desiredHz > targetHz)
+            desiredHz = targetHz;
 
-            if (index > targetIndex)
-            {
-                index = targetIndex;
-            }
-        }
+        if (maxHz && desiredHz > maxHz)
+            desiredHz = maxHz;
 
-        if (maxHz > 0 && table.list[index] > maxHz)
-        {
-            for (u32 i = table.count; i > 0; i--)
-            {
-                if (table.list[i - 1] <= maxHz)
-                {
-                    index = i - 1;
-                    break;
-                }
-            }
-        }
+        u32 newHz = table.list[ClockManager::TableIndexForHz(table, desiredHz)];
 
-        u32 newHz = table.list[index];
-        if (mgr->IsAssignableHz(SysClkModule_CPU, newHz))
-        {
+        // ramp up fast, go down slow
+        bool goingDown = (lastHz != 0) && (newHz < lastHz);
+
+        if (!goingDown)
+            downHoldRemaining = 0;
+        else if (downHoldRemaining == 0)
+            downHoldRemaining = DOWN_HOLD_TICKS;
+
+        if (downHoldRemaining > 0)
+            downHoldRemaining--;
+
+        if ((!goingDown || (downHoldRemaining == 0)) && mgr->IsAssignableHz(SysClkModule_CPU, newHz)) {
             Board::SetHz(SysClkModule_CPU, newHz);
             mgr->context->freqs[SysClkModule_CPU] = newHz;
+            lastHz = newHz;
         }
 
-        svcSleepThread(50'000'000);
+        svcSleepThread(POLL_NS);
     }
 }
 
-void ClockManager::GovernorThread(void* arg)
-{
+void ClockManager::GovernorThread(void* arg) {
     ClockManager* mgr = static_cast<ClockManager*>(arg);
 
-    for (;;)
-    {
-        if (!mgr->running)
-        {
-            svcSleepThread(50'000'000);
-            continue;
-        }
+    u32 downHoldRemaining = 0;
+    u32 lastHz            = 0;
 
-        if (!isGpuGovernorEnabled)
-        {
-            svcSleepThread(50'000'000);
+    for (;;) {
+        if (!mgr->running || !isGpuGovernorEnabled) {
+            downHoldRemaining = 0;
+            lastHz            = 0;
             continue;
         }
 
         auto& table = mgr->freqTable[SysClkModule_GPU];
         if (table.count == 0)
-        {
-            svcSleepThread(50'000'000);
             continue;
-        }
 
         std::scoped_lock lock{mgr->contextMutex};
 
-        u32 currentHz = Board::GetHz(SysClkModule_GPU);
-
-        u32 index = table.count - 1;
-        for (u32 i = 0; i < table.count; i++)
-        {
-            if (table.list[i] == currentHz)
-            {
-                index = i;
-                break;
-            }
-        }
-
-        if (table.list[index] != currentHz)
-        {
-            for (u32 i = 0; i < table.count; i++)
-            {
-                if (table.list[i] >= currentHz)
-                {
-                    index = i;
-                    break;
-                }
-            }
-        }
-
-        u32 targetHz = mgr->context->overrideFreqs[SysClkModule_GPU];
-        if (!targetHz)
-        {
-            targetHz = mgr->config->GetAutoClockHz(
-                mgr->context->applicationId,
-                SysClkModule_GPU,
-                mgr->context->profile,
-                false
-            );
-
-            if (!targetHz)
-            {
-                targetHz = mgr->config->GetAutoClockHz(
-                    GLOBAL_PROFILE_ID,
-                    SysClkModule_GPU,
-                    mgr->context->profile,
-                    false
-                );
-            }
-        }
-
-        int gpuLoad = Board::GetPartLoad(HocClkPartLoad_GPU);
-        int cpuLoad = Board::GetPartLoad(HocClkPartLoad_CPUMax);
-
-        if (isCpuGovernorEnabled && !isCpuGovernorInBoostMode && cpuLoad < 600)
-        {
-            if (gpuLoad < 600 && index > 0)
-            {
-                index--;
-            }
-            else if (gpuLoad > 750 && index + 1 < table.count)
-            {
-                index++;
-            }
-        }
-        else
-        {
-            if (gpuLoad < 600 && index > 0)
-            {
-                index--;
-            }
-            else if (gpuLoad > 800 && index + 1 < table.count)
-            {
-                index++;
-            }
-        }
-
+        u32 gpuLoad    = Board::GetPartLoad(HocClkPartLoad_GPU);
+        u32 tableMaxHz = table.list[table.count - 1];
+        u32 desiredHz  = ClockManager::SchedutilTargetHz(gpuLoad, tableMaxHz);
+        u32 targetHz = ClockManager::ResolveTargetHz(mgr, SysClkModule_GPU);
         u32 maxHz = mgr->GetMaxAllowedHz(SysClkModule_GPU, mgr->context->profile);
 
-        if (targetHz)
-        {
-            u32 targetIndex = table.count - 1;
-            for (u32 i = 0; i < table.count; i++)
-            {
-                if (table.list[i] >= targetHz)
-                {
-                    targetIndex = i;
-                    break;
-                }
-            }
+        if (targetHz && desiredHz > targetHz)
+            desiredHz = targetHz;
 
-            if (index > targetIndex)
-            {
-                index = targetIndex;
-            }
-        }
+        if (maxHz && desiredHz > maxHz)
+            desiredHz = maxHz;
 
-        if (maxHz > 0 && table.list[index] > maxHz)
-        {
-            for (u32 i = table.count; i > 0; i--)
-            {
-                if (table.list[i - 1] <= maxHz)
-                {
-                    index = i - 1;
-                    break;
-                }
-            }
-        }
+        u32 newHz = table.list[ClockManager::TableIndexForHz(table, desiredHz)];
+        bool goingDown = (lastHz != 0) && (newHz < lastHz);
 
-        u32 newHz = table.list[index];
-        if (mgr->IsAssignableHz(SysClkModule_GPU, newHz))
-        {
+        if (!goingDown)
+            downHoldRemaining = 0;
+        else if (downHoldRemaining == 0)
+            downHoldRemaining = DOWN_HOLD_TICKS;
+
+        if (downHoldRemaining > 0)
+            downHoldRemaining--;
+
+        if ((!goingDown || (downHoldRemaining == 0)) && mgr->IsAssignableHz(SysClkModule_GPU, newHz)) {
             Board::SetHz(SysClkModule_GPU, newHz);
             mgr->context->freqs[SysClkModule_GPU] = newHz;
+            lastHz = newHz;
         }
 
-        svcSleepThread(50'000'000);
+        svcSleepThread(POLL_NS);
     }
 }
-
 GovernorState ClockManager::GetEffectiveGovernorState(GovernorState appState, GovernorState tempState)
 {
     if (tempState == GovernorState_Disabled)
@@ -683,11 +521,11 @@ void ClockManager::HandleGovernor(uint32_t targetHz) {
     isGpuGovernorEnabled = newGpuGovernorState;
 
     if(newCpuGovernorState == false && lastCpuGovernorState == true) {
-        svcSleepThread(150'000'000); // thread syncing. probably a cleaner way to do this but hey, it works!
+        svcSleepThread(50'000'000); // thread syncing. probably a cleaner way to do this but hey, it works!
         Board::ResetToStockCpu();
     }
     if(newGpuGovernorState == false && lastGpuGovernorState == true) {
-        svcSleepThread(150'000'000);
+        svcSleepThread(50'000'000);
         Board::ResetToStockGpu();
     }
 
@@ -807,7 +645,7 @@ void ClockManager::SetClocks(bool isBoost) {
     bool returnRaw = false; // Return a value scaled to MHz instead of raw value
     for (unsigned int module = 0; module < SysClkModule_EnumMax; module++)
     {
-        u32 oldHz = Board::GetHz((SysClkModule)module); // Get Old RAM hz (used primarily for DVFS Logic)
+        u32 oldHz = Board::GetHz((SysClkModule)module); // Get Old hz (used primarily for DVFS Logic)
 
         if(module > SysClkModule_MEM)
             returnRaw = true;

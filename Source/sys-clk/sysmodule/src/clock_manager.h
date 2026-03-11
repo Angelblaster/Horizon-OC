@@ -193,10 +193,10 @@ class ClockManager
     GovernorState GetEffectiveGovernorState(GovernorState appState, GovernorState tempState);
 
     /**
-     * Frequency tables
+     * Frequency table
      *
      */
-    struct {
+    struct FreqTable {
       std::uint32_t count;
       std::uint32_t list[SYSCLK_FREQ_LIST_MAX];
     } freqTable[SysClkModule_EnumMax];
@@ -215,6 +215,30 @@ class ClockManager
      * @param speedo GPU Speedo
      */
     unsigned int GetGpuVoltage (unsigned int freq, int speedo);
+
+    /**
+     * Gets the required vMin for a ram frequency for a speedo
+     *
+     * @param util Utilization in percentile
+     * @param tableMaxHz Table Max Hz
+     */
+    static u32 SchedutilTargetHz(u32 util, u32 tableMaxHz);
+
+    /**
+     * Gets the required vMin for a ram frequency for a speedo
+     *
+     * @param table FreqTable for module
+     * @param targetHz Hz to search for
+     */
+    static u32 TableIndexForHz(const FreqTable& table, u32 targetHz);
+
+    /**
+     * Gets the required vMin for a ram frequency for a speedo
+     *
+     * @param mgr ClockManager instance (runs in a thread so must be passed)
+     * @param module Module for which to resolve target Hz
+     */
+    static u32 ResolveTargetHz(ClockManager* mgr, SysClkModule module);
 
   protected:
     bool IsAssignableHz(SysClkModule module, std::uint32_t hz);
