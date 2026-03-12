@@ -43,9 +43,9 @@
 #define HOSPPC_HAS_BOOST (hosversionAtLeast(7,0,0))
 
 // governor constants
-#define POLL_NS         = 5'000'000;  // 5 ms  – governor poll rate
-#define DOWN_HOLD_TICKS = 10;         // 50 ms – how long to in POLL_NS to hold while ramping down
-#define STEP_UTIL    = 900;        // multiplier for step calculations
+#define POLL_NS 5'000'000  // 5 ms  – governor poll rate
+#define DOWN_HOLD_TICKS 10         // 50 ms – how long to in POLL_NS to hold while ramping down
+#define STEP_UTIL 900        // multiplier for step calculations
 
 bool isGpuGovernorEnabled = false;
 bool isCpuGovernorEnabled = false;
