@@ -654,6 +654,9 @@ void ClockManager::DVFSAfterSet(u32 targetHz) {
     if(targetHz) {
         Board::SetHz(SysClkModule_GPU, ~0);
         Board::SetHz(SysClkModule_GPU, nearestHz);
+    } else {
+        Board::SetHz(SysClkModule_GPU, ~0);
+        Board::ResetToStockGpu();
     }
 }
 
