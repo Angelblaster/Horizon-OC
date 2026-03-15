@@ -99,4 +99,25 @@ namespace ams::ldr::hoc {
             R_SUCCEED();
         }
     };
+
+    namespace panic {
+        /* Requires modifying g_ams_handlers in secmon_smc_handler.cpp */
+        constexpr inline void SmcError(u32 rgb) {
+            SecmonArgs args = {};
+            constexpr u32 SmcShowErrorID = 0xF0000005;
+            args.X[0] = SmcShowErrorID;
+            args.X[1] = rgb;
+            svcCallSecureMonitor(&args);
+        }
+
+        constexpr inline u32 PackCode(u32 r, u32 g, u32 b) {
+            return ((r & 0xF) << 8) | ((g & 0xF) << 4) | ((b & 0xF) << 0);
+        }
+
+        constexpr u32 Gpu   = PackCode(0xF, 0x7, 0x0);
+        constexpr u32 Cpu   = PackCode(0xF, 0x0, 0x0);
+        constexpr u32 Emc   = PackCode(0x0, 0xF, 0xF);
+        constexpr u32 Patch = PackCode(0x8, 0x0, 0xF);
+    }
+
 }

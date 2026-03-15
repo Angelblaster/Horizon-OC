@@ -652,7 +652,7 @@ namespace ams::ldr::hoc::pcv::mariko {
 
         // Copy unmodified 1600000 table to tmp
         std::memcpy(reinterpret_cast<void *>(tmp), reinterpret_cast<void *>(table_max), sizeof(MarikoMtcTable));
-        
+
         /* Adjust timings properly according to the new frequency. */
         MemMtcTableAutoAdjust(table_max);
 
@@ -810,7 +810,11 @@ namespace ams::ldr::hoc::pcv::mariko {
         for (auto &entry : patches) {
             LOGGING("%s Count: %zu", entry.description, entry.patched_count);
             if (R_FAILED(entry.CheckResult())) {
-                CRASH(entry.description);
+                #if defined(AMS_BUILD_FOR_AUDITING) || defined(AMS_BUILD_FOR_DEBUGGING)
+                    panic::SmcError(panic::Patch);
+                #else
+                    CRASH(entry.description);
+                #endif
             }
         }
     }
