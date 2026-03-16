@@ -145,14 +145,14 @@ ClockManager::ClockManager()
     this->context->isDram8GB = Board::IsDram8GB();
     Board::SetGpuSchedulingMode((GpuSchedulingMode)this->config->GetConfigValue(HorizonOCConfigValue_GPUScheduling), (GpuSchedulingOverrideMethod)this->config->GetConfigValue(HorizonOCConfigValue_GPUSchedulingMethod));
     this->context->gpuSchedulingMode = (GpuSchedulingMode)this->config->GetConfigValue(HorizonOCConfigValue_GPUScheduling);
-    
+
     this->context->isSysDockInstalled = this->sysDockIntegration->getCurrentSysDockState();
     this->context->isSaltyNXInstalled = this->saltyNXIntegration->getCurrentSaltyNXState();
     if(this->context->isSaltyNXInstalled) {
         this->saltyNXIntegration->LoadSaltyNX();
     }
 
-    
+
 	threadStart(&cpuGovernorTHREAD);
 	threadStart(&gpuGovernorTHREAD);
     threadStart(&vrrTHREAD);
@@ -635,7 +635,7 @@ void ClockManager::HandleGovernor(uint32_t targetHz) {
                                 effectiveState == GovernorState_Enabled_CpuVrr ||
                                 effectiveState == GovernorState_Enabled_GpuVrr ||
                                 effectiveState == GovernorState_Enabled_Vrr);
-                                
+
     isCpuGovernorEnabled = newCpuGovernorState;
     isGpuGovernorEnabled = newGpuGovernorState;
     isVRREnabled = newVrrGovernorState;
@@ -675,22 +675,18 @@ void ClockManager::DVFSBeforeSet(u32 targetHz) {
 
 void ClockManager::DVFSAfterSet(u32 targetHz) {
     s32 dvfsOffset = this->config->GetConfigValue(HorizonOCConfigValue_DVFSOffset);
-    dvfsOffset = std::max(dvfsOffset, -50);
-    u32 vmin = Board::GetMinimumGpuVoltage(targetHz / 1000000) + dvfsOffset;
-    Board::PcvHijackDvfs(vmin);
+    dvfsOffset = std::max(dvfsOffset, -80);
+    u32 vmin = Board::GetMinimumGpuVoltage(targetHz / 1000000);
 
-    targetHz = this->context->overrideFreqs[SysClkModule_GPU];
-    if (!targetHz)
-    {
-        targetHz = this->config->GetAutoClockHz(this->context->applicationId, SysClkModule_GPU, this->context->profile, false);
-        if(!targetHz)
-            targetHz = this->config->GetAutoClockHz(GLOBAL_PROFILE_ID, SysClkModule_GPU, this->context->profile, false);
+    if (vmin) {
+        vmin += dvfsOffset;
     }
 
     u32 maxHz = this->GetMaxAllowedHz(SysClkModule_GPU, this->context->profile);
     u32 nearestHz = this->GetNearestHz(SysClkModule_GPU, targetHz, maxHz);
+    Board::PcvHijackDvfs(vmin);
 
-    if(targetHz) {
+    if (targetHz) {
         Board::SetHz(SysClkModule_GPU, ~0);
         Board::SetHz(SysClkModule_GPU, nearestHz);
     } else {
@@ -1030,7 +1026,7 @@ bool ClockManager::RefreshContext()
         this->context->fps = saltyNXIntegration->GetFPS();
     else
         this->context->fps = 254; // N/A
-    
+
     return hasChanged;
 }
 
