@@ -921,7 +921,17 @@ public:
 
 protected:
     void listUI() override {
+        Result rc = sysclkIpcGetConfigValues(this->configList); // populate config list early otherwise wont work
+        if (R_FAILED(rc)) [[unlikely]] {
+            FatalGui::openWithResultCode("sysclkIpcGetConfigValues", rc);
+            return;
+        }
+
         ValueThresholds thresholdsDisabled(0, 0);
+        ValueThresholds mCpuClockThresholds(1963000, 2397000);
+        ValueThresholds mCpuClockThresholdsUV(2397000, 2499000);
+        ValueThresholds eCpuClockThresholds(1785000, 2091000);
+        ValueThresholds eCpuClockThresholdsUV(2091000, 2193000);
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("CPU Settings"));
         if(IsMariko()) {
@@ -935,13 +945,13 @@ protected:
                 NamedValue("2601 MHz", 2601000),
                 NamedValue("2703 MHz", 2703000),
             };
-            ValueThresholds mCpuClockThresholds(1963000, 2397000);
+
             addConfigButton(
                 KipConfigValue_marikoCpuBoostClock,
                 "CPU Boost Clock",
                 ValueRange(0, 0, 1, "", 1),
                 "CPU Boost Clock",
-                &mCpuClockThresholds,
+                this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds,
                 {},
                 ClkOptions,
                 false
@@ -956,13 +966,12 @@ protected:
                 NamedValue("2295 MHz", 2295000),
                 NamedValue("2397 MHz", 2397000),
             };
-            ValueThresholds eCpuClockThresholds(1785000, 2091000);
             addConfigButton(
                 KipConfigValue_eristaCpuBoostClock,
                 "CPU Boost Clock",
                 ValueRange(0, 0, 1, "", 1),
                 "CPU Boost Clock",
-                &eCpuClockThresholds,
+                this->configList->values[KipConfigValue_eristaCpuUV] ? &eCpuClockThresholdsUV : &eCpuClockThresholds,
                 {},
                 ClkOptionsE,
                 false
@@ -1076,13 +1085,13 @@ protected:
                 NamedValue("2601 MHz", 2601000),
                 NamedValue("2703 MHz", 2703000),
             };
-            ValueThresholds mCpuMaxClockThresholds(1963000, 2397000);
+
             addConfigButton(
                 KipConfigValue_marikoCpuMaxClock,
                 "CPU Max Clock",
                 ValueRange(0, 0, 1, "", 1),
                 "CPU Max Clock",
-                &mCpuMaxClockThresholds,
+                this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds,
                 {},
                 maxClkOptions,
                 false

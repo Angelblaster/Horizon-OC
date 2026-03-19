@@ -54,9 +54,10 @@ void AppProfileGui::openFreqChoiceGui(tsl::elm::ListItem* listItem, SysClkProfil
     std::map<uint32_t, std::string> labels = {};
 
     if (module == SysClkModule_CPU) {
-        labels = IsMariko() ? cpu_freq_label_m : cpu_freq_label_e;
+        bool isUsingUv = IsMariko() ? configList.values[KipConfigValue_marikoCpuUVHigh] : configList.values[KipConfigValue_eristaCpuUV];
+        labels = IsMariko() ? (isUsingUv ? cpu_freq_label_m_uv : cpu_freq_label_m) : (isUsingUv ? cpu_freq_label_e_uv : cpu_freq_label_e);
     } else if (module == SysClkModule_GPU) {
-        labels = IsMariko() ? gpu_freq_label_m : gpu_freq_label_e;
+        labels = IsMariko() ? *(marikoUV[configList.values[KipConfigValue_marikoGpuUV]]) : *(eristaUV[configList.values[KipConfigValue_eristaGpuUV]]);
     }
     tsl::changeTo<FreqChoiceGui>(this->profileList->mhzMap[profile][module] * 1000000, hzList, hzCount, module, [this, listItem, profile, module](std::uint32_t hz) {
         this->profileList->mhzMap[profile][module] = hz / 1000000;

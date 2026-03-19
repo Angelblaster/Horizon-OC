@@ -21,6 +21,14 @@
 #include <string>
 
 extern std::map<uint32_t, std::string> cpu_freq_label_m;
+extern std::map<uint32_t, std::string> cpu_freq_label_m_uv;
 extern std::map<uint32_t, std::string> cpu_freq_label_e;
+extern std::map<uint32_t, std::string> cpu_freq_label_e_uv;
 extern std::map<uint32_t, std::string> gpu_freq_label_m;
+extern std::map<uint32_t, std::string> gpu_freq_label_m_slt;
+extern std::map<uint32_t, std::string> gpu_freq_label_m_hiopt;
 extern std::map<uint32_t, std::string> gpu_freq_label_e;
+extern std::map<uint32_t, std::string> gpu_freq_label_e_uv;
+
+extern std::map<uint32_t, std::string>* marikoUV[3];
+extern std::map<uint32_t, std::string>* eristaUV[3];
