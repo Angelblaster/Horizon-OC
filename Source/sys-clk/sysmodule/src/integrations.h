@@ -90,4 +90,5 @@ public:
     void LoadSharedMemory();
     void searchSharedMemoryBlock(uintptr_t base);
     u8 GetFPS();
+    u16 GetResolutionHeight();
 };

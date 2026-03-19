@@ -50,6 +50,7 @@ typedef struct
     u8 dramID;
     bool isDram8GB;
     u8 fps;
+    u16 resolutionHeight;
 } SysClkContext;
 
 typedef struct

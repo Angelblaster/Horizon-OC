@@ -88,6 +88,7 @@ void SaltyNXIntegration::searchSharedMemoryBlock(uintptr_t base) {
 }
  
 u64 prevTid = 0;
+
 u8 SaltyNXIntegration::GetFPS() {
     if (!SharedMemoryUsed)
         return 254;
@@ -107,4 +108,29 @@ u8 SaltyNXIntegration::GetFPS() {
     }
  
     return NxFps ? NxFps->FPS : 254;
+}
+
+u16 SaltyNXIntegration::GetResolutionHeight() {
+    if (!SharedMemoryUsed)
+        return 0;
+ 
+    u64 tid = ProcessManagement::GetCurrentApplicationId();
+    if (tid == 0)
+        return 0;
+ 
+    if (prevTid != tid) {
+        NxFps = 0;
+        prevTid = tid;
+    }
+
+    if (!NxFps) {
+        uintptr_t base = (uintptr_t)shmemGetAddr(&_sharedmemory);
+        searchSharedMemoryBlock(base);
+    }
+    if(NxFps) {
+        NxFps -> renderCalls[0].calls = 0xFFFF;
+        svcSleepThread(10*1000);
+        return NxFps->viewportCalls[0].height;
+    }
+    return 0;
 }

@@ -621,7 +621,7 @@ void ClockManager::HandleGovernor(uint32_t targetHz) {
     isCpuGovernorEnabled = newCpuGovernorState;
     isGpuGovernorEnabled = newGpuGovernorState;
     isVRREnabled = newVrrGovernorState;
-    
+
     if(newCpuGovernorState == false && lastCpuGovernorState == true) {
         svcSleepThread(50'000'000); // thread syncing. probably a cleaner way to do this but hey, it works!
         Board::ResetToStockCpu();
@@ -1009,6 +1009,11 @@ bool ClockManager::RefreshContext()
         this->context->fps = saltyNXIntegration->GetFPS();
     else
         this->context->fps = 254; // N/A
+
+    if(this->context->isSaltyNXInstalled)
+        this->context->resolutionHeight = saltyNXIntegration->GetResolutionHeight();
+    else
+        this->context->resolutionHeight = 0; // N/A
 
     return hasChanged;
 }

@@ -58,7 +58,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     // All constants pre-calculated and cached
     static constexpr const char* const labels[] = {
-        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "FAN", "DISP", "FPS"
+        "App ID", "Profile", "CPU", "GPU", "MEM", "SoC", "Board", "Skin", "Now", "Avg", "BAT", "PMIC", "FAN", "DISP", "FPS", "RES"
     };
 
     static constexpr u32 dataPositions[6] = {63-3+3, 200-1, 344-1-3, 200-1, 342-1, 321-1};
@@ -169,8 +169,13 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     renderer->drawString(displayStrings[23], false, positions[2] - 2, y, SMALL_TEXT_SIZE, tsl::infoTextColor);  // Bat Age
 
     if(this->context->isSaltyNXInstalled) {
+
+        renderer->drawString(labels[15], false, positions[3], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // RES label
+        renderer->drawString(displayStrings[27], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // RES
+
         renderer->drawString(labels[14], false, positions[4], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // FPS label
         renderer->drawString(displayStrings[26], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // FPS
+
     }
 
     y+=20;
@@ -295,6 +300,16 @@ void BaseMenuGui::refresh()
             sprintf(displayStrings[26], "%u", context->fps);
         }
     }
+
+    if(this->context->isSaltyNXInstalled) {
+        if(context->resolutionHeight == 0) {
+            strcpy(displayStrings[27], "N/A");
+        } else {
+            memset(displayStrings[27], 0, sizeof(displayStrings[27]));
+            sprintf(displayStrings[27], "%up", context->resolutionHeight);
+        }
+    }
+    
 }
 
 tsl::elm::Element* BaseMenuGui::baseUI()
