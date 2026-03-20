@@ -114,7 +114,7 @@ namespace board {
         // threadCreate(&cpuCore3Thread, CheckCore, &idletick3, NULL, 0x1000, 0x10, 3);
         // threadCreate(&miscThread, miscThreadFunc, NULL, NULL, 0x1000, 0x10, 3);
 
-        threadStart(&miscThread);
+        // threadStart(&miscThread);
         batteryInfoInitialize();
         FetchHardwareInfos();
 
@@ -167,7 +167,7 @@ namespace board {
 
         ExitLoad();
 
-        threadClose(&miscThread);
+        // threadClose(&miscThread);
 
         pwmChannelSessionClose(&g_ICon);
         pwmExit();
