@@ -31,7 +31,6 @@ namespace board {
 
     void StartLoad(Result nvCheck, u32 fd);
     void ExitLoad();
-    u32 GetGpuLoad();
-    u32 GetMaxCpuLoad();
+    u32 GetPartLoad();
 
 }

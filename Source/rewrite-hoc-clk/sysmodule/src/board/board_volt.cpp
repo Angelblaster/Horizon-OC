@@ -34,6 +34,7 @@ namespace board {
         RgltrSession session;
         Result rc = 0;
         u32 out = 0;
+        BatteryChargeInfo info;
 
         switch (voltage) {
             case HocClkVoltage_SOC:

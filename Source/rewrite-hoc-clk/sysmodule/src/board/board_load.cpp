@@ -25,6 +25,8 @@
  */
 
 #include <switch.h>
+#include <sysclk.h>
+#include <nxExt.h>
 #include <algorithm>
 #include <math.h>
 #include <numeric>
@@ -63,14 +65,6 @@ namespace board {
         } while(true);
     }
 
-    void StartGpuLoad(Result nvCheck, u32 fd) {
-        ;
-    }
-
-    u32 GetGpuLoad() {
-        return gpuLoad;
-    }
-
     void CheckCore(void *idletickPtr) {
         u64* idletick = static_cast<u64 *>(idletickPtr);
         while(true) {
@@ -103,6 +97,27 @@ namespace board {
         float cpuUsage1 = std::clamp(((Systemtickfrequency - idletick1) / static_cast<double>(Systemtickfrequency)) * 1000.0, 0.0, 1000.0);
         float cpuUsage2 = std::clamp(((Systemtickfrequency - idletick2) / static_cast<double>(Systemtickfrequency)) * 1000.0, 0.0, 1000.0);
         return std::round(std::max({cpuUsage0, cpuUsage1, cpuUsage2}));
+    }
+
+    u32 GetPartLoad(SysClkPartLoad loadSource) {
+        switch(loadSource) {
+            case SysClkPartLoad_EMC:
+                return t210EmcLoadAll();
+            case SysClkPartLoad_EMCCpu:
+                return t210EmcLoadCpu();
+            case HocClkPartLoad_GPU:
+                return gpuLoad;
+            case HocClkPartLoad_CPUMax:
+                return GetMaxCpuLoad();
+            case HocClkPartLoad_BAT:
+                BatteryChargeInfo info;
+                batteryInfoGetChargeInfo(&info);
+                return info.RawBatteryCharge;
+            default:
+                ASSERT_ENUM_VALID(SysClkPartLoad, loadSource);
+        }
+
+        return 0;
     }
 
     void ExitLoad() {

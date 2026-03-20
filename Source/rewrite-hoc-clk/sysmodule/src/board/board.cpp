@@ -112,7 +112,7 @@ namespace board {
         ASSERT_RESULT_OK(rc, "pmdmntInitialize");
 
         StartGpuLoad(nvCheck, fd);
-        // threadCreate(&cpuCore3Thread, CheckCore, &idletick3, NULL, 0x1000, 0x10, 3);
+        /* TODO: Add back fan. */
         // threadCreate(&miscThread, miscThreadFunc, NULL, NULL, 0x1000, 0x10, 3);
 
         // threadStart(&miscThread);
