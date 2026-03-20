@@ -212,4 +212,11 @@ namespace board {
         return args.X[1] == 0x00002000 ? true : false;
     }
 
+    /* TODO: Put this into a different file. */
+    void SetDisplayRefreshDockedState(bool docked) {
+        if (GetConsoleType() != HorizonOCConsoleType_Hoag) {
+            DisplayRefresh_SetDockedState(docked);
+        }
+    }
+
 }

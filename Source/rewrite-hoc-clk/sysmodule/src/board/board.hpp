@@ -39,5 +39,6 @@ namespace board {
     HorizonOCConsoleType GetConsoleType();
     u8 GetDramID();
     bool IsDram8GB();
+    void SetDisplayRefreshDockedState(bool docked);
 
 }
