@@ -111,18 +111,8 @@ namespace board {
         ASSERT_RESULT_OK(rc, "pmdmntInitialize");
 
         StartGpuLoad(nvCheck, fd);
-
-        leventClear(&threadexit);
-        threadCreate(&cpuCore0Thread, CheckCore, &idletick0, NULL, 0x1000, 0x10, 0);
-        threadCreate(&cpuCore1Thread, CheckCore, &idletick1, NULL, 0x1000, 0x10, 1);
-        threadCreate(&cpuCore2Thread, CheckCore, &idletick2, NULL, 0x1000, 0x10, 2);
         // threadCreate(&cpuCore3Thread, CheckCore, &idletick3, NULL, 0x1000, 0x10, 3);
         threadCreate(&miscThread, miscThreadFunc, NULL, NULL, 0x1000, 0x10, 3);
-
-        threadStart(&cpuCore0Thread);
-        threadStart(&cpuCore1Thread);
-        threadStart(&cpuCore2Thread);
-        // threadStart(&cpuCore3Thread);
 
         threadStart(&miscThread);
         batteryInfoInitialize();
@@ -177,7 +167,6 @@ namespace board {
 
         ExitLoad();
 
-        // threadClose(&cpuCore3Thread);
         threadClose(&miscThread);
 
         pwmChannelSessionClose(&g_ICon);

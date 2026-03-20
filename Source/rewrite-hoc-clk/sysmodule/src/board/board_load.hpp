@@ -25,11 +25,13 @@
  */
 
 #pragma once
+#include <switch.h>
 
 namespace board {
 
-    void StartGpuLoad(Result nvCheck, u32 fd);
-    void StartCpuLoad();
+    void StartLoad(Result nvCheck, u32 fd);
     void ExitLoad();
+    u32 GetGpuLoad();
+    u32 GetMaxCpuLoad();
 
 }

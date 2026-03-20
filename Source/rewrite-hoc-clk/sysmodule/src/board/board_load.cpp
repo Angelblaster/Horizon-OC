@@ -25,12 +25,27 @@
  */
 
 #include <switch.h>
+#include <algorithm>
+#include <math.h>
+#include <numeric>
 
 namespace board {
 
     Thread gpuThread;
+    LEvent threadexit;
+    Thread cpuCore0Thread;
+    Thread cpuCore1Thread;
+    Thread cpuCore2Thread;
+
     u32 gpuLoad;
     u32 _fd;
+
+    u64 idletick0 = 0;
+    u64 idletick1 = 0;
+    u64 idletick2 = 0;
+
+    constexpr u64 CpuTimeOutNs = 500'000'000;
+    constexpr double Systemtickfrequency = 19200000.0 * (static_cast<double>(CpuTimeOutNs) / 1'000'000'000.0);
 
     void GpuLoadThread(Result *nvCheck) {
         constexpr u32 GpuSamples = 8;
@@ -49,18 +64,52 @@ namespace board {
     }
 
     void StartGpuLoad(Result nvCheck, u32 fd) {
-        _fd = fd;
+        ;
+    }
 
+    u32 GetGpuLoad() {
+        return gpuLoad;
+    }
+
+    void CheckCore(void *idletickPtr) {
+        u64* idletick = static_cast<u64 *>(idletickPtr);
+        while(true) {
+            u64 idletickA;
+            u64 idletickB;
+            svcGetInfo(&idletickB, InfoType_IdleTickCount, INVALID_HANDLE, -1);
+            svcWaitForAddress(&threadexit, ArbitrationType_WaitIfEqual, 0, CpuTimeOutNs);
+            svcGetInfo(&idletickA, InfoType_IdleTickCount, INVALID_HANDLE, -1);
+            *idletick = idletickA - idletickB;
+        }
+    }
+
+    void StartLoad() {
+        _fd = fd;
         threadCreate(&gpuThread, GpuLoadThread, &nvCheck, NULL, 0x1000, 0x3F, -2);
-        threadStart(&gpuThread);
+        threadStart(&gpuThread)
+
+        leventClear(&threadexit);
+        threadCreate(&cpuCore0Thread, CheckCore, &idletick0, NULL, 0x1000, 0x10, 0);
+        threadCreate(&cpuCore1Thread, CheckCore, &idletick1, NULL, 0x1000, 0x10, 1);
+        threadCreate(&cpuCore2Thread, CheckCore, &idletick2, NULL, 0x1000, 0x10, 2);
+
+        threadStart(&cpuCore0Thread);
+        threadStart(&cpuCore1Thread);
+        threadStart(&cpuCore2Thread);
+    }
+
+    u32 GetMaxCpuLoad() {
+        float cpuUsage0 = std::clamp(((Systemtickfrequency - idletick0) / static_cast<double>(Systemtickfrequency)) * 1000.0, 0.0, 1000.0);
+        float cpuUsage1 = std::clamp(((Systemtickfrequency - idletick1) / static_cast<double>(Systemtickfrequency)) * 1000.0, 0.0, 1000.0);
+        float cpuUsage2 = std::clamp(((Systemtickfrequency - idletick2) / static_cast<double>(Systemtickfrequency)) * 1000.0, 0.0, 1000.0);
+        return std::round(std::max({cpuUsage0, cpuUsage1, cpuUsage2}));
     }
 
     void ExitLoad() {
-        threadClose(gpuThread);
-    }
-
-    void StartCpuLoad() {
-
+        threadClose(&gpuThread);
+        threadClose(&cpuCore0Thread);
+        threadClose(&cpuCore1Thread);
+        threadClose(&cpuCore2Thread);
     }
 
 }
