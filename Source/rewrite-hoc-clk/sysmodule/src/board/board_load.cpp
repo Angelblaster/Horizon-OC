@@ -117,7 +117,6 @@ namespace board {
             default:
                 ASSERT_ENUM_VALID(SysClkPartLoad, loadSource);
         }
-
         return 0;
     }
 
