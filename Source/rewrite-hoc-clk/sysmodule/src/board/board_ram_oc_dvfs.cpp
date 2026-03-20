@@ -75,7 +75,13 @@ namespace board {
     }
 
     void CacheGpuVoltTable() {
-        const u32 voltagePattern[] = { 600000, 12500, 1400000, };
+
+
+        UnkRegulator reg = {
+            .voltageMinUV = 600000,
+            .voltageStep  = 12500,
+            .voltageMax   = 1400000,
+        };
 
         Handle handle = GetPcvHandle();
         if (handle == INVALID_HANDLE) {
@@ -115,19 +121,19 @@ namespace board {
                     break;
                 }
 
-                u8 *resultPattern = static_cast<u8 *>(memmem_impl(buffer, sizeof(buffer), voltagePattern, sizeof(voltagePattern)));
-                u32 index = resultPattern - buffer;
+                u8 *resultFindReg = static_cast<u8 *>(memmem_impl(buffer, sizeof(buffer), &reg, sizeof(reg)));
+                u32 index = resultFindReg - buffer;
 
-                if (!resultPattern) {
+                if (!resultFindReg) {
                     continue;
                 }
 
                 /* Assuming mariko. */
                 const u32 vmax = 800;
-                constexpr u32 DvfsTableOffset = 312;
-                if (!std::memcmp(&buffer[index + DvfsTableOffset], &vmax, sizeof(vmax))) {
-                    std::memcpy(voltData.voltTable, &buffer[index + DvfsTableOffset], sizeof(dvfsTable));
-                    voltData.voltTableAddress = base + memoryInfo.addr + DvfsTableOffset + index;
+                constexpr u32 VoltageTableOffset = 312;
+                if (!std::memcmp(&buffer[index + VoltageTableOffset], &vmax, sizeof(vmax))) {
+                    std::memcpy(voltData.voltTable, &buffer[index + VoltageTableOffset], sizeof(voltData.voltTable));
+                    voltData.voltTableAddress = base + memoryInfo.addr + VoltageTableOffset + index;
                 }
 
                 svcCloseHandle(handle);

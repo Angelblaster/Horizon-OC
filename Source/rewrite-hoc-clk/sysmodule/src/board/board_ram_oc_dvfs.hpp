@@ -35,6 +35,13 @@ namespace board {
         u32 ramVmin;
     };
 
+    /* TODO: Find out what component this actually targets. */
+    struct UnkRegulator {
+        u32 voltageMinUV;
+        u32 voltageStep;
+        u32 voltageMax;
+    }
+
     void CacheGpuVoltTable();
     void PcvHijackGpuVolts(u32 vmin);
     u32 GetMinimumVmin(u32 freqMhz, u32 bracket);
