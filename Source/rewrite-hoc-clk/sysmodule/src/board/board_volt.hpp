@@ -25,16 +25,11 @@
  */
 
 #pragma once
-
 #include <switch.h>
-
-#define HOSSVC_HAS_CLKRST (hosversionAtLeast(8,0,0))
-#define HOSSVC_HAS_TC (hosversionAtLeast(5,0,0))
+#include <sysclk.h>
 
 namespace board {
 
-    void Initialize();
-    void Exit();
-    SysClkSocType GetSocType();
+    u32 GetVoltage(HocClkVoltage voltage);
 
 }

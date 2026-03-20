@@ -182,4 +182,8 @@ namespace board {
         }
     }
 
+    SysClkSocType GetSocType() {
+        return gSocType;
+    }
+
 }
