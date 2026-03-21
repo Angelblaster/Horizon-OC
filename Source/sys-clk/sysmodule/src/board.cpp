@@ -41,6 +41,7 @@
 #include <notification.h>
 #include <memmem.h>
 #include <minIni.h>
+#include <sys/stat.h>
 
 #define MAX(A, B)   std::max(A, B)
 #define MIN(A, B)   std::min(A, B)
@@ -280,13 +281,16 @@ void Board::Initialize()
         pwmCheck = pwmOpenSession2(&g_ICon, 0x3D000001);
     }
 
+    struct stat st = {0};
+    bool isRetro = stat("sdmc:/" FILE_CONFIG_DIR "/retro.flag", &st) == 0;
+
     u64 clkVirtAddr, dsiVirtAddr, outsize;
     rc = svcQueryMemoryMapping(&clkVirtAddr, &outsize, 0x60006000, 0x1000);
     ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (clk)");
     rc = svcQueryMemoryMapping(&dsiVirtAddr, &outsize, 0x54300000, 0x40000);
     ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (dsi)");
 
-    DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = IsHoag()};
+    DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = IsHoag(), .isRetroSUPER = isRetro, .isPossiblySpoofedRetro = isRetro};
 
     DisplayRefresh_Initialize(&cfg);
 
