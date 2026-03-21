@@ -342,6 +342,8 @@ void AppProfileGui::addProfileUI(SysClkProfile profile)
         FatalGui::openWithResultCode("sysclkIpcGetConfigValues", rc);
         return;
     }
+    if((profile == SysClkProfile_Docked && IsHoag()) || profile == SysClkProfile_HandheldCharging)
+        return;
     this->listElement->addItem(new tsl::elm::CategoryHeader(sysclkFormatProfile(profile, true) + std::string(" ") + ult::DIVIDER_SYMBOL + " \ue0e3 Reset"));
     this->addModuleListItem(profile, SysClkModule_CPU);
     this->addModuleListItem(profile, SysClkModule_GPU);
