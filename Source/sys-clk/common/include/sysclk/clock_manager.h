@@ -43,7 +43,9 @@ typedef struct
     uint32_t voltages[HocClkVoltage_EnumMax];
     u16 speedos[HorizonOCSpeedo_EnumMax];
     u16 iddq[HorizonOCSpeedo_EnumMax];
-    
+    u16 waferX;
+    u16 waferY;
+
     // Misc stuff
     GpuSchedulingMode gpuSchedulingMode;
     bool isSysDockInstalled;

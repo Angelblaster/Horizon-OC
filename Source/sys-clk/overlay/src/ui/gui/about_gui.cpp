@@ -28,6 +28,7 @@ tsl::elm::ListItem* DramModule = NULL;
 tsl::elm::ListItem* sysdockStatusItem = NULL;
 tsl::elm::ListItem* saltyNXStatusItem = NULL;
 tsl::elm::ListItem* RETROStatusItem = NULL;
+tsl::elm::ListItem* waferCordsItem = NULL;
 
 ImageElement* CatImage = NULL;
 HideableCategoryHeader* CatHeader = NULL;
@@ -61,9 +62,11 @@ void AboutGui::listUI()
         new tsl::elm::ListItem("Module: ");
     this->listElement->addItem(DramModule);
 
-    sysdockStatusItem =
-        new tsl::elm::ListItem("sys-dock status:");
-    this->listElement->addItem(sysdockStatusItem);
+    if(!IsHoag()) {
+        sysdockStatusItem =
+            new tsl::elm::ListItem("sys-dock status:");
+        this->listElement->addItem(sysdockStatusItem);
+    }
 
     saltyNXStatusItem =
         new tsl::elm::ListItem("SaltyNX status:");
@@ -74,6 +77,10 @@ void AboutGui::listUI()
             new tsl::elm::ListItem("RR Display status:");
         this->listElement->addItem(RETROStatusItem);
     }
+
+    waferCordsItem =
+        new tsl::elm::ListItem("Wafer Position:");
+    this->listElement->addItem(waferCordsItem);
 
     this->listElement->addItem(
         new tsl::elm::CategoryHeader("Credits")
@@ -279,18 +286,24 @@ void AboutGui::update()
 void AboutGui::refresh()
 {
     BaseMenuGui::refresh();
-    std::string ramModule = formatRamModule();
 
     if (!this->context)
         return;
     // Format strings once per refresh
     sprintf(strings[0], "%u/%u/%u", this->context->speedos[HorizonOCSpeedo_CPU], this->context->speedos[HorizonOCSpeedo_GPU], this->context->speedos[HorizonOCSpeedo_SOC]);
+    // This is how hekate does it
     sprintf(strings[1], "%u/%u/%u", this->context->iddq[HorizonOCSpeedo_CPU], this->context->iddq[HorizonOCSpeedo_GPU], this->context->iddq[HorizonOCSpeedo_SOC]);
     SpeedoItem->setValue(strings[0]);
     IddqItem->setValue(strings[1]);
     DramModule->setValue(formatRamModule());
-    sysdockStatusItem->setValue(this->context->isSysDockInstalled ? "Installed" : "Not Installed");
+    if(!IsHoag())
+        sysdockStatusItem->setValue(this->context->isSysDockInstalled ? "Installed" : "Not Installed");
+
     saltyNXStatusItem->setValue(this->context->isSaltyNXInstalled ? "Installed" : "Not Installed");
+    
     if(IsHoag())
         RETROStatusItem->setValue(this->context->isUsingRetroSuper ? "Installed" : "Not Installed");
+
+    sprintf(strings[2], "X: %u Y: %u", this->context->waferX, this->context->waferY);
+    waferCordsItem->setValue(strings[2]);
 }

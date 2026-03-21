@@ -154,7 +154,7 @@ ClockManager::ClockManager()
     }
 
     this->context->isUsingRetroSuper = Board::IsUsingRetroSuperDisplay();
-
+    Board::GetWaferPosition(&this->context->waferX, &this->context->waferY);
 	threadStart(&cpuGovernorTHREAD);
 	threadStart(&gpuGovernorTHREAD);
     threadStart(&vrrTHREAD);

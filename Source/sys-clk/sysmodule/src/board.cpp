@@ -42,25 +42,13 @@
 #include <memmem.h>
 #include <minIni.h>
 #include <sys/stat.h>
+#include <fuse.h>
 
 #define MAX(A, B)   std::max(A, B)
 #define MIN(A, B)   std::min(A, B)
 #define CEIL(A)     std::ceil(A)
 #define FLOOR(A)    std::floor(A)
 #define ROUND(A)    std::lround(A)
-
-
-#define FUSE_CPU_SPEEDO_0_CALIB 0x114
-//#define FUSE_CPU_SPEEDO_1_CALIB 0x12C
-#define FUSE_CPU_SPEEDO_2_CALIB 0x130
-
-#define FUSE_SOC_SPEEDO_0_CALIB 0x134
-//#define FUSE_SOC_SPEEDO_1_CALIB 0x138
-//#define FUSE_SOC_SPEEDO_2_CALIB 0x13C
-
-#define FUSE_CPU_IDDQ_CALIB 0x118
-#define FUSE_SOC_IDDQ_CALIB 0x140
-#define FUSE_GPU_IDDQ_CALIB 0x228
 
 #define HOSSVC_HAS_CLKRST (hosversionAtLeast(8,0,0))
 #define HOSSVC_HAS_TC (hosversionAtLeast(5,0,0))
@@ -104,6 +92,7 @@ u32 cpu0, cpu1, cpu2, cpu3, cpuAvg;
 u16 cpuSpeedo0, cpuSpeedo2, socSpeedo0; // CPU, GPU, SOC
 u32 speedoBracket;
 u16 cpuIDDQ, gpuIDDQ, socIDDQ;
+u16 BwaferX, BwaferY;
 u8 g_dramID = 0;
 u64 cldvfs, cldvfs_temp;
 u32 cachedEristaUvLowTune0 = 0, cachedEristaUvLowTune1 = 0, cachedMarikoUvHighTune0 = 0;
@@ -314,6 +303,11 @@ bool Board::IsUsingRetroSuperDisplay() {
     return isRetro;
 }
 
+void Board::GetWaferPosition(u16* x, u16* y) {
+    *x = BwaferX;
+    *y = BwaferY;
+}
+
 void Board::fuseReadSpeedos() {
 
     u64 pid = 0;
@@ -352,9 +346,11 @@ void Board::fuseReadSpeedos() {
                 cpuSpeedo0 = *reinterpret_cast<const u16*>(dump + FUSE_CPU_SPEEDO_0_CALIB);
                 cpuSpeedo2 = *reinterpret_cast<const u16*>(dump + FUSE_CPU_SPEEDO_2_CALIB);
                 socSpeedo0 = *reinterpret_cast<const u16*>(dump + FUSE_SOC_SPEEDO_0_CALIB);
-                cpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_CPU_IDDQ_CALIB);
-                gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB);
-                socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB);
+                cpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_CPU_IDDQ_CALIB) * 4;
+                socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB) * 5;
+                gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB) * 4;
+                BwaferX = *reinterpret_cast<const u16*>(dump + FUSE_OPT_X_COORDINATE);
+                BwaferY = *reinterpret_cast<const u16*>(dump + FUSE_OPT_Y_COORDINATE);
 
                 svcCloseHandle(debug);
                 return;
