@@ -30,6 +30,22 @@
 
 namespace board {
 
+    struct GpuVoltData {
+        u32 voltTable[6][32] = {};
+        u64 voltTableAddress;
+        u32 ramVmin;
+    };
+
+    /* TODO: Find out what component this actually targets. */
+    struct UnkRegulator {
+        u32 voltageMinUV;
+        u32 voltageStep;
+        u32 voltageMax;
+    };
+
     u32 GetVoltage(HocClkVoltage voltage);
+    void CacheGpuVoltTable();
+    void PcvHijackGpuVolts(u32 vmin);
+    u32 GetMinimumGpuVmin(u32 freqMhz, u32 bracket);
 
 }
