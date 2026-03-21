@@ -304,7 +304,7 @@ public:
         static constexpr struct { const char* label; int shift; } kAll[] = {
             {"CPU", 0}, {"GPU", 8}, {"VRR", 16}
         };
-        int count = IsHoag() ? 2 : 3;
+        int count = configList.values[HorizonOCConfigValue_OverwriteRefreshRate] ? 2 : 3;
 
         for (int i = 0; i < count; i++) {
             u8 cur = (this->packed >> kAll[i].shift) & 0xFF;
@@ -354,7 +354,7 @@ void GlobalOverrideGui::listUI()
     this->addModuleListItem(SysClkModule_MEM);
     #if IS_MINIMAL == 0
         ValueThresholds lcdThresholds(60, 65);
-        if(configList.values[HorizonOCConfigValue_OverwriteRefreshRate] && !IsHoag())
+        if(configList.values[HorizonOCConfigValue_OverwriteRefreshRate])
             this->addModuleListItemValue(HorizonOCModule_Display, "Display", IsAula() ? 45 : 40, configList.values[HorizonOCConfigValue_EnableUnsafeDisplayFreqs] ? IsAula() ? 65 : 72 : 60, 1, " Hz", 1, 0, lcdThresholds);
     #endif
 

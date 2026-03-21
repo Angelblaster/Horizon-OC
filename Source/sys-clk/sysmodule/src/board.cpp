@@ -24,8 +24,6 @@
  * --------------------------------------------------------------------------
  */
 
-// Note: Hoag crashes on display refresh rate init while in sleep mode
-
 #include <nxExt.h>
 #include "board.h"
 #include "errors.h"
@@ -282,17 +280,15 @@ void Board::Initialize()
         pwmCheck = pwmOpenSession2(&g_ICon, 0x3D000001);
     }
 
-    if(!IsHoag()) {
-        u64 clkVirtAddr, dsiVirtAddr, outsize;
-        rc = svcQueryMemoryMapping(&clkVirtAddr, &outsize, 0x60006000, 0x1000);
-        ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (clk)");
-        rc = svcQueryMemoryMapping(&dsiVirtAddr, &outsize, 0x54300000, 0x40000);
-        ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (dsi)");
+    u64 clkVirtAddr, dsiVirtAddr, outsize;
+    rc = svcQueryMemoryMapping(&clkVirtAddr, &outsize, 0x60006000, 0x1000);
+    ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (clk)");
+    rc = svcQueryMemoryMapping(&dsiVirtAddr, &outsize, 0x54300000, 0x40000);
+    ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (dsi)");
 
-        DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr};
+    DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = IsHoag()};
 
-        DisplayRefresh_Initialize(&cfg);
-    }
+    DisplayRefresh_Initialize(&cfg);
 
     rc = svcQueryMemoryMapping(&cldvfs, &cldvfs_temp, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
     ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (cldvfs)");
@@ -420,14 +416,15 @@ void Board::Exit()
     // threadClose(&cpuCore3Thread);
     threadClose(&miscThread);
 
+    DisplayRefresh_Shutdown();
+
     pwmChannelSessionClose(&g_ICon);
 	pwmExit();
     rgltrExit();
     batteryInfoExit();
     pmdmntExit();
     nvExit();
-    if(!IsHoag())
-        DisplayRefresh_Shutdown();
+
 }
 
 SysClkProfile Board::GetProfile()
@@ -462,8 +459,7 @@ void Board::SetHz(SysClkModule module, std::uint32_t hz)
 {
     Result rc = 0;
     if(module == HorizonOCModule_Display) {
-        if(!IsHoag())
-            DisplayRefresh_SetRate(hz);
+        DisplayRefresh_SetRate(hz);
         return;
     }
     if(module > SysClkModule_MEM)
@@ -501,10 +497,7 @@ std::uint32_t Board::GetHz(SysClkModule module)
     std::uint32_t hz = 0;
 
     if(module == HorizonOCModule_Display) {
-        if(!IsHoag())
-            DisplayRefresh_GetRate(&hz, false);
-        else
-            hz = 60;
+        DisplayRefresh_GetRate(&hz, false);
         return hz;
     }
 
@@ -541,10 +534,7 @@ std::uint32_t Board::GetRealHz(SysClkModule module)
         case SysClkModule_MEM:
             return t210ClkMemFreq();
         case HorizonOCModule_Display:
-            if(!IsHoag())
-                DisplayRefresh_GetRate(&hz, false);
-            else
-                hz = 60;
+            DisplayRefresh_GetRate(&hz, false);
             return hz;
         default:
             ASSERT_ENUM_VALID(SysClkModule, module);
@@ -739,8 +729,7 @@ void Board::ResetToStockGpu()
 }
 
 void Board::ResetToStockDisplay() {
-    if(!IsHoag())
-        DisplayRefresh_SetRate(60);
+    DisplayRefresh_SetRate(60);
 }
 
 u8 Board::GetHighestDockedDisplayRate() {

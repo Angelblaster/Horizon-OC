@@ -286,12 +286,17 @@ public:
         : applicationId(appId), profileList(pList), profile(prof) {}
 
     void listUI() override {
+        Result rc = sysclkIpcGetConfigValues(&configList);
+        if (R_FAILED(rc)) [[unlikely]] {
+            FatalGui::openWithResultCode("sysclkIpcGetConfigValues", rc);
+            return;
+        }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Governor"));
 
         static constexpr struct { const char* label; int shift; } kAll[] = {
             {"CPU", 0}, {"GPU", 8}, {"VRR", 16}
         };
-        int count = IsHoag() ? 2 : 3;
+        int count = configList.values[HorizonOCConfigValue_OverwriteRefreshRate] ? 2 : 3;
 
         for (int i = 0; i < count; i++) {
             u8 cur = (this->profileList->mhzMap[this->profile][HorizonOCModule_Governor] >> kAll[i].shift) & 0xFF;
@@ -411,7 +416,7 @@ void AppProfileGui::addProfileUI(SysClkProfile profile)
                         NamedValue("115 Hz", 115),
                         NamedValue("120 Hz", 120)
                     };
-                    if(configList.values[HorizonOCConfigValue_OverwriteRefreshRate] && !IsHoag())
+                    if(configList.values[HorizonOCConfigValue_OverwriteRefreshRate])
                         this->addModuleListItemValue(profile, HorizonOCModule_Display, "Display", 50, 120, 1, " Hz", 1, 0, ValueThresholds(), dockedFreqsStandard);
                 }
             }

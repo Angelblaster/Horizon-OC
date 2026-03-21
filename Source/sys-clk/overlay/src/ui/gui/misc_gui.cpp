@@ -446,18 +446,17 @@ void MiscGui::listUI()
     });
     gpuSubmenu->setValue(R_ARROW);
     this->listElement->addItem(gpuSubmenu);
-    if(!IsHoag()) {
-        tsl::elm::ListItem* displaySubMenu = new tsl::elm::ListItem("Display Settings");
-        displaySubMenu->setClickListener([](u64 keys) {
-            if (keys & HidNpadButton_A) {
-                tsl::changeTo<DisplaySubMenuGui>();
-                return true;
-            }
-            return false;
-        });
-        displaySubMenu->setValue(R_ARROW);
-        this->listElement->addItem(displaySubMenu);
-    }
+    
+    tsl::elm::ListItem* displaySubMenu = new tsl::elm::ListItem("Display Settings");
+    displaySubMenu->setClickListener([](u64 keys) {
+        if (keys & HidNpadButton_A) {
+            tsl::changeTo<DisplaySubMenuGui>();
+            return true;
+        }
+        return false;
+    });
+    displaySubMenu->setValue(R_ARROW);
+    this->listElement->addItem(displaySubMenu);
 
     #if IS_MINIMAL == 0
         // std::vector<NamedValue> chargerCurrents = {
