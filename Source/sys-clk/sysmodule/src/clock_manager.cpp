@@ -152,6 +152,7 @@ ClockManager::ClockManager()
         this->saltyNXIntegration->LoadSaltyNX();
     }
 
+    this->context->isUsingRetroSuper = Board::IsUsingRetroSuperDisplay();
 
 	threadStart(&cpuGovernorTHREAD);
 	threadStart(&gpuGovernorTHREAD);
@@ -994,7 +995,7 @@ bool ClockManager::RefreshContext()
 
     if(targetHz && this->context->realFreqs[HorizonOCModule_Display] > targetHz && this->context->profile != SysClkProfile_Docked)
         this->context->realFreqs[HorizonOCModule_Display] = targetHz; // clean up display real freqs, should probably be moved to the real freqs loop?
-        
+
     if(!Board::IsHoag())
         Board::SetDisplayRefreshDockedState(this->context->profile == SysClkProfile_Docked);
     if(this->context->isSaltyNXInstalled)

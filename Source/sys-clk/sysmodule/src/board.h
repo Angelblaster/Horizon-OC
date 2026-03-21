@@ -69,6 +69,7 @@ class Board
     static void SetCpuUvLevel(u32 levelLow, u32 levelHigh, u32 tbreakPoint);
     static u32 CalculateTbreak(u32 table);
     static bool IsHoag();
+    static bool IsUsingRetroSuperDisplay();
   protected:
     static void FetchHardwareInfos();
     static PcvModule GetPcvModule(SysClkModule sysclkModule);

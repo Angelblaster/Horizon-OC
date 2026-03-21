@@ -446,7 +446,7 @@ void MiscGui::listUI()
     });
     gpuSubmenu->setValue(R_ARROW);
     this->listElement->addItem(gpuSubmenu);
-    
+
     tsl::elm::ListItem* displaySubMenu = new tsl::elm::ListItem("Display Settings");
     displaySubMenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
@@ -601,17 +601,23 @@ public:
 
 protected:
     void listUI() override {
+        BaseMenuGui::refresh(); // get latest context
+        if(!this->context)
+            return;
+
         this->listElement->addItem(new tsl::elm::CategoryHeader("Display Settings"));
         addConfigToggle(HorizonOCConfigValue_OverwriteRefreshRate, nullptr);
-        tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-            renderer->drawString("\uE150 Enabling unsafe display", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-            renderer->drawString("refresh rates may cause stress", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-            renderer->drawString("or damage to your display! ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-            renderer->drawString("Proceed at your own risk!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
-        });
-        warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
-        this->listElement->addItem(warningText);
-        addConfigToggle(HorizonOCConfigValue_EnableUnsafeDisplayFreqs, nullptr);
+        if(!this->context->isUsingRetroSuper) {
+            tsl::elm::CustomDrawer* warningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+                renderer->drawString("\uE150 Enabling unsafe display", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+                renderer->drawString("refresh rates may cause stress", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+                renderer->drawString("or damage to your display! ", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+                renderer->drawString("Proceed at your own risk!", false, x + 20, y + 90, 18, tsl::style::color::ColorText);
+            });
+            warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 110);
+            this->listElement->addItem(warningText);
+            addConfigToggle(HorizonOCConfigValue_EnableUnsafeDisplayFreqs, nullptr);
+        }
     }
 };
 

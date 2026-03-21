@@ -120,6 +120,7 @@ static const u32 gpuDvfsArray[] = { 590, 600, 610, 620, 630, 640, 650, 660, 670,
 u32 dvfsTable[6][32] = {};
 u64 dvfsAddress;
 u32 ramVmin;
+bool isRetro = false;
 
 const char* Board::GetModuleName(SysClkModule module, bool pretty)
 {
@@ -282,7 +283,7 @@ void Board::Initialize()
     }
 
     struct stat st = {0};
-    bool isRetro = stat("sdmc:/" FILE_CONFIG_DIR "/retro.flag", &st) == 0;
+    isRetro = (stat("sdmc:/" FILE_CONFIG_DIR "/retro.flag", &st) == 0);
 
     u64 clkVirtAddr, dsiVirtAddr, outsize;
     rc = svcQueryMemoryMapping(&clkVirtAddr, &outsize, 0x60006000, 0x1000);
@@ -307,6 +308,10 @@ void Board::Initialize()
     }
 
 
+}
+
+bool Board::IsUsingRetroSuperDisplay() {
+    return isRetro;
 }
 
 void Board::fuseReadSpeedos() {
