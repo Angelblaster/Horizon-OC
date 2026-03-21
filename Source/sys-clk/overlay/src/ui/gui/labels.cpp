@@ -35,7 +35,7 @@ std::map<uint32_t, std::string> cpu_freq_label_m_uv = {
     {1224000000, "Dev OC"},
     {1785000000, "Boost Mode"},
     {2397000000, "Safe Max"},
-    {2601000000, "Unsafe Max"},
+    {2499000000, "Unsafe Max"},
     {2703000000, "Absolute Max"},
 };
 
