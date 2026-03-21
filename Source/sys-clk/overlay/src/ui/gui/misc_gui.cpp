@@ -590,7 +590,28 @@ public:
 protected:
     void listUI() override {
         this->listElement->addItem(new tsl::elm::CategoryHeader("Governor Settings"));
-        addFreqButton(HorizonOCConfigValue_CpuGovernorMinimumFreq, "CPU Governor Minimum Frequency", SysClkModule_CPU, BaseMenuGui::IsMariko() ? cpu_freq_label_m : cpu_freq_label_e);
+        ValueThresholds thresholdsDisabled(0, 0);
+
+        std::vector<NamedValue> GovernorMinHz = {
+            NamedValue("510 MHz", 510000000),
+            NamedValue("612 MHz", 612000000),
+            NamedValue("714 MHz", 714000000),
+            NamedValue("816 MHz", 816000000),
+            NamedValue("918 MHz", 918000000),
+            NamedValue("1020 MHz", 1020000000),
+        };
+
+        addConfigButton(
+            HorizonOCConfigValue_CpuGovernorMinimumFreq,
+            "CPU Governor Minimum Frequency",
+            ValueRange(0, 0, 1, "", 0),
+            "CPU Governor Minimum Frequency",
+            &thresholdsDisabled,
+            {},
+            GovernorMinHz,
+            false
+        );
+
     }
 };
 

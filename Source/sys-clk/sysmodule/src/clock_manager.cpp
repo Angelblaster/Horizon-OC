@@ -61,6 +61,7 @@ u32 initialConfigValues[SysClkConfigValue_EnumMax]; // initial config. used for 
 bool kipAvailable = false;
 bool isCpuGovernorInBoostMode = false;
 bool isVRREnabled = false;
+
 ClockManager *ClockManager::GetInstance()
 {
     return instance;
@@ -370,7 +371,8 @@ void ClockManager::CpuGovernorThread(void* arg) {
 
     u32 downHoldRemaining = 0;
     u32 lastHz            = 0;
-
+    u32 minHz = 612;
+    u32 tick = 0;
     for (;;) {
         if (!mgr->running || !isCpuGovernorEnabled) {
             downHoldRemaining = 0;
@@ -423,6 +425,14 @@ void ClockManager::CpuGovernorThread(void* arg) {
 
         if (downHoldRemaining > 0)
             downHoldRemaining--;
+
+        if(++tick > 50) {
+            minHz = mgr->config->GetConfigValue(HorizonOCConfigValue_CpuGovernorMinimumFreq);
+            tick = 0;
+        }
+
+        if(newHz < minHz)
+            newHz = minHz;
 
         if ((!goingDown || (downHoldRemaining == 0)) && mgr->IsAssignableHz(SysClkModule_CPU, newHz)) {
             Board::SetHz(SysClkModule_CPU, newHz);

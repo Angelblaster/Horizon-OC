@@ -451,7 +451,7 @@ static inline uint64_t sysclkDefaultConfigValue(SysClkConfigValue val)
         case HocClkConfigValue_LiteTDPLimit:
             return 6400ULL; // 0.5C
         case HorizonOCConfigValue_CpuGovernorMinimumFreq:
-            return 612ULL; // 612MHz
+            return 612000000ULL; // 612MHz
         default:
             return 0ULL;
     }
