@@ -31,6 +31,6 @@
 namespace board {
 
     u32 GetTemperatureMilli(SysClkThermalSensor sensor);
-    u32 GetPowerMw(SysClkPowerSensor sensor)
+    u32 GetPowerMw(SysClkPowerSensor sensor);
 
 }
