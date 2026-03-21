@@ -31,6 +31,7 @@
 #include <math.h>
 #include <numeric>
 #include "board_misc.hpp"
+#include <minIni.h>
 
 namespace board {
 
@@ -128,6 +129,49 @@ namespace board {
         threadClose(&cpuCore0Thread);
         threadClose(&cpuCore1Thread);
         threadClose(&cpuCore2Thread);
+    }
+
+    namespace {
+        constexpr u32 NVschedCtrlEnable  = 0x00000601;
+        constexpr u32 NVschedCtrlDisable = 0x00000602;
+    }
+
+    void SetGpuSchedulingMode(GpuSchedulingMode mode, GpuSchedulingOverrideMethod method, Result nvCheckSched, u32 fd2) {
+        if (R_FAILED(nvCheckSched) && method == GpuSchedulingOverrideMethod_NvService) {
+            return;
+        }
+
+        u32 temp;
+        bool enabled = false;
+        switch (mode) {
+            case GpuSchedulingMode_DoNotOverride: break;
+            case GpuSchedulingMode_Disabled:
+                if (method == GpuSchedulingOverrideMethod_NvService) {
+                    nvIoctl(fd2, NVschedCtrlDisable, &temp);
+                } else {
+                    enabled = false;
+                }
+                break;
+            case GpuSchedulingMode_Enabled:
+                if (method == GpuSchedulingOverrideMethod_NvService) {
+                    nvIoctl(fd2, NVschedCtrlEnable, &temp);
+                } else {
+                    enabled = true;
+                }
+                break;
+            default:
+                ASSERT_ENUM_VALID(GpuSchedulingMode, mode);
+        }
+
+        if (method == GpuSchedulingOverrideMethod_Ini) {
+            constexpr const char *IniPath = "sdmc:/atmosphere/config/system_settings.ini";
+            constexpr const char *Section = "am.gpu";
+            constexpr const char *Key = "gpu_scheduling_enabled";
+
+            const char *value = enabled ? "u8!0x1" : "u8!0x0";
+
+            ini_puts(Section, Key, value, IniPath);
+        }
     }
 
 }

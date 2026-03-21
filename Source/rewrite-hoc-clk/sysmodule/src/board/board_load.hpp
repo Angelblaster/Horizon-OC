@@ -32,5 +32,6 @@ namespace board {
     void StartLoad(Result nvCheck, u32 fd);
     void ExitLoad();
     u32 GetPartLoad();
+    void SetGpuSchedulingMode(GpuSchedulingMode mode, GpuSchedulingOverrideMethod method, Result nvCheckSched, u32 fd2);
 
 }
