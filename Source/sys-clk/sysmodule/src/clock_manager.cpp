@@ -574,8 +574,7 @@ void ClockManager::VRRThread(void* arg) {
 }
 
 void ClockManager::HandleSafetyFeatures() {
-    AppletOperationMode opMode = appletGetOperationMode();
-    if(this->config->GetConfigValue(HocClkConfigValue_HandheldTDP) && opMode == AppletOperationMode_Handheld) {
+    if(this->config->GetConfigValue(HocClkConfigValue_HandheldTDP) && (this->context->profile != SysClkProfile_Docked)) { // Enable while charging as non-PD charger can cause lack of power
         if(Board::GetConsoleType() == HorizonOCConsoleType_Hoag) {
             if(Board::GetPowerMw(SysClkPowerSensor_Avg) < -(int)this->config->GetConfigValue(HocClkConfigValue_LiteTDPLimit)) {
                 ResetToStockClocks();
