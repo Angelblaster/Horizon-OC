@@ -776,11 +776,9 @@ void ClockManager::SetClocks(bool isBoost) {
         if(noDisp && module == HorizonOCModule_Display)
             continue;
 
-        if(module == HorizonOCModule_Display && this->config->GetConfigValue(HorizonOCConfigValue_OverwriteRefreshRate)) {
+        if(module == HorizonOCModule_Display && this->config->GetConfigValue(HorizonOCConfigValue_OverwriteRefreshRate) && !noDisp) {
             if(targetHz)
                 Board::SetHz(HorizonOCModule_Display, targetHz);
-            else
-                Board::ResetToStockDisplay();
         }
 
         // Skip GPU and CPU if governors handle them

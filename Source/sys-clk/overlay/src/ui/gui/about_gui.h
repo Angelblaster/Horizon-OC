@@ -26,7 +26,7 @@
 class AboutGui : public BaseMenuGui
 {
 protected:
-    char strings[32][32];  // Pre-formatted strings
+    char strings[32][32];
 
 public:
     AboutGui();

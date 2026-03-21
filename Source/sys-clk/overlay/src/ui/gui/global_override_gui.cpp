@@ -299,12 +299,17 @@ public:
     GovernorOverrideSubMenuGui(u32 initialPacked) : packed(initialPacked) {}
 
     void listUI() override {
+        Result rc = sysclkIpcGetConfigValues(&configList); // idk why this is needed, probably some refreshing issue
+        if (R_FAILED(rc)) [[unlikely]] {
+            FatalGui::openWithResultCode("sysclkIpcGetConfigValues", rc);
+            return;
+        }
         this->listElement->addItem(new tsl::elm::CategoryHeader("Governor"));
 
         static constexpr struct { const char* label; int shift; } kAll[] = {
             {"CPU", 0}, {"GPU", 8}, {"VRR", 16}
         };
-        int count = configList.values[HorizonOCConfigValue_OverwriteRefreshRate] ? 2 : 3;
+        int count = configList.values[HorizonOCConfigValue_OverwriteRefreshRate] ? 3 : 2;
 
         for (int i = 0; i < count; i++) {
             u8 cur = (this->packed >> kAll[i].shift) & 0xFF;

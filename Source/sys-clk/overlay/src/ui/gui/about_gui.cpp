@@ -27,6 +27,7 @@ tsl::elm::ListItem* IddqItem = NULL;
 tsl::elm::ListItem* DramModule = NULL;
 tsl::elm::ListItem* sysdockStatusItem = NULL;
 tsl::elm::ListItem* saltyNXStatusItem = NULL;
+tsl::elm::ListItem* RETROStatusItem = NULL;
 
 ImageElement* CatImage = NULL;
 HideableCategoryHeader* CatHeader = NULL;
@@ -67,6 +68,12 @@ void AboutGui::listUI()
     saltyNXStatusItem =
         new tsl::elm::ListItem("SaltyNX status:");
     this->listElement->addItem(saltyNXStatusItem);
+    
+    if(IsHoag()) {
+        RETROStatusItem =
+            new tsl::elm::ListItem("RR Display status:");
+        this->listElement->addItem(RETROStatusItem);
+    }
 
     this->listElement->addItem(
         new tsl::elm::CategoryHeader("Credits")
@@ -284,4 +291,6 @@ void AboutGui::refresh()
     DramModule->setValue(formatRamModule());
     sysdockStatusItem->setValue(this->context->isSysDockInstalled ? "Installed" : "Not Installed");
     saltyNXStatusItem->setValue(this->context->isSaltyNXInstalled ? "Installed" : "Not Installed");
+    if(IsHoag())
+        RETROStatusItem->setValue(this->context->isUsingRetroSuper ? "Installed" : "Not Installed");
 }
