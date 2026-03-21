@@ -347,8 +347,8 @@ void Board::fuseReadSpeedos() {
                 cpuSpeedo2 = *reinterpret_cast<const u16*>(dump + FUSE_CPU_SPEEDO_2_CALIB);
                 socSpeedo0 = *reinterpret_cast<const u16*>(dump + FUSE_SOC_SPEEDO_0_CALIB);
                 cpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_CPU_IDDQ_CALIB) * 4;
-                socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB) * 5;
-                gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB) * 4;
+                gpuIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_GPU_IDDQ_CALIB) * 5;
+                socIDDQ = *reinterpret_cast<const u16*>(dump + FUSE_SOC_IDDQ_CALIB) * 4;
                 BwaferX = *reinterpret_cast<const u16*>(dump + FUSE_OPT_X_COORDINATE);
                 BwaferY = *reinterpret_cast<const u16*>(dump + FUSE_OPT_Y_COORDINATE);
 
