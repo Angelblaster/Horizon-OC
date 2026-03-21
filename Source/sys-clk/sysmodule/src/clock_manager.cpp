@@ -999,8 +999,10 @@ bool ClockManager::RefreshContext()
             targetHz = this->config->GetAutoClockHz(GLOBAL_PROFILE_ID, HorizonOCModule_Display, this->context->profile, true);
     }
 
-    if(targetHz && this->context->realFreqs[HorizonOCModule_Display] > targetHz && this->context->profile != SysClkProfile_Docked)
+    if(targetHz && this->context->realFreqs[HorizonOCModule_Display] > targetHz && this->context->profile != SysClkProfile_Docked) {
         this->context->realFreqs[HorizonOCModule_Display] = targetHz; // clean up display real freqs, should probably be moved to the real freqs loop?
+        hasChanged = true;
+    }
 
     if(!Board::IsHoag())
         Board::SetDisplayRefreshDockedState(this->context->profile == SysClkProfile_Docked);
