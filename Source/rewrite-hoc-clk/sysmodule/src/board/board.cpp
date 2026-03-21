@@ -33,7 +33,7 @@
 #include "board.hpp"
 #include "board_fuse.hpp"
 #include "board_load.hpp"
-#include "board_ram_oc_dvfs.hpp"
+#include "board_volt.hpp"
 #include "board_misc.hpp"
 
 namespace board {
@@ -114,7 +114,7 @@ namespace board {
         ASSERT_RESULT_OK(rc, "pmdmntInitialize");
 
         StartGpuLoad(nvCheck, fd);
-        /* TODO: Add back fan. */
+
         StartMiscThread(pwmCheck)
 
         batteryInfoInitialize();
@@ -140,17 +140,7 @@ namespace board {
             DisplayRefresh_Initialize(&cfg);
         }
 
-       // rc = svcQueryMemoryMapping(&cldvfs, &cldvfs_temp, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
-       // ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (cldvfs)");
-
-       // if (socType == SysClkSocType_Erista) {
-       //     cachedEristaUvLowTune0 = *(u32*) (cldvfs + CL_DVFS_TUNE0_0);
-       //     cachedEristaUvLowTune1 = *(u32*) (cldvfs + CL_DVFS_TUNE1_0);
-       // } else {
-       //     SetHz(SysClkModule_CPU, 1785000000);
-       //     cachedMarikoUvHighTune0 = *(u32*) (cldvfs + CL_DVFS_TUNE0_0);
-       //     ResetToStockCpu();
-       // }
+        CacheDfllData();
     }
 
     void Exit() {

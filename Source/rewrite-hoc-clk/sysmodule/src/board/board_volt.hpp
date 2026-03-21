@@ -43,6 +43,18 @@ namespace board {
         u32 voltageMax;
     };
 
+    struct CpuDfllData {
+        u32 tune0Low;
+        u32 tune0High;
+        u32 tune1Low;
+        u32 tune1High;
+       // u32 tune_high_min_millivolts;
+       // u32 tune_high_margin_millivolts;
+       // u64 dvco_calibration_max;
+    };
+
+    void CacheDfllData();
+    u32 CalculateTbreak();
     u32 GetVoltage(HocClkVoltage voltage);
     void CacheGpuVoltTable();
     void PcvHijackGpuVolts(u32 vmin);
