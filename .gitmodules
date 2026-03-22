@@ -1,9 +1,12 @@
 [submodule "Source/Horizon-OC-Monitor/lib/Atmosphere-libs"]
 	path = Source/Horizon-OC-Monitor/lib/Atmosphere-libs
 	url = https://github.com/Atmosphere-NX/Atmosphere-libs
+	branch = master
 [submodule "Source/Horizon-OC-Monitor/lib/libultrahand"]
 	path = Source/Horizon-OC-Monitor/lib/libultrahand
 	url = https://github.com/ppkantorski/libultrahand
+	branch = main
 [submodule "Source/sys-clk/overlay/lib/libultrahand"]
 	path = Source/sys-clk/overlay/lib/libultrahand
 	url = https://github.com/ppkantorski/libultrahand
+	branch = main
