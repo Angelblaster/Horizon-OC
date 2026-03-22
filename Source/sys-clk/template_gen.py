@@ -3,8 +3,8 @@ import os
 import re
 import json
 
-SOURCE_DIR = os.path.join("src", "ui", "gui")
-OUTPUT_FILE = os.path.join("lang", "en.json")
+SOURCE_DIR = os.path.join("overlay", "src", "ui", "gui")
+OUTPUT_FILE = os.path.join("overlay", "lang", "en.json")
 
 IGNORED_PREFIXES = (
     "/", "\\",
@@ -80,8 +80,15 @@ UNTRANSLATABLE = {
     "t6 tRTW",
     "t7 tWTR",
     "t8 tREFI",
+    "tREFI",
     "JEDEC",
-
+    "App ID",
+    "Profile",
+    "USB Charger",
+    "Handheld",
+    "PD Charger",
+    "Docked",
+    
     # MHz warning strings with mixed technical terms
     "1581MHz Tbreak",
     "1683MHz Tbreak",

@@ -14,7 +14,7 @@ import time
 import urllib.parse
 import urllib.request
 
-INPUT_FILE = os.path.join("lang", "en.json")
+INPUT_FILE = os.path.join("overlay", "lang", "en.json")
 BATCH_SIZE = 75
 DELAY = 0.3
 
