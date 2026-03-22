@@ -80,7 +80,7 @@ UNTRANSLATABLE = {
     "t6 tRTW",
     "t7 tWTR",
     "t8 tREFI",
-    "JEDEC".
+    "JEDEC",
 
     # MHz warning strings with mixed technical terms
     "1581MHz Tbreak",

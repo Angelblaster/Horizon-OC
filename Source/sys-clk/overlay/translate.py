@@ -15,8 +15,8 @@ import urllib.parse
 import urllib.request
 
 INPUT_FILE = os.path.join("lang", "en.json")
-BATCH_SIZE = 50
-DELAY = 0.1
+BATCH_SIZE = 75
+DELAY = 0.3
 
 ALL_LANGUAGES = [
     "es", "fr", "de", "ja", "ko", "it", "nl", "pt", "ru", "uk", "pl", "zh-cn", "zh-tw",
