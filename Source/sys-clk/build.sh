@@ -39,4 +39,4 @@ cp -vf "$ROOT_DIR/../../README.md" "$DIST_DIR/README.md"
 
 echo "*** lang ***"
 
-cp -r "$ROOT_DIR/overlay/lang/" "$DIST_DIR/config/horizon-oc/lang/"
+cp -r "$ROOT_DIR/overlay/lang/" "$DIST_DIR/config/horizon-oc/"
