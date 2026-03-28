@@ -682,7 +682,7 @@ protected:
                 ValueThresholds tdpThresholdsLite(6400, 7500);
                 addConfigButton(
                     HocClkConfigValue_LiteTDPLimit,
-                    "TDP Threshold",e
+                    "TDP Threshold",
                     ValueRange(4000, 8000, 100, "mW", 1),
                     "Power",
                     &tdpThresholdsLite,
