@@ -179,7 +179,7 @@ namespace fileUtils {
             RefreshFlags(true);
             g_has_initialized = true;
             LogLine("=== hoc-clk " TARGET_VERSION " ===");
-            LogLine("by m4xw, natinusala, p-sam, Souldbminer and Lightos_");
+            LogLine("by m4xw, natinusala, p-sam, Souldbminer, Lightos_ and Dominatorul");
         }
 
         return rc;
