@@ -580,7 +580,7 @@ namespace clockManager {
             integrations::LoadSaltyNX();
         }
 
-        gContext.isUsingRetroSuper = board::IsUsingRetroSuperDisplay();
+        gContext.isUsingRetroSuper = integrations::GetRETROSuperStatus();
         governor::startThreads();
     }
 
@@ -616,6 +616,7 @@ namespace clockManager {
 
     void Tick()
     {
+        fileUtils::LogLine("CPU Temp: %d", board::GetTemperatureMilli(HorizonOCThermalSensor_CPU));
         std::scoped_lock lock{gContextMutex};
         std::uint32_t mode = 0;
         Result rc = apmExtGetCurrentPerformanceConfiguration(&mode);
@@ -633,7 +634,7 @@ namespace clockManager {
 
     void WaitForNextTick()
     {
-        if (!(board::GetHz(SysClkModule_MEM) < 665000000))
+        if (board::GetHz(SysClkModule_MEM) > 665000000)
             svcSleepThread(config::GetConfigValue(SysClkConfigValue_PollingIntervalMs) * 1000000ULL);
         else
             svcSleepThread(5000 * 1000000ULL); // 5 seconds in sleep mode

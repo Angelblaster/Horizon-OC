@@ -37,7 +37,7 @@
 #include "clock_manager.hpp"
 #include "ipc_service.hpp"
 #include "config.hpp"
-#define INNER_HEAP_SIZE 0x40000
+#define INNER_HEAP_SIZE 0x45000
 
 
 extern "C"

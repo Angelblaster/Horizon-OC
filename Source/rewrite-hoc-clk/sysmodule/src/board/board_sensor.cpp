@@ -31,6 +31,7 @@
 #include <battery.h>
 #include <pwm.h>
 #include "board.hpp"
+#include "../soctherm.hpp"
 
 namespace board {
 
@@ -38,23 +39,50 @@ namespace board {
         s32 millis = 0;
         BatteryChargeInfo info;
 
-        if (sensor == SysClkThermalSensor_SOC) {
-            millis = tmp451TempSoc();
-        } else if (sensor == SysClkThermalSensor_PCB) {
-            millis = tmp451TempPcb();
-        } else if (sensor == SysClkThermalSensor_Skin) {
-            if (HOSSVC_HAS_TC) {
-                Result rc;
-                rc = tcGetSkinTemperatureMilliC(&millis);
-                ASSERT_RESULT_OK(rc, "tcGetSkinTemperatureMilliC");
+        soctherm::TSensorTemps temps;
+        soctherm::ReadSensors(temps);
+
+        switch(sensor) {
+            case SysClkThermalSensor_SOC: {
+                millis = tmp451TempSoc();
+                break;
             }
-        } else if (sensor == HorizonOCThermalSensor_Battery) {
-            batteryInfoGetChargeInfo(&info);
-            millis = batteryInfoGetTemperatureMiliCelsius(&info);
-        /* } else if (sensor == HorizonOCThermalSensor_PMIC) {
-            millis = 50000; */
-        } else {
-            ASSERT_ENUM_VALID(SysClkThermalSensor, sensor);
+            case SysClkThermalSensor_PCB: {
+                millis = tmp451TempPcb();
+                break;
+            }
+            case SysClkThermalSensor_Skin: {
+                if (HOSSVC_HAS_TC) {
+                    Result rc;
+                    rc = tcGetSkinTemperatureMilliC(&millis);
+                    ASSERT_RESULT_OK(rc, "tcGetSkinTemperatureMilliC");
+                }
+                break;
+            }
+            case HorizonOCThermalSensor_Battery: {
+                batteryInfoGetChargeInfo(&info);
+                millis = batteryInfoGetTemperatureMiliCelsius(&info);
+                break;
+            }
+            case HorizonOCThermalSensor_PMIC: {
+                millis = 50000;
+                break;
+            }
+            case HorizonOCThermalSensor_CPU: {
+                millis = temps.cpu;
+                break;
+            }
+            case HorizonOCThermalSensor_GPU: {
+                millis = temps.gpu;
+                break;
+            }
+            case HorizonOCThermalSensor_MEM: {
+                millis = board::GetSocType() == SysClkSocType_Mariko ? temps.pllx : temps.mem;
+                break;
+            }
+            default: {
+                ASSERT_ENUM_VALID(SysClkThermalSensor, sensor);
+            }
         }
 
         return std::max(0, millis);

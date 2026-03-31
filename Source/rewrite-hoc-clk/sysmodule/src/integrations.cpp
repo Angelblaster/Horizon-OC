@@ -95,6 +95,11 @@ namespace integrations {
         return stat("sdmc:/atmosphere/contents/0000000000534C56/flags/boot2.flag", &st) == 0;
     }
 
+    bool GetRETROSuperStatus() {
+        struct stat st = {0};
+        return stat("sdmc:/config/horizon-oc/retro.flag", &st) == 0;
+    }
+
     void LoadSaltyNX() {
         if (!CheckSaltyNXPort())
             return;

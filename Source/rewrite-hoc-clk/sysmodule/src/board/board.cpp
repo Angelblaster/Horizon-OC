@@ -40,7 +40,8 @@
 #include "board_volt.hpp"
 #include "board_misc.hpp"
 #include "../soctherm.hpp"
-
+#include "../integrations.hpp"
+#include "../file_utils.hpp"
 namespace board {
 
     SysClkSocType gSocType;
@@ -51,6 +52,46 @@ namespace board {
     PwmChannelSession iCon;
 
     u32 fd = 0, fd2 = 0;
+
+    constexpr u32 pscDependencies[] = {PscPmModuleId_Display};    // Our dependencies
+    constexpr PscPmModuleId pscModuleId = (PscPmModuleId)692;   // Our ID
+    static PscPmModule pscModule;                               // Module to listen for events with
+
+    Thread SleepWakeListener;
+
+    void SleepWakeEventListener(void *ptr) {
+        while (true) {
+            Result rc = eventWait(&pscModule.event, 10'000'000);
+            if (R_VALUE(rc) == KERNELRESULT(TimedOut))
+                continue;
+            if (R_VALUE(rc) == KERNELRESULT(Cancelled))
+                break;
+
+            PscPmState eventState;
+            u32 flags;
+            if (R_FAILED(pscPmModuleGetRequest(&pscModule, &eventState, &flags)))
+                break;
+
+            switch (eventState) {
+                case PscPmState_ReadySleep:
+                    fileUtils::LogLine("Sleep");
+                    soctherm::StopSensors();
+                    break;
+                case PscPmState_ReadyAwaken:
+                    fileUtils::LogLine("Wake");
+                    soctherm::StartSensors();
+                    break;
+                case PscPmState_ReadyShutdown:
+                    fileUtils::LogLine("Shutdown");
+                    soctherm::StopSensors();
+                    break;
+                default:
+                    break;
+            }
+
+            pscPmModuleAcknowledge(&pscModule, eventState);
+        }
+    }
 
     void FetchHardwareInfos() {
         ReadFuses(fuseData);
@@ -115,13 +156,13 @@ namespace board {
         Result nvCheck = 1;
         if (R_SUCCEEDED(nvInitialize())) {
             nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-            Result nvCheck_sched = nvOpen(&fd2, "/dev/nvsched-ctrl");
-            /* This can be improved. */
-            NvSchedSucceed(nvCheck_sched);
+            // Result nvCheck_sched = nvOpen(&fd2, "/dev/nvsched-ctrl");
+            // /* This can be improved. */
+            // NvSchedSucceed(nvCheck_sched);
 
-            if (R_SUCCEEDED(nvCheck_sched)) {
-                SchedSetFD2(fd2);
-            }
+            // if (R_SUCCEEDED(nvCheck_sched)) {
+            //     SchedSetFD2(fd2);
+            // }
         }
 
         rc = rgltrInitialize();
@@ -129,6 +170,16 @@ namespace board {
 
         rc = pmdmntInitialize();
         ASSERT_RESULT_OK(rc, "pmdmntInitialize");
+
+        rc = pscmInitialize();
+        ASSERT_RESULT_OK(rc, "pscmInitialize");
+
+        rc = pscmGetPmModule(&pscModule, pscModuleId, pscDependencies, sizeof(pscDependencies)/sizeof(u32), true);
+        ASSERT_RESULT_OK(rc, "pscmGetPmModule");
+
+        threadCreate(&SleepWakeListener, SleepWakeEventListener, NULL, NULL, 0x1000, 0x0, 3);
+
+        threadStart(&SleepWakeListener);
 
         StartLoad(nvCheck, fd);
 
@@ -152,13 +203,16 @@ namespace board {
         rc = svcQueryMemoryMapping(&dsiVirtAddr, &outsize, 0x54300000, 0x40000);
         ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (dsi)");
 
-        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr};
+        display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == HorizonOCConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);
 
         CacheDfllData();
     }
 
     void Exit() {
+
+        soctherm::StopSensors();
+
         if (HOSSVC_HAS_CLKRST) {
             clkrstExit();
         } else {
@@ -184,9 +238,12 @@ namespace board {
         rgltrExit();
         batteryInfoExit();
         pmdmntExit();
-        nvExit();
-
         display::Shutdown();
+        nvExit();
+        threadClose(&SleepWakeListener);
+        pscPmModuleFinalize(&pscModule);
+        pscPmModuleClose(&pscModule);
+        pscmExit();
     }
 
     SysClkSocType GetSocType() {
@@ -233,5 +290,4 @@ namespace board {
     bool IsUsingRetroSuperDisplay() {
         return false; /* stub for now. */
     }
-
 }

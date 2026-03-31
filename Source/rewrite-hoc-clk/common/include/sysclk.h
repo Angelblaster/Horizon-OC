@@ -49,7 +49,6 @@ extern "C" {
 #include "sysclk/config.h"
 #include "sysclk/errors.h"
 #include "sysclk/psm_ext.h"
-#include "sysclk/soctherm.hpp"
 
 #ifdef __cplusplus
 }

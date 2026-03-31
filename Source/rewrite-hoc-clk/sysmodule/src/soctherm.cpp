@@ -418,7 +418,7 @@ namespace soctherm {
         };
 
         u32 calib[SocthermTSensor_EnumMax] = {};
-        u64 socthermVa;
+        u64 socthermVa, carVa, fuseVa;
         bool isMariko;
     }
 
@@ -509,6 +509,22 @@ namespace soctherm {
         }
     }
 
+    void StopSensors() {
+        const TSensor *sensors = isMariko ? marikoTSensors : eristaTSensors;
+        u32 count = isMariko ? std::size(marikoTSensors) : std::size(eristaTSensors);
+
+        for (u32 i = 0; i < count; ++i) {
+            SetBits(socthermVa, sensors[i].base + SENSOR_CONFIG0, SENSOR_CONFIG0_STOP);
+            ClearBits(socthermVa, sensors[i].base + SENSOR_CONFIG1, SENSOR_CONFIG1_TEMP_ENABLE);
+            WriteReg(socthermVa, sensors[i].base + SENSOR_CONFIG2, 0);
+        }
+
+        WriteReg(socthermVa, TSENSOR_TSENSOR_CLKEN, 0);
+        WriteReg(carVa, CAR_CLK_SOURCE_TSENSOR, 0);
+        SetBits(carVa, CAR_CLK_OUT_ENB_V, 0);
+
+    }
+
     void StartSensors() {
         if (!ReadReg(socthermVa, TSENSOR_TSENSOR_CLKEN)) {
             u32 pdiv, hotspot;
@@ -597,7 +613,6 @@ namespace soctherm {
     }
 
     void Initialize() {
-        u64 carVa, fuseVa;
         isMariko = board::GetSocType() == SysClkSocType_Mariko;
 
         constexpr u64 SocthermPa = 0x700E2000, FusePa = 0x7000F000, CarPa = 0x60006000;

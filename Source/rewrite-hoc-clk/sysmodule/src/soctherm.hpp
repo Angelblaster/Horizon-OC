@@ -122,7 +122,16 @@ namespace soctherm {
         SocthermTSensor_EnumMax = 8,
     };
 
+    struct TSensorTemps {
+        s32 cpu;
+        s32 gpu;
+        s32 mem;
+        s32 pllx;
+    };
+
     void Initialize();
+    void StartSensors();
+    void StopSensors();
     void ReadSensors(TSensorTemps &temps);
 
 }
