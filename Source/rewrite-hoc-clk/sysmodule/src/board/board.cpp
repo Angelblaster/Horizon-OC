@@ -160,9 +160,6 @@ namespace board {
     }
 
     void Exit() {
-
-        //soctherm::StopSensors();
-
         if (HOSSVC_HAS_CLKRST) {
             clkrstExit();
         } else {
