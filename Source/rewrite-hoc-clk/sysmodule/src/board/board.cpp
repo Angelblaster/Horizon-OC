@@ -74,12 +74,15 @@ namespace board {
 
             switch (eventState) {
                 case PscPmState_ReadySleep:
+                    fileUtils::LogLine("Sleep");
                     soctherm::StopSensors();
                     break;
                 case PscPmState_ReadyAwaken:
+                    fileUtils::LogLine("Wake");
                     soctherm::StartSensors();
                     break;
                 case PscPmState_ReadyShutdown:
+                    fileUtils::LogLine("Shutdown");
                     soctherm::StopSensors();
                     break;
                 default:
