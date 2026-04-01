@@ -201,8 +201,7 @@ static inline const char* sysclkFormatModule(SysClkModule module, bool pretty)
 
 static inline const char* sysclkFormatThermalSensor(SysClkThermalSensor thermSensor, bool pretty)
 {
-    switch(thermSensor)
-    {
+    switch(thermSensor) {
         case SysClkThermalSensor_SOC:
             return pretty ? "SOC" : "soc";
         case SysClkThermalSensor_PCB:
@@ -219,6 +218,8 @@ static inline const char* sysclkFormatThermalSensor(SysClkThermalSensor thermSen
             return pretty ? "GPU" : "gpu";
         case HorizonOCThermalSensor_MEM:
             return pretty ? "MEM" : "mem";
+            case HorizonOCThermalSensor_PLLX:
+            return pretty ? "PLLX" : "pllx";
         default:
             return NULL;
     }
