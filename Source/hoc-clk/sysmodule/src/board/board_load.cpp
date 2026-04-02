@@ -45,8 +45,8 @@ namespace board {
 
     u32 gpuLoad;
     u32 _fd, _fd2;
-    Result nvCheckSched;
-
+    Result nvCheckSched = 0;
+    Result nvCheck_load = 0;
     u64 idletick0 = 0;
     u64 idletick1 = 0;
     u64 idletick2 = 0;
@@ -54,18 +54,16 @@ namespace board {
     constexpr u64 CpuTimeOutNs = 500'000'000;
     constexpr double Systemtickfrequency = 19200000.0 * (static_cast<double>(CpuTimeOutNs) / 1'000'000'000.0);
 
-    void GpuLoadThread(void *nvCheckPtr) {
-        Result nvCheck = *static_cast<Result *>(nvCheckPtr);
-        constexpr u32 GpuSamples = 8;
-        u32 gpu_load_array[GpuSamples] = {};
+    void GpuLoadThread(void *ptr) {
+        #define gpu_samples_average 8
+        #define NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD 0x80044715
+        uint32_t gpu_load_array[gpu_samples_average] = {0};
         size_t i = 0;
-        constexpr u32 NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD  = 0x80044715;
-
-        if (R_SUCCEEDED(nvCheck)) do {
+        if (R_SUCCEEDED(nvCheck_load)) do {
             u32 temp;
             if (R_SUCCEEDED(nvIoctl(_fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &temp))) {
-                gpu_load_array[i++ % GpuSamples] = temp;
-                gpuLoad = std::accumulate(&gpu_load_array[0], &gpu_load_array[GpuSamples], 0) / GpuSamples;
+                gpu_load_array[i++ % gpu_samples_average] = temp;
+                gpuLoad = std::accumulate(&gpu_load_array[0], &gpu_load_array[gpu_samples_average], 0) / gpu_samples_average;
             }
             svcSleepThread(16'666'000); // wait a bit (this is the perfect amount of time to keep the reading accurate)
         } while(true);
@@ -85,6 +83,7 @@ namespace board {
 
     void StartLoad(Result nvCheck, u32 fd) {
         _fd = fd;
+        nvCheck_load = nvCheck;
         threadCreate(&gpuThread, GpuLoadThread, &nvCheck, NULL, 0x1000, 0x3F, -2);
         threadStart(&gpuThread);
 
