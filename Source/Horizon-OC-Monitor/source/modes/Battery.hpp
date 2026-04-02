@@ -30,7 +30,7 @@ public:
         disableJumpTo = true;
         mutexInit(&mutex_BatteryChecker);
         StartBatteryThread();
-        //tsl::elm::g_disableMenuCacheOnReturn.store(true, std::memory_order_release);
+        // tsl::elm::g_disableMenuCacheOnReturn.store(true, std::memory_order_release);
     }
     ~BatteryOverlay() {
         CloseBatteryThread();
@@ -141,8 +141,8 @@ public:
             }
         });
 
-        //tsl::elm::g_disableMenuCacheOnReturn.store(true, std::memory_order_release);
-        tsl::elm::HeaderOverlayFrame* rootFrame = new tsl::elm::HeaderOverlayFrame("Horizon OC Monitor", APP_VERSION, true);
+        // tsl::elm::g_disableMenuCacheOnReturn.store(true, std::memory_order_release);
+        tsl::elm::HeaderOverlayFrame* rootFrame = new tsl::elm::HeaderOverlayFrame("Status Monitor Pro", APP_VERSION, true);
         rootFrame->setContent(Status);
 
         return rootFrame;

@@ -129,10 +129,8 @@ public:
         //}
         //tsl::elm::g_disableMenuCacheOnReturn.store(true, std::memory_order_release);
         tsl::elm::HeaderOverlayFrame* rootFrame = new tsl::elm::HeaderOverlayFrame("Horizon OC Monitor", "Modes");
-        if (!lastSelectedItem.empty()) {
+        if (!lastSelectedItem.empty())
             list->jumpToItem(lastSelectedItem);
-        }
-        lastSelectedItem = "Other";
 
         rootFrame->setContent(list);
 
@@ -158,7 +156,7 @@ public:
         }
 
         if (keysDown & KEY_B) {
-            
+            lastSelectedItem = "Other";
             tsl::swapTo<MainMenu>();
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
             triggerExitSound.store(true, std::memory_order_release);
@@ -369,11 +367,8 @@ public:
         });
         list->addItem(Other);
 
-        if (!lastSelectedItem.empty()) {
+        if (!lastSelectedItem.empty())
             list->jumpToItem(lastSelectedItem);
-            lastSelectedItem = "";
-        }
-
 
         //list->disableCaching();
         tsl::elm::HeaderOverlayFrame* rootFrame = new tsl::elm::HeaderOverlayFrame("Horizon OC Monitor", APP_VERSION);
@@ -446,6 +441,14 @@ public:
             if (SaltySD) {
                 LoadSharedMemoryAndRefreshRate();
             }
+            if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+                uint32_t sysClkApiVer = 0;
+                sysclkIpcGetAPIVersion(&sysClkApiVer);
+                if (sysClkApiVer != SYSCLK_IPC_API_VERSION) {
+                    sysclkIpcExit();
+                }
+                else sysclkCheck = 0;
+            }
             if (R_SUCCEEDED(splInitialize())) {
                 u64 sku = 0;
                 splGetConfig(SplConfigItem_HardwareType, &sku);
@@ -458,14 +461,16 @@ public:
                 }
             }
             splExit();
-            sysclkIpcInitialize();
+
         });
         Hinted = envIsSyscallHinted(0x6F);
     }
 
     virtual void exitServices() override {
         CloseThreads();
-        sysclkIpcExit();
+        if (R_SUCCEEDED(sysclkCheck)) {
+            sysclkIpcExit();
+        }
         shmemClose(&_sharedmemory);
         //Exit services
         clkrstExit();
@@ -520,6 +525,14 @@ public:
             if (SaltySD) {
                 LoadSharedMemory();
             }
+            if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+                uint32_t sysClkApiVer = 0;
+                sysclkIpcGetAPIVersion(&sysClkApiVer);
+                if (sysClkApiVer != SYSCLK_IPC_API_VERSION) {
+                    sysclkIpcExit();
+                }
+                else sysclkCheck = 0;
+            }
             if (R_SUCCEEDED(splInitialize())) {
                 u64 sku = 0;
                 splGetConfig(SplConfigItem_HardwareType, &sku);
@@ -532,7 +545,6 @@ public:
                 }
             }
             splExit();
-            sysclkIpcInitialize();
         });
         Hinted = envIsSyscallHinted(0x6F);
     }
@@ -540,7 +552,9 @@ public:
     virtual void exitServices() override {
         CloseThreads();
         shmemClose(&_sharedmemory);
-        sysclkIpcExit();
+        if (R_SUCCEEDED(sysclkCheck)) {
+            sysclkIpcExit();
+        }
         //Exit services
         clkrstExit();
         pcvExit();
@@ -598,6 +612,14 @@ public:
             if (SaltySD) {
                 LoadSharedMemory();
             }
+            if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+                uint32_t sysClkApiVer = 0;
+                sysclkIpcGetAPIVersion(&sysClkApiVer);
+                if (sysClkApiVer != SYSCLK_IPC_API_VERSION) {
+                    sysclkIpcExit();
+                }
+                else sysclkCheck = 0;
+            }
             if (R_SUCCEEDED(splInitialize())) {
                 u64 sku = 0;
                 splGetConfig(SplConfigItem_HardwareType, &sku);
@@ -610,7 +632,6 @@ public:
                 }
             }
             splExit();
-            sysclkIpcInitialize();
         });
         Hinted = envIsSyscallHinted(0x6F);
 
@@ -619,7 +640,9 @@ public:
     virtual void exitServices() override {
         CloseThreads();
         shmemClose(&_sharedmemory);
-        sysclkIpcExit();
+        if (R_SUCCEEDED(sysclkCheck)) {
+            sysclkIpcExit();
+        }
         // Exit services
         clkrstExit();
         pcvExit();
@@ -679,6 +702,14 @@ public:
             if (SaltySD) {
                 LoadSharedMemoryAndRefreshRate();
             }
+            if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+                uint32_t sysClkApiVer = 0;
+                sysclkIpcGetAPIVersion(&sysClkApiVer);
+                if (sysClkApiVer != SYSCLK_IPC_API_VERSION) {
+                    sysclkIpcExit();
+                }
+                else sysclkCheck = 0;
+            }
             if (R_SUCCEEDED(splInitialize())) {
                 u64 sku = 0;
                 splGetConfig(SplConfigItem_HardwareType, &sku);
@@ -691,7 +722,6 @@ public:
                 }
             }
             splExit();
-            sysclkIpcInitialize();
         });
         Hinted = envIsSyscallHinted(0x6F);
     }
@@ -699,7 +729,9 @@ public:
     virtual void exitServices() override {
         CloseThreads();
         shmemClose(&_sharedmemory);
-        sysclkIpcExit();
+        if (R_SUCCEEDED(sysclkCheck)) {
+            sysclkIpcExit();
+        }
         clkrstExit();
         pcvExit();
         tsExit();
@@ -753,6 +785,14 @@ public:
             if (SaltySD) {
                 LoadSharedMemoryAndRefreshRate();
             }
+            if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+                uint32_t sysClkApiVer = 0;
+                sysclkIpcGetAPIVersion(&sysClkApiVer);
+                if (sysClkApiVer != SYSCLK_IPC_API_VERSION) {
+                    sysclkIpcExit();
+                }
+                else sysclkCheck = 0;
+            }
             if (R_SUCCEEDED(splInitialize())) {
                 u64 sku = 0;
                 splGetConfig(SplConfigItem_HardwareType, &sku);
@@ -765,7 +805,6 @@ public:
                 }
             }
             splExit();
-            sysclkIpcInitialize();
         });
         Hinted = envIsSyscallHinted(0x6F);
     }
@@ -773,7 +812,9 @@ public:
     virtual void exitServices() override {
         CloseThreads();
         shmemClose(&_sharedmemory);
-        sysclkIpcExit();
+        if (R_SUCCEEDED(sysclkCheck)) {
+            sysclkIpcExit();
+        }
         clkrstExit();
         pcvExit();
         tsExit();
@@ -827,6 +868,14 @@ public:
             if (SaltySD) {
                 LoadSharedMemoryAndRefreshRate();
             }
+            if (sysclkIpcRunning() && R_SUCCEEDED(sysclkIpcInitialize())) {
+                uint32_t sysClkApiVer = 0;
+                sysclkIpcGetAPIVersion(&sysClkApiVer);
+                if (sysClkApiVer != SYSCLK_IPC_API_VERSION) {
+                    sysclkIpcExit();
+                }
+                else sysclkCheck = 0;
+            }
             if (R_SUCCEEDED(splInitialize())) {
                 u64 sku = 0;
                 splGetConfig(SplConfigItem_HardwareType, &sku);
@@ -839,7 +888,6 @@ public:
                 }
             }
             splExit();
-            sysclkIpcInitialize();
         });
         Hinted = envIsSyscallHinted(0x6F);
     }
@@ -847,7 +895,9 @@ public:
     virtual void exitServices() override {
         CloseThreads();
         shmemClose(&_sharedmemory);
-        sysclkIpcExit();
+        if (R_SUCCEEDED(sysclkCheck)) {
+            sysclkIpcExit();
+        }
         clkrstExit();
         pcvExit();
         tsExit();
@@ -931,7 +981,7 @@ inline void setupMode(const std::string& modeType = "") {
 // This function gets called on startup to create a new Overlay object
 int main(int argc, char **argv) {
 
-    // load heap settings outside of loop (only Horizon OC Monitor directive)
+    // load heap settings outside of loop (only Status Monitor directive)
     ult::currentHeapSize = ult::getCurrentHeapSize();
     ult::expandedMemory = ult::currentHeapSize >= ult::OverlayHeapSize::Size_8MB;
     ult::limitedMemory = ult::currentHeapSize == ult::OverlayHeapSize::Size_4MB;

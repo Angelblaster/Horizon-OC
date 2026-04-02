@@ -144,18 +144,18 @@ namespace ams::ldr::hoc::pcv {
 
         using namespace ams::ldr::hoc::pcv;
         sValidator validators[] = {
-            { C.eristaCpuBoostClock,                1020'000, 2295'000,  true, panic::Cpu },
+            { C.eristaCpuBoostClock,                1020'000, 2397'000,  true, panic::Cpu },
             { C.marikoCpuBoostClock,                1020'000, 2703'000,  true, panic::Cpu },
             { C.eristaCpuMaxVolt,                       1000,     1260, false, panic::Cpu },
             { C.marikoCpuMaxVolt,                       1000,     1200, false, panic::Cpu },
-            { eristaCpuDvfsMaxFreq,                 1785'000, 2295'000, false, panic::Cpu },
+            { eristaCpuDvfsMaxFreq,                 1785'000, 2397'000, false, panic::Cpu },
             { marikoCpuDvfsMaxFreq,                 1785'000, 2703'000, false, panic::Cpu },
             { C.commonEmcMemVolt,                    912'500, 1350'000, false, panic::Emc }, // Official burst vmax for the RAMs is 1500mV
             { GET_MAX_OF_ARR(erista::maxEmcClocks), 1600'000, 2600'000, false, panic::Emc },
             { C.marikoEmcMaxClock,                  1600'000, 3500'000, false, panic::Emc },
             { C.marikoEmcVddqVolt,                   250'000,  700'000, false, panic::Emc },
             { eristaGpuDvfsMaxFreq,                  768'000, 1152'000, false, panic::Gpu },
-            { marikoGpuDvfsMaxFreq,                  768'000, 1570'000, false, panic::Gpu },
+            { marikoGpuDvfsMaxFreq,                  768'000, 1536'000, false, panic::Gpu },
             { C.marikoGpuVmax,                           800,      960, false, panic::Gpu },
         };
 

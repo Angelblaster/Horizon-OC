@@ -83,7 +83,7 @@ Result nvdecCheck = 1;
 Result nvencCheck = 1;
 Result nvjpgCheck = 1;
 Result nifmCheck = 1;
-Result sysclkCheck = 0;
+Result sysclkCheck = 1;
 Result pwmDutyCycleCheck = 1;
 
 //Wi-Fi
@@ -225,10 +225,14 @@ uint32_t realRAM_Hz = 0;
 uint32_t partLoad[SysClkPartLoad_EnumMax];
 uint32_t realCPU_mV = 0; 
 uint32_t realGPU_mV = 0; 
-uint32_t realVDD2_mV = 0;
-uint32_t realVDDQ_mV = 0;
+uint32_t realRAM_mV = 0; 
 uint32_t realSOC_mV = 0; 
 uint8_t refreshRate = 0;
+
+//Read real temps from sys-clk sysmodule
+int32_t realCPU_Temp = 0;
+int32_t realGPU_Temp = 0;
+int32_t realRAM_Temp = 0;
 
 int compare (const void* elem1, const void* elem2) {
     if ((((resolutionCalls*)(elem1))->calls) > (((resolutionCalls*)(elem2))->calls)) return -1;
@@ -521,7 +525,6 @@ bool usingEOS() {
     return versionString.find("eos") != std::string::npos;
 }
 
-
 // === ULTRA-FAST VOLTAGE READING ===
 static constexpr PowerDomainId domains[] = {
     PcvPowerDomainId_Max77621_Cpu,    // [0] CPU
@@ -572,20 +575,29 @@ void Misc(void*) {
         }
         
         // Get sys-clk data
-        SysClkContext sysclkCTX;
-        if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
-            realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
-            realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
-            realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
-            partLoad[SysClkPartLoad_EMC] = sysclkCTX.partLoad[SysClkPartLoad_EMC];
-            partLoad[SysClkPartLoad_EMCCpu] = sysclkCTX.partLoad[SysClkPartLoad_EMCCpu];
-            
-            realCPU_mV = sysclkCTX.voltages[HocClkVoltage_CPU]; 
-            realGPU_mV = sysclkCTX.voltages[HocClkVoltage_GPU]; 
-            realVDD2_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDD2];
-            realVDDQ_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDDQ];
-            realSOC_mV = sysclkCTX.voltages[HocClkVoltage_SOC];
+        if (R_SUCCEEDED(sysclkCheck)) {
+            SysClkContext sysclkCTX;
+            if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
+                realCPU_Hz = sysclkCTX.realFreqs[SysClkModule_CPU];
+                realGPU_Hz = sysclkCTX.realFreqs[SysClkModule_GPU];
+                realRAM_Hz = sysclkCTX.realFreqs[SysClkModule_MEM];
+                partLoad[SysClkPartLoad_EMC] = sysclkCTX.partLoad[SysClkPartLoad_EMC];
+                partLoad[SysClkPartLoad_EMCCpu] = sysclkCTX.partLoad[SysClkPartLoad_EMCCpu];
+				realCPU_Temp = sysclkCTX.temps[HorizonOCThermalSensor_CPU];
+				realGPU_Temp = sysclkCTX.temps[HorizonOCThermalSensor_GPU];
+				realRAM_Temp = sysclkCTX.temps[HorizonOCThermalSensor_MEM];
+                
+                realCPU_mV = sysclkCTX.voltages[HocClkVoltage_CPU]; 
+                realGPU_mV = sysclkCTX.voltages[HocClkVoltage_GPU]; 
+                realRAM_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDD2]; 
+                realSOC_mV = sysclkCTX.voltages[HocClkVoltage_SOC];
+                const u32 vdd2_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDD2] / 1000;  // µV to mV
+                const u32 vddq_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDDQ] / 1000;  // µV to mV
+                realRAM_mV = vdd2_mV * 100000 + vddq_mV * 10;
+
+            }
         }
+
         
         // Temperatures
         if (R_SUCCEEDED(i2cCheck)) {
@@ -685,7 +697,7 @@ void Misc2(void*) {
 
 void Misc3(void*) {
     const bool isUsingEOS = usingEOS();
-
+    
     // Initialize voltage reading if needed
     bool canReadVoltages = false;
     if (!isUsingEOS && realVoltsPolling) {
@@ -694,10 +706,33 @@ void Misc3(void*) {
             realVoltsPolling = false;
         }
     }
-
+    
     do {
         mutexLock(&mutex_Misc);
+        
+        // Get sys-clk data
+        if (R_SUCCEEDED(sysclkCheck)) {
+            SysClkContext sysclkCTX;
+            if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
+                partLoad[SysClkPartLoad_EMC] = sysclkCTX.partLoad[SysClkPartLoad_EMC];
+                partLoad[SysClkPartLoad_EMCCpu] = sysclkCTX.partLoad[SysClkPartLoad_EMCCpu];
+				
+				realCPU_Temp = sysclkCTX.temps[HorizonOCThermalSensor_CPU];
+				realGPU_Temp = sysclkCTX.temps[HorizonOCThermalSensor_GPU];
+				realRAM_Temp = sysclkCTX.temps[HorizonOCThermalSensor_MEM];
+                
+                realCPU_mV = sysclkCTX.voltages[HocClkVoltage_CPU]; 
+                realGPU_mV = sysclkCTX.voltages[HocClkVoltage_GPU]; 
+                realRAM_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDD2]; 
+                realSOC_mV = sysclkCTX.voltages[HocClkVoltage_SOC];
+                const u32 vdd2_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDD2] / 1000;  // µV to mV
+                const u32 vddq_mV = sysclkCTX.voltages[HocClkVoltage_EMCVDDQ] / 1000;  // µV to mV
+                realRAM_mV = vdd2_mV * 100000 + vddq_mV * 10;
 
+            }
+        }
+
+        
         // Temperatures
         if (R_SUCCEEDED(i2cCheck)) {
             Tmp451GetSocTemp(&SOC_temperatureF);
@@ -706,7 +741,7 @@ void Misc3(void*) {
         if (R_SUCCEEDED(tcCheck)) {
             tcGetSkinTemperatureMilliC(&skin_temperaturemiliC);
         }
-
+        
         // Fan
         if (R_SUCCEEDED(pwmCheck)) {
             double temp = 0;
@@ -720,21 +755,16 @@ void Misc3(void*) {
                 }
             }
         }
-
+        
         // GPU Load
         if (R_SUCCEEDED(nvCheck)) {
             nvIoctl(fd, NVGPU_GPU_IOCTL_PMU_GET_GPU_LOAD, &GPU_Load_u);
         }
-
-        SysClkContext sysclkCTX;
-        if (R_SUCCEEDED(sysclkIpcGetCurrentContext(&sysclkCTX))) {
-            partLoad[SysClkPartLoad_EMC] = sysclkCTX.partLoad[SysClkPartLoad_EMC];
-        }
-
+        
         mutexUnlock(&mutex_Misc);
-
+        
     } while (!leventWait(&threadexit, 1'000'000'000)); // 1 second timeout
-
+    
     // Cleanup voltage reading if initialized
     if (canReadVoltages) {
         rgltrExit();
@@ -1239,6 +1269,7 @@ struct FullSettings {
     bool setPosRight;
     bool showRealFreqs;
     bool realVolts; 
+	bool realTemps;
     bool showDeltas;
     bool showTargetFreqs;
     bool showFPS;
@@ -1256,6 +1287,7 @@ struct MiniSettings {
     uint8_t refreshRate;
     bool realFrequencies;
     bool realVolts;
+	bool realTemps;
     bool showFullCPU;
     bool showFullResolution;
     bool showFanPercentage;
@@ -1276,8 +1308,8 @@ struct MiniSettings {
     uint16_t catColor;
     uint16_t textColor;
     std::string show;
-    bool showRAMLoad;
-    bool showRAMLoadCPUGPU;
+    bool showpartLoad;
+    bool showpartLoadCPUGPU;
     bool invertBatteryDisplay;
     bool disableScreenshots;
     bool sleepExit;
@@ -1291,6 +1323,7 @@ struct MicroSettings {
     uint8_t refreshRate;
     bool realFrequencies;
     bool realVolts; 
+	bool realTemps;
     bool showFullCPU;
     bool showFullResolution;
     bool showSOCVoltage;
@@ -1310,7 +1343,7 @@ struct MicroSettings {
     uint16_t catColor;
     uint16_t textColor;
     std::string show;
-    bool showRAMLoad;
+    bool showpartLoad;
     bool setPosBottom;
     bool disableScreenshots;
     bool sleepExit;
@@ -1333,6 +1366,7 @@ struct FpsCounterSettings {
 
 struct FpsGraphSettings {
     bool showInfo;
+	bool realTemps;
     uint8_t refreshRate;
     uint16_t backgroundColor;
     uint16_t focusBackgroundColor;
@@ -1373,6 +1407,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
     // Initialize defaults
     settings->realFrequencies = true;
     settings->realVolts = true;
+	settings->realTemps = true;
     settings->showFullCPU = false;
     settings->showFullResolution = true;
     settings->showFanPercentage = true;
@@ -1394,8 +1429,8 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
     convertStrToRGBA4444("#2DFF", &(settings->catColor));
     convertStrToRGBA4444("#FFFF", &(settings->textColor));
     settings->show = "DTC+BAT+CPU+GPU+RAM+TMP+FPS+RES";
-    settings->showRAMLoad = true;
-    settings->showRAMLoadCPUGPU = false;
+    settings->showpartLoad = true;
+    settings->showpartLoadCPUGPU = false;
     settings->invertBatteryDisplay = true;
     settings->refreshRate = 1;
     settings->disableScreenshots = false;
@@ -1449,7 +1484,13 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
         convertToUpper(key);
         settings->realVolts = (key == "TRUE");
     }
-    
+	
+    it = section.find("real_temps");
+	if (it != section.end()) {
+		key = it->second;
+		convertToUpper(key);
+		settings->realTemps = (key == "TRUE");
+	}
     // Process font sizes with shared bounds
     static constexpr long minFontSize = 8;
     static constexpr long maxFontSize = 22;
@@ -1587,7 +1628,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
     if (it != section.end()) {
         key = it->second;
         convertToUpper(key);
-        settings->showRAMLoad = (key != "FALSE");
+        settings->showpartLoad = (key != "FALSE");
     }
 
     // Process CPU/GPU RAM load flag
@@ -1595,7 +1636,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
     if (it != section.end()) {
         key = it->second;
         convertToUpper(key);
-        settings->showRAMLoadCPUGPU = (key != "FALSE");
+        settings->showpartLoadCPUGPU = (key != "FALSE");
     }
 
     // Invert the battery display value
@@ -1665,6 +1706,7 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
     // Initialize defaults
     settings->realFrequencies = true;
     settings->realVolts = true;
+	settings->realTemps = true;
     settings->showFullCPU = false;
     settings->showFullResolution = false;
     settings->showSOCVoltage = true;
@@ -1684,7 +1726,7 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
     convertStrToRGBA4444("#2DFF", &(settings->catColor));
     convertStrToRGBA4444("#FFFF", &(settings->textColor));
     settings->show = "FPS+CPU+GPU+RAM+SOC+BAT+DTC";
-    settings->showRAMLoad = true;
+    settings->showpartLoad = true;
     settings->setPosBottom = false;
     settings->disableScreenshots = false;
     settings->sleepExit = false;
@@ -1734,6 +1776,13 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
         convertToUpper(key);
         settings->realVolts = (key == "TRUE");
     }
+	
+	it = section.find("real_temps");
+	if (it != section.end()) {
+		key = it->second;
+		convertToUpper(key);
+		settings->realTemps = (key == "TRUE");
+		}
     
     it = section.find("show_full_cpu");
     if (it != section.end()) {
@@ -1874,7 +1923,7 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
     if (it != section.end()) {
         key = it->second;
         convertToUpper(key);
-        settings->showRAMLoad = (key != "FALSE");
+        settings->showpartLoad = (key != "FALSE");
     }
     
     // Process show string
@@ -2046,6 +2095,7 @@ ALWAYS_INLINE void GetConfigSettings(FpsCounterSettings* settings) {
 ALWAYS_INLINE void GetConfigSettings(FpsGraphSettings* settings) {
     // Initialize defaults
     settings->showInfo = true;
+	settings->realTemps = false;
     //settings->setPos = 0;
     convertStrToRGBA4444("#0009", &(settings->backgroundColor));
     convertStrToRGBA4444("#000F", &(settings->focusBackgroundColor));
@@ -2124,6 +2174,15 @@ ALWAYS_INLINE void GetConfigSettings(FpsGraphSettings* settings) {
         convertToUpper(key);
         settings->showInfo = (key == "TRUE");
     }
+	
+	    it = section.find("real_temps");
+    if (it != section.end()) {
+        key = it->second;
+        convertToUpper(key);
+        settings->realTemps = (key == "TRUE");
+    }
+
+    it = section.find("use_dynamic_colors");
 
     it = section.find("use_dynamic_colors");
     if (it != section.end()) {
@@ -2192,6 +2251,7 @@ ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
     settings->setPosRight = false;
     settings->refreshRate = 1;
     settings->showRealFreqs = true;
+	settings->realTemps = false;
     settings->showDeltas = true;
     settings->showTargetFreqs = true;
     settings->showFPS = true;
@@ -2250,6 +2310,13 @@ ALWAYS_INLINE void GetConfigSettings(FullSettings* settings) {
         settings->showRealFreqs = !(key == "FALSE");
     }
     
+	it = section.find("real_temps");
+	if (it != section.end()) {
+		key = it->second;
+		convertToUpper(key);
+		settings->realTemps = (key == "TRUE");
+	}
+	
     it = section.find("show_deltas");
     if (it != section.end()) {
         key = it->second;

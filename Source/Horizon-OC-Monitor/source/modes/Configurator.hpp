@@ -1,24 +1,24 @@
 /*
  * Mode-Specific Configuration Settings
- *
+ * 
  * Based on actual settings structures, each mode only shows applicable settings:
- *
- * Mini Mode: Refresh Rate, Colors (background, focus_background, separator, category, text),
+ * 
+ * Mini Mode: Refresh Rate, Colors (background, focus_background, separator, category, text), 
  *           Toggles, Font Sizes, Elements, DTC Format
- *
- * Micro Mode: Refresh Rate, Colors (background, separator, category, text), Toggles,
+ * 
+ * Micro Mode: Refresh Rate, Colors (background, separator, category, text), Toggles, 
  *            Font Sizes, Elements, Text Alignment, Vertical Position (Top/Bottom only), DTC Format
- *
- * Full Mode: Refresh Rate, Toggles (show_real_freqs, show_deltas, etc.),
+ * 
+ * Full Mode: Refresh Rate, Toggles (show_real_freqs, show_deltas, etc.), 
  *           Horizontal Position (Left/Right only) - NO colors, fonts, or elements
- *
- * FPS Counter: Refresh Rate, Colors (background, text only), Font Sizes,
+ * 
+ * FPS Counter: Refresh Rate, Colors (background, text only), Font Sizes, 
  *             Horizontal/Vertical Position
- *
- * FPS Graph: Refresh Rate, Colors (8 graph-specific colors), Toggles (show_info only),
+ * 
+ * FPS Graph: Refresh Rate, Colors (8 graph-specific colors), Toggles (show_info only), 
  *           Horizontal/Vertical Position - NO fonts
- *
- * Game Resolutions: Refresh Rate, Colors (background, category, text only),
+ * 
+ * Game Resolutions: Refresh Rate, Colors (background, category, text only), 
  *                  Horizontal/Vertical Position - NO toggles, fonts, or elements
  */
 
@@ -81,9 +81,9 @@ private:
     bool isFPSCounterMode;
     bool isFPSGraphMode;
     bool isGameResolutionsMode;
-
+    
 public:
-    AlphaSelector(const std::string& mode, const std::string& key, const std::string& displayTitle)
+    AlphaSelector(const std::string& mode, const std::string& key, const std::string& displayTitle) 
         : modeName(mode), colorKey(key), title(displayTitle) {
             isMiniMode = (mode == "Mini");
             isMicroMode = (mode == "Micro");
@@ -94,7 +94,7 @@ public:
     ~AlphaSelector() {
         lastSelectedListItem = nullptr;
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader(title));
@@ -105,14 +105,14 @@ public:
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
         else if (isGameResolutionsMode) section = "game_resolutions";
-
+        
         // Get current color value and extract alpha
         std::string currentColor = ult::parseValueFromIniSection(configIniPath, section, colorKey);
         if (currentColor.empty()) {
             currentColor = "#0009"; // Default
         }
         std::string currentAlpha = extractAlphaFromColor(currentColor);
-
+        
         // Alpha options
         static const std::vector<std::pair<std::string, char>> alphaOptions = {
             {"Transparent", '0'},
@@ -127,7 +127,7 @@ public:
             {"90%", 'E'},
             {"Opaque", 'F'}
         };
-
+        
         for (const auto& option : alphaOptions) {
             auto* alphaItem = new tsl::elm::ListItem(option.first);
             if (currentAlpha[0] == option.second) {
@@ -139,10 +139,10 @@ public:
                     // Get current color and update only the alpha
                     std::string color = ult::parseValueFromIniSection(configIniPath, section, colorKey);
                     if (color.empty()) color = "#0009";
-
+                    
                     std::string newColor = setAlphaInColor(color, option.second);
                     ult::setIniFileValue(configIniPath, section, colorKey, newColor);
-
+                    
                     alphaItem->setValue(ult::CHECKMARK_SYMBOL);
                     if (lastSelectedListItem && lastSelectedListItem != alphaItem) {
                         lastSelectedListItem->setValue("");
@@ -154,14 +154,14 @@ public:
             });
             list->addItem(alphaItem);
         }
-
+        
         list->jumpToItem("", ult::CHECKMARK_SYMBOL, false);
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Alpha");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -169,7 +169,7 @@ public:
             jumpItemName = title;
             jumpItemValue = "";
             jumpItemExactMatch = false;
-
+            
             tsl::swapTo<ColorConfig>(SwapDepth(2), modeName);
             return true;
         }
@@ -214,7 +214,7 @@ private:
     std::string modeName;
     bool isMiniMode;
     bool isMicroMode;
-
+    
 public:
     DTCFormatConfig(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
@@ -223,20 +223,20 @@ public:
     ~DTCFormatConfig() {
         lastSelectedListItem = nullptr;
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("DTC Format"));
 
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string currentValue = ult::parseValueFromIniSection(configIniPath, section, "dtc_format");
-
+        
         // Handle default values
         if (currentValue.empty()) {
             currentValue = isMiniMode ? "%m-%d-%Y"+ult::DIVIDER_SYMBOL+"%H:%M:%S" : "%H:%M:%S";
         }
-
-
+        
+        
         for (const auto& format : dtcFormats) {
             auto* formatItem = new tsl::elm::ListItem(format.first);
             //formatItem->setValue(format.second);
@@ -258,15 +258,15 @@ public:
             });
             list->addItem(formatItem);
         }
-
+        
         // Jump to currently selected item
         list->jumpToItem("", ult::CHECKMARK_SYMBOL, false);
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "DTC Format");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -274,7 +274,7 @@ public:
             jumpItemName = "DTC Format";
             jumpItemValue = "";
             jumpItemExactMatch = false;
-
+            
             tsl::swapTo<ConfiguratorOverlay>(SwapDepth(2), modeName);
             return true;
         }
@@ -292,7 +292,7 @@ private:
     bool isFPSGraphMode;
     bool isGameResolutionsMode;
     bool isFPSCounterMode;
-
+    
 public:
     TogglesConfig(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
@@ -302,11 +302,11 @@ public:
         isGameResolutionsMode = (mode == "Game Resolutions");
         isFPSCounterMode = (mode == "FPS Counter");
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Toggles"));
-
+        
         if (isFPSGraphMode) {
             // FPS Graph: show_info and disable_screenshots
             auto* showInfo = new tsl::elm::ToggleListItem("Info", getCurrentShowInfo());
@@ -314,6 +314,12 @@ public:
                 ult::setIniFileValue(configIniPath, "fps-graph", "show_info", state ? "true" : "false");
             });
             list->addItem(showInfo);
+			
+		    auto* realTemps = new tsl::elm::ToggleListItem("Real Temperatures", getCurrentFPSGraphRealTemps());
+			realTemps->setStateChangedListener([this](bool state) {
+				ult::setIniFileValue(configIniPath, "fps-graph", "real_temps", state ? "true" : "false");
+			});
+			list->addItem(realTemps);
 
             auto* dynamicColors = new tsl::elm::ToggleListItem("Use Dynamic Colors", getCurrentUseDynamicColors());
             dynamicColors->setStateChangedListener([this](bool state) {
@@ -326,7 +332,7 @@ public:
                 ult::setIniFileValue(configIniPath, "fps-graph", "disable_screenshots", state ? "true" : "false");
             });
             list->addItem(disableScreenshots);
-
+            
         } else if (isFullMode) {
             // Full mode: specific full toggles
             auto* realFreqs = new tsl::elm::ToggleListItem("Real Freqs", getCurrentShowRealFreqs());
@@ -334,31 +340,37 @@ public:
                 ult::setIniFileValue(configIniPath, "full", "show_real_freqs", state ? "true" : "false");
             });
             list->addItem(realFreqs);
-
+            
+			auto* realTemps = new tsl::elm::ToggleListItem("Real Temperatures", getCurrentFullRealTemps());
+			realTemps->setStateChangedListener([this](bool state) {
+				ult::setIniFileValue(configIniPath, "full", "real_temps", state ? "true" : "false");
+			});
+			list->addItem(realTemps);
+			
             auto* showDeltas = new tsl::elm::ToggleListItem("Deltas", getCurrentShowDeltas());
             showDeltas->setStateChangedListener([this](bool state) {
                 ult::setIniFileValue(configIniPath, "full", "show_deltas", state ? "true" : "false");
             });
             list->addItem(showDeltas);
-
+            
             auto* targetFreqs = new tsl::elm::ToggleListItem("Target Freqs", getCurrentShowTargetFreqs());
             targetFreqs->setStateChangedListener([this](bool state) {
                 ult::setIniFileValue(configIniPath, "full", "show_target_freqs", state ? "true" : "false");
             });
             list->addItem(targetFreqs);
-
+            
             auto* showFPS = new tsl::elm::ToggleListItem("FPS", getCurrentShowFPS());
             showFPS->setStateChangedListener([this](bool state) {
                 ult::setIniFileValue(configIniPath, "full", "show_fps", state ? "true" : "false");
             });
             list->addItem(showFPS);
-
+            
             auto* showRES = new tsl::elm::ToggleListItem("RES", getCurrentShowRES());
             showRES->setStateChangedListener([this](bool state) {
                 ult::setIniFileValue(configIniPath, "full", "show_res", state ? "true" : "false");
             });
             list->addItem(showRES);
-
+            
             auto* showRDSD = new tsl::elm::ToggleListItem("Read Speed", getCurrentShowRDSD());
             showRDSD->setStateChangedListener([this](bool state) {
                 ult::setIniFileValue(configIniPath, "full", "show_read_speed", state ? "true" : "false");
@@ -376,36 +388,42 @@ public:
                 ult::setIniFileValue(configIniPath, "full", "disable_screenshots", state ? "true" : "false");
             });
             list->addItem(disableScreenshots);
-
+            
         } else if (isMiniMode || isMicroMode) {
             // Mini/Micro modes: shared toggles
             const std::string section = isMiniMode ? "mini" : "micro";
-
+            
             auto* realFreqs = new tsl::elm::ToggleListItem("Real Frequencies", getCurrentRealFreqs());
             realFreqs->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "real_freqs", state ? "true" : "false");
             });
             list->addItem(realFreqs);
-
+            
             auto* realVolts = new tsl::elm::ToggleListItem("Real Voltages", getCurrentRealVolts());
             realVolts->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "real_volts", state ? "true" : "false");
             });
             list->addItem(realVolts);
-
+			
+			auto* realTemps = new tsl::elm::ToggleListItem("Real Temperatures", getCurrentRealTemps());
+			realTemps->setStateChangedListener([this, section](bool state) {
+				ult::setIniFileValue(configIniPath, section, "real_temps", state ? "true" : "false");
+			});
+			list->addItem(realTemps);
+            
             auto* showFullCPU = new tsl::elm::ToggleListItem("Full CPU", getCurrentShowFullCPU());
             showFullCPU->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "show_full_cpu", state ? "true" : "false");
             });
             list->addItem(showFullCPU);
-
-            auto* showVDDQ = new tsl::elm::ToggleListItem("VDDQ", getCurrentShowVDDQ());
+            
+            auto* showVDDQ = new tsl::elm::ToggleListItem("VDD2", getCurrentShowVDDQ());
             showVDDQ->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "show_vddq", state ? "true" : "false");
             });
             list->addItem(showVDDQ);
 
-            auto* showVDD2 = new tsl::elm::ToggleListItem("VDD2", getCurrentShowVDD2());
+            auto* showVDD2 = new tsl::elm::ToggleListItem("VDDQ", getCurrentShowVDD2());
             showVDD2->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "show_vdd2", state ? "true" : "false");
             });
@@ -416,7 +434,7 @@ public:
                 ult::setIniFileValue(configIniPath, section, "show_full_res", state ? "true" : "false");
             });
             list->addItem(showFullRes);
-
+            
             auto* socVoltage = new tsl::elm::ToggleListItem("SOC Voltage", getCurrentShowSOCVoltage());
             socVoltage->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "show_soc_voltage", state ? "true" : "false");
@@ -424,11 +442,11 @@ public:
             list->addItem(socVoltage);
 
             if (isMiniMode) {
-                auto* PartLoadCPUGPU = new tsl::elm::ToggleListItem("RAM Load CPU/GPU", getCurrentShowRAMLoadCPUGPU());
-                PartLoadCPUGPU->setStateChangedListener([this, section](bool state) {
+                auto* partLoadCPUGPU = new tsl::elm::ToggleListItem("RAM Load CPU/GPU", getCurrentShowpartLoadCPUGPU());
+                partLoadCPUGPU->setStateChangedListener([this, section](bool state) {
                     ult::setIniFileValue(configIniPath, section, "show_RAM_load_CPU_GPU", state ? "true" : "false");
                 });
-                list->addItem(PartLoadCPUGPU);
+                list->addItem(partLoadCPUGPU);
             }
 
             if (isMiniMode || isMicroMode) {
@@ -438,7 +456,7 @@ public:
                 });
                 list->addItem(invertBatteryDisplay);
             }
-
+            
             auto* dtcSymbol = new tsl::elm::ToggleListItem("Use DTC Symbol", getCurrentUseDTCSymbol());
             dtcSymbol->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "use_dtc_symbol", state ? "true" : "false");
@@ -462,7 +480,7 @@ public:
                 ult::setIniFileValue(configIniPath, section, "sleep_exit", state ? "true" : "false");
             });
             list->addItem(sleepExit);
-
+            
         } else if (isGameResolutionsMode) {
             // Game Resolutions mode: only disable_screenshots
             auto* disableScreenshots = new tsl::elm::ToggleListItem("Disable Screenshots", getCurrentDisableScreenshots("game_resolutions"));
@@ -470,7 +488,7 @@ public:
                 ult::setIniFileValue(configIniPath, "game_resolutions", "disable_screenshots", state ? "true" : "false");
             });
             list->addItem(disableScreenshots);
-
+            
         } else if (isFPSCounterMode) {
             // FPS Counter mode: only disable_screenshots
             auto* integerCounter = new tsl::elm::ToggleListItem("Use Integer Counter", getCurrentUseIntegerCounter("fps-counter"));
@@ -486,7 +504,7 @@ public:
             });
             list->addItem(disableScreenshots);
         }
-
+        
         list->jumpToItem(jumpItemName, jumpItemValue, jumpItemExactMatch);
         {
             jumpItemName = "";
@@ -498,7 +516,7 @@ public:
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -508,7 +526,7 @@ public:
         }
         return false;
     }
-
+    
 private:
     // Helper methods for getting current toggle states
     bool getCurrentShowInfo() {
@@ -517,7 +535,14 @@ private:
         convertToUpper(value);
         return value == "TRUE";
     }
-
+	
+	bool getCurrentFPSGraphRealTemps() {
+		std::string value = ult::parseValueFromIniSection(configIniPath, "fps-graph", "real_temps");
+		if (value.empty()) return false;
+		convertToUpper(value);
+		return value == "TRUE";
+	}
+    
     bool getCurrentRealFreqs() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "real_freqs");
@@ -525,7 +550,7 @@ private:
         convertToUpper(value);
         return value == "TRUE";
     }
-
+    
     bool getCurrentRealVolts() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "real_volts");
@@ -533,7 +558,15 @@ private:
         convertToUpper(value);
         return value == "TRUE";
     }
-
+	
+	bool getCurrentRealTemps() {
+		const std::string section = isMiniMode ? "mini" : "micro";
+		std::string value = ult::parseValueFromIniSection(configIniPath, section, "real_temps");
+		if (value.empty()) return true;
+		convertToUpper(value);
+		return value == "TRUE";
+	}
+    
     bool getCurrentShowFullCPU() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "show_full_cpu");
@@ -558,7 +591,7 @@ private:
         return value == "TRUE";
     }
 
-
+    
     bool getCurrentShowFullRes() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "show_full_res");
@@ -566,7 +599,7 @@ private:
         convertToUpper(value);
         return value != "FALSE";
     }
-
+    
     bool getCurrentShowSOCVoltage() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "show_soc_voltage");
@@ -575,7 +608,7 @@ private:
         return value != "FALSE";
     }
 
-    bool getCurrentShowRAMLoadCPUGPU() {
+    bool getCurrentShowpartLoadCPUGPU() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "show_RAM_load_CPU_GPU");
         if (value.empty()) return false; // Default: false for mini, true for micro
@@ -590,7 +623,7 @@ private:
         convertToUpper(value);
         return value != "FALSE";
     }
-
+    
     bool getCurrentUseDTCSymbol() {
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "use_dtc_symbol");
@@ -627,7 +660,7 @@ private:
         convertToUpper(value);
         return value != "FALSE";  // True if not explicitly "FALSE"
     }
-
+    
     // Full mode toggle helpers
     bool getCurrentShowRealFreqs() {
         std::string value = ult::parseValueFromIniSection(configIniPath, "full", "show_real_freqs");
@@ -635,35 +668,42 @@ private:
         convertToUpper(value);
         return value != "FALSE";
     }
-
+	
+	bool getCurrentFullRealTemps() {
+		std::string value = ult::parseValueFromIniSection(configIniPath, "full", "real_temps");
+		if (value.empty()) return false;
+		convertToUpper(value);
+		return value == "TRUE";
+	}
+    
     bool getCurrentShowDeltas() {
         std::string value = ult::parseValueFromIniSection(configIniPath, "full", "show_deltas");
         if (value.empty()) return true;
         convertToUpper(value);
         return value != "FALSE";
     }
-
+    
     bool getCurrentShowTargetFreqs() {
         std::string value = ult::parseValueFromIniSection(configIniPath, "full", "show_target_freqs");
         if (value.empty()) return true;
         convertToUpper(value);
         return value != "FALSE";
     }
-
+    
     bool getCurrentShowFPS() {
         std::string value = ult::parseValueFromIniSection(configIniPath, "full", "show_fps");
         if (value.empty()) return true;
         convertToUpper(value);
         return value != "FALSE";
     }
-
+    
     bool getCurrentShowRES() {
         std::string value = ult::parseValueFromIniSection(configIniPath, "full", "show_res");
         if (value.empty()) return true;
         convertToUpper(value);
         return value != "FALSE";
     }
-
+    
     bool getCurrentShowRDSD() {
         std::string value = ult::parseValueFromIniSection(configIniPath, "full", "show_read_speed");
         if (value.empty()) return true;
@@ -683,7 +723,7 @@ private:
     bool isFPSCounterMode;
     bool isFPSGraphMode;
     int currentRate;
-
+    
 public:
     RefreshRateConfig(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
@@ -692,7 +732,7 @@ public:
         isGameResolutionsMode = (mode == "Game Resolutions");
         isFPSCounterMode = (mode == "FPS Counter");
         isFPSGraphMode = (mode == "FPS Graph");
-
+        
         std::string section;
         if (isMiniMode) section = "mini";
         else if (isMicroMode) section = "micro";
@@ -700,7 +740,7 @@ public:
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         const std::string value = ult::parseValueFromIniSection(configIniPath, section, "refresh_rate");
         int defaultRate = (isGameResolutionsMode) ? 10 : ((isFPSCounterMode || isFPSGraphMode) ? 30 : 1);
         currentRate = value.empty() ? defaultRate : std::clamp(atoi(value.c_str()), 1, 60);
@@ -709,7 +749,7 @@ public:
     ~RefreshRateConfig() {
         lastSelectedListItem = nullptr;
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Refresh Rate"));
@@ -730,7 +770,7 @@ public:
                     else if (isGameResolutionsMode) section = "game_resolutions";
                     else if (isFPSCounterMode) section = "fps-counter";
                     else if (isFPSGraphMode) section = "fps-graph";
-
+                    
                     ult::setIniFileValue(configIniPath, section, "refresh_rate", std::to_string(rate));
                     rateItem->setValue(ult::CHECKMARK_SYMBOL);
                     if (lastSelectedListItem && rateItem != lastSelectedListItem)
@@ -742,14 +782,14 @@ public:
             });
             list->addItem(rateItem);
         }
-
+        
         list->jumpToItem("", ult::CHECKMARK_SYMBOL, false);
 
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Configuration");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -757,7 +797,7 @@ public:
             jumpItemName = "Refresh Rate";
             jumpItemValue = "";
             jumpItemExactMatch = false;
-
+            
             tsl::swapTo<ConfiguratorOverlay>(SwapDepth(2), modeName);
             return true;
         }
@@ -769,42 +809,21 @@ public:
 class FramePaddingConfig : public tsl::Gui {
 private:
     std::string modeName;
-    bool isMiniMode;
-    bool isGameResolutionsMode;
-    bool isFPSCounterMode;
-    bool isFPSGraphMode;
     int currentPadding;
-
+    
 public:
     FramePaddingConfig(const std::string& mode) : modeName(mode) {
-        isMiniMode = (mode == "Mini");
-        isGameResolutionsMode = (mode == "Game Resolutions");
-        isFPSCounterMode = (mode == "FPS Counter");
-        isFPSGraphMode = (mode == "FPS Graph");
-
-        std::string section;
-        if (isMiniMode) section = "mini";
-        else if (isGameResolutionsMode) section = "game_resolutions";
-        else if (isFPSCounterMode) section = "fps-counter";
-        else if (isFPSGraphMode) section = "fps-graph";
-
-        const std::string value = ult::parseValueFromIniSection(configIniPath, section, "frame_padding");
-        currentPadding = value.empty() ? 10 : std::clamp(atoi(value.c_str()), 0, 14);
+        const std::string value = ult::parseValueFromIniSection(configIniPath, "mini", "frame_padding");
+        currentPadding = value.empty() ? 10 : std::clamp(atoi(value.c_str()), 0, 14); // max value 14
     }
 
     ~FramePaddingConfig() {
         lastSelectedListItem = nullptr;
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Frame Padding"));
-
-        std::string section;
-        if (isMiniMode) section = "mini";
-        else if (isGameResolutionsMode) section = "game_resolutions";
-        else if (isFPSCounterMode) section = "fps-counter";
-        else if (isFPSGraphMode) section = "fps-graph";
 
         static const std::vector<int> paddingValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
         for (int padding : paddingValues) {
@@ -813,9 +832,9 @@ public:
                 paddingItem->setValue(ult::CHECKMARK_SYMBOL);
                 lastSelectedListItem = paddingItem;
             }
-            paddingItem->setClickListener([this, paddingItem, padding, section](uint64_t keys) {
+            paddingItem->setClickListener([this, paddingItem, padding](uint64_t keys) {
                 if (keys & KEY_A) {
-                    ult::setIniFileValue(configIniPath, section, "frame_padding", std::to_string(padding));
+                    ult::setIniFileValue(configIniPath, "mini", "frame_padding", std::to_string(padding));
                     paddingItem->setValue(ult::CHECKMARK_SYMBOL);
                     if (lastSelectedListItem && paddingItem != lastSelectedListItem)
                         lastSelectedListItem->setValue("");
@@ -826,14 +845,14 @@ public:
             });
             list->addItem(paddingItem);
         }
-
+        
         list->jumpToItem("", ult::CHECKMARK_SYMBOL, false);
 
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Configuration");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -841,7 +860,7 @@ public:
             jumpItemName = "Frame Padding";
             jumpItemValue = "";
             jumpItemExactMatch = false;
-
+            
             tsl::swapTo<ConfiguratorOverlay>(SwapDepth(2), modeName);
             return true;
         }
@@ -859,9 +878,9 @@ private:
     bool isMicroMode;
     bool isFPSCounterMode;
     std::string title;
-
+    
 public:
-    FontSizeSelector(const std::string& mode, const std::string& type)
+    FontSizeSelector(const std::string& mode, const std::string& type) 
         : modeName(mode), fontType(type) {
             isMiniMode = (mode == "Mini");
             isMicroMode = (mode == "Micro");
@@ -873,7 +892,7 @@ public:
     ~FontSizeSelector() {
         lastSelectedListItem = nullptr;
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader(title));
@@ -882,19 +901,19 @@ public:
         if (isMiniMode) section = "mini";
         else if (isMicroMode) section = "micro";
         else if (isFPSCounterMode) section = "fps-counter";
-
+        
         const std::string keyName = fontType + "_font_size";
         const std::string currentValue = ult::parseValueFromIniSection(configIniPath, section, keyName);
         int defaultSize = isFPSCounterMode ? 40 : 15;
         const int currentSize = currentValue.empty() ? defaultSize : atoi(currentValue.c_str());
-
+        
         // Font size range depends on mode
         int minSize = 8;
         int maxSize;
         if (isFPSCounterMode) maxSize = 150;
         else if (isMiniMode) maxSize = 22;
         else maxSize = 18; // Micro mode
-
+        
         for (int size = minSize; size <= maxSize; size++) {
             auto* sizeItem = new tsl::elm::ListItem(std::to_string(size) + " pt");
             if (size == currentSize) {
@@ -914,14 +933,14 @@ public:
             });
             list->addItem(sizeItem);
         }
-
+        
         list->jumpToItem("", ult::CHECKMARK_SYMBOL, false);
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Font Sizes");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -929,7 +948,7 @@ public:
             jumpItemName = title;
             jumpItemValue = "";
             jumpItemExactMatch = false;
-
+            
             tsl::swapTo<FontSizeConfig>(SwapDepth(2), modeName);
             return true;
         }
@@ -944,30 +963,30 @@ private:
     bool isMiniMode;
     bool isMicroMode;
     bool isFPSCounterMode;
-
+    
 public:
     FontSizeConfig(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
         isMicroMode = (mode == "Micro");
         isFPSCounterMode = (mode == "FPS Counter");
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Font Sizes"));
-
+        
         std::string section;
         if (isMiniMode) section = "mini";
         else if (isMicroMode) section = "micro";
         else if (isFPSCounterMode) section = "fps-counter";
-
+        
         const std::string handheldValue = ult::parseValueFromIniSection(configIniPath, section, "handheld_font_size");
         const std::string dockedValue = ult::parseValueFromIniSection(configIniPath, section, "docked_font_size");
-
+        
         int defaultSize = isFPSCounterMode ? 40 : 15;
         const int handheldSize = handheldValue.empty() ? defaultSize : atoi(handheldValue.c_str());
         const int dockedSize = dockedValue.empty() ? defaultSize : atoi(dockedValue.c_str());
-
+        
         auto* handheldItem = new tsl::elm::ListItem("Handheld Font Size");
         handheldItem->setValue(std::to_string(handheldSize) + " pt");
         handheldItem->setClickListener([this](uint64_t keys) {
@@ -978,7 +997,7 @@ public:
             return false;
         });
         list->addItem(handheldItem);
-
+        
         auto* dockedItem = new tsl::elm::ListItem("Docked Font Size");
         dockedItem->setValue(std::to_string(dockedSize) + " pt");
         dockedItem->setClickListener([this](uint64_t keys) {
@@ -989,7 +1008,7 @@ public:
             return false;
         });
         list->addItem(dockedItem);
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Configuration");
         rootFrame->setContent(list);
         list->jumpToItem(jumpItemName, jumpItemValue, jumpItemExactMatch);
@@ -1000,7 +1019,7 @@ public:
         }
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -1027,9 +1046,9 @@ private:
     bool isFPSGraphMode;
     bool isBackgroundColor;
     bool isTextBasedColor;
-
+    
 public:
-    ColorSelector(const std::string& mode, const std::string& title, const std::string& key, const std::string& def)
+    ColorSelector(const std::string& mode, const std::string& title, const std::string& key, const std::string& def) 
         : modeName(mode), modeTitle(title), colorKey(key), defaultValue(def) {
             isMiniMode = (mode == "Mini");
             isMicroMode = (mode == "Micro");
@@ -1037,25 +1056,25 @@ public:
             isGameResolutionsMode = (mode == "Game Resolutions");
             isFPSCounterMode = (mode == "FPS Counter");
             isFPSGraphMode = (mode == "FPS Graph");
-
+            
             // Determine if this is a background color or text-based color
-            isBackgroundColor = (key == "background_color" || key == "focus_background_color" ||
+            isBackgroundColor = (key == "background_color" || key == "focus_background_color" || 
                                (isFPSGraphMode && (key == "fps_counter_color" || key == "dashed_line_color")));
-
+            
             isTextBasedColor = (key == "text_color" || key == "separator_color" || key == "cat_color" ||
-                              (isFPSGraphMode && (key == "border_color" || key == "max_fps_text_color" ||
-                               key == "min_fps_text_color" || key == "main_line_color" ||
+                              (isFPSGraphMode && (key == "border_color" || key == "max_fps_text_color" || 
+                               key == "min_fps_text_color" || key == "main_line_color" || 
                                key == "rounded_line_color" || key == "perfect_line_color")));
         }
 
     ~ColorSelector() {
         lastSelectedListItem = nullptr;
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader(modeTitle));
-
+    
         std::string section;
         if (isMiniMode) section = "mini";
         else if (isMicroMode) section = "micro";
@@ -1063,13 +1082,13 @@ public:
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         std::string currentValue = ult::parseValueFromIniSection(configIniPath, section, colorKey);
         if (currentValue.empty()) currentValue = defaultValue;
-
+        
         // Extract the color without alpha for comparison (for backgrounds and text colors)
         std::string currentColorWithoutAlpha = extractColorWithoutAlpha(currentValue);
-
+        
         // Updated colors list with comprehensive color palette
         static const std::vector<std::pair<std::string, std::string>> colors = {
             // Grays & Basics
@@ -1079,54 +1098,54 @@ public:
             {"Light Gray", "#888F"},
             {"Silver", "#CCCF"},
             {"White", "#FFFF"},
-
+            
             // Reds
             {"Dark Red", "#800F"},
             {"Red", "#F00F"},
             {"Light Red", "#F88F"},
             {"Pink", "#F8AF"},
-
+            
             // Greens
             {"Dark Green", "#080F"},
             {"Green", "#0F0F"},
             {"Lime Green", "#0C0F"},
             {"Light Green", "#8F8F"},
-
+            
             // Blues
             {"Dark Blue", "#003F"},
             {"Blue", "#00FF"},
             {"Light Blue", "#2DFF"},
             {"Sky Blue", "#8CFF"},
-
+            
             // Purples
             {"Dark Purple", "#808F"},
             {"Purple", "#80FF"},
             {"Light Purple", "#C8FF"},
             {"Violet", "#A0FF"},
-
+            
             // Yellows & Oranges
             {"Orange", "#F80F"},
             {"Yellow", "#FF0F"},
             {"Light Yellow", "#FFCF"},
-
+            
             // Cyans & Teals
             {"Teal", "#088F"},
             {"Cyan", "#0FFF"},
             {"Light Cyan", "#8FFF"},
-
+            
             // Magentas & Pinks
             {"Magenta", "#F0FF"},
             {"Hot Pink", "#F8CF"},
-
+            
             // Browns
             {"Brown", "#840F"},
             {"Light Brown", "#A86F"}
         };
-
+        
         std::string _jumpItemValue;
         for (const auto& color : colors) {
             auto* colorItem = new tsl::elm::ListItem(color.first);
-
+            
             // For display, show the color code based on type
             std::string displayValue;
             if (isTextBasedColor || isBackgroundColor) {
@@ -1136,9 +1155,9 @@ public:
                 // For any remaining FPS Graph colors (shouldn't happen now), keep original behavior
                 displayValue = color.second;
             }
-
+            
             colorItem->setValue(displayValue);
-
+            
             // Check if this is the selected color
             bool isSelected = false;
             if (isBackgroundColor || isTextBasedColor) {
@@ -1148,17 +1167,17 @@ public:
                 // For any remaining FPS Graph colors (shouldn't happen now)
                 isSelected = (color.second == currentValue);
             }
-
+            
             if (isSelected) {
                 colorItem->setValue(displayValue + " " + ult::CHECKMARK_SYMBOL);
                 lastSelectedListItem = colorItem;
                 _jumpItemValue = displayValue + " " + ult::CHECKMARK_SYMBOL;
             }
-
+            
             colorItem->setClickListener([this, colorItem, color, section, displayValue](uint64_t keys) {
                 if (keys & KEY_A) {
                     std::string valueToSave = color.second;
-
+                    
                     if (isBackgroundColor) {
                         // For background colors, preserve existing alpha
                         std::string existingColor = ult::parseValueFromIniSection(configIniPath, section, colorKey);
@@ -1171,9 +1190,9 @@ public:
                         valueToSave = setAlphaInColor(color.second, 'F');
                     }
                     // For any remaining FPS Graph colors (shouldn't happen now), use as-is
-
+                    
                     ult::setIniFileValue(configIniPath, section, colorKey, valueToSave);
-
+                    
                     // Update the UI - clear old checkmark and set new one
                     if (lastSelectedListItem && lastSelectedListItem != colorItem) {
                         // Get the display value for the old selected item
@@ -1190,7 +1209,7 @@ public:
                         }
                         lastSelectedListItem->setValue(oldDisplayValue);
                     }
-
+                    
                     // Set new checkmark
                     colorItem->setValue(displayValue + " " + ult::CHECKMARK_SYMBOL);
                     lastSelectedListItem = colorItem;
@@ -1201,12 +1220,12 @@ public:
             list->addItem(colorItem);
         }
         list->jumpToItem("", _jumpItemValue, false);
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Colors");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -1232,7 +1251,7 @@ private:
     bool isGameResolutionsMode;
     bool isFPSCounterMode;
     bool isFPSGraphMode;
-
+    
 public:
     ColorConfig(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
@@ -1241,18 +1260,18 @@ public:
         isGameResolutionsMode = (mode == "Game Resolutions");
         isFPSCounterMode = (mode == "FPS Counter");
         isFPSGraphMode = (mode == "FPS Graph");
-
+        
         // Full mode should never access color configuration
         //if (isFullMode) {
         //    // This should not happen, but if it does, go back
         //    tsl::goBack();
         //}
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Colors"));
-
+        
         auto getCurrentColor = [this](const std::string& key, const std::string& def) {
             std::string section;
             if (isMiniMode) section = "mini";
@@ -1261,18 +1280,18 @@ public:
             else if (isGameResolutionsMode) section = "game_resolutions";
             else if (isFPSCounterMode) section = "fps-counter";
             else if (isFPSGraphMode) section = "fps-graph";
-
+            
             std::string value = ult::parseValueFromIniSection(configIniPath, section, key);
             return value.empty() ? def : value;
         };
-
+        
         auto getColorName = [](const std::string& hexColor) -> std::string {
             // Extract RGB without alpha for comparison
             std::string rgb = hexColor;
             if (hexColor.length() == 5 && hexColor[0] == '#') {
                 rgb = hexColor.substr(0, 4);
             }
-
+            
             // Map of hex colors to names (RGB only, no alpha)
             static const std::map<std::string, std::string> colorNames = {
                 // Grays & Basics
@@ -1282,50 +1301,50 @@ public:
                 {"#888", "Light Gray"},
                 {"#CCC", "Silver"},
                 {"#FFF", "White"},
-
+                
                 // Reds
                 {"#800", "Dark Red"},
                 {"#F00", "Red"},
                 {"#F88", "Light Red"},
                 {"#F8A", "Pink"},
-
+                
                 // Greens
                 {"#080", "Dark Green"},
                 {"#0F0", "Green"},
                 {"#0C0", "Lime Green"},
                 {"#8F8", "Light Green"},
-
+                
                 // Blues
                 {"#003", "Dark Blue"},
                 {"#00F", "Blue"},
                 {"#2DF", "Light Blue"},
                 {"#8CF", "Sky Blue"},
-
+                
                 // Purples
                 {"#808", "Dark Purple"},
                 {"#80F", "Purple"},
                 {"#C8F", "Light Purple"},
                 {"#A0F", "Violet"},
-
+                
                 // Yellows & Oranges
                 {"#F80", "Orange"},
                 {"#FF0", "Yellow"},
                 {"#FFC", "Light Yellow"},
-
+                
                 // Cyans & Teals
                 {"#088", "Teal"},
                 {"#0FF", "Cyan"},
                 {"#8FF", "Light Cyan"},
-
+                
                 // Magentas & Pinks
                 {"#F0F", "Magenta"},
                 {"#F8C", "Hot Pink"},
-
+                
                 // Browns
                 {"#840", "Brown"},
                 {"#A86", "Light Brown"}
             };
-
+            
             auto it = colorNames.find(rgb);
             if (it != colorNames.end()) {
                 // Special case for black/transparent disambiguation
@@ -1338,7 +1357,7 @@ public:
             }
             return rgb; // Return hex if no name found
         };
-
+        
         auto getAlphaPercentage = [](const std::string& color) -> std::string {
             if (color.length() == 5 && color[0] == '#') {
                 char alpha = color[4];
@@ -1359,7 +1378,7 @@ public:
             }
             return "60%";
         };
-
+        
         if (!isFullMode) {
             // Background Color (all modes)
             auto* bgColor = new tsl::elm::ListItem("Background Color");
@@ -1375,7 +1394,7 @@ public:
                 return false;
             });
             list->addItem(bgColor);
-
+            
             // Background Alpha (new)
             auto* bgAlpha = new tsl::elm::ListItem("Background Alpha");
             bgAlpha->setValue(getAlphaPercentage(bgCurrentColor));
@@ -1387,7 +1406,7 @@ public:
                 return false;
             });
             list->addItem(bgAlpha);
-
+        
             if (isMiniMode || isFPSCounterMode || isFPSGraphMode || isGameResolutionsMode) {
                 // Mini mode: has focus background
                 auto* focusBgColor = new tsl::elm::ListItem("Focus Color");
@@ -1401,7 +1420,7 @@ public:
                     return false;
                 });
                 list->addItem(focusBgColor);
-
+                
                 // Focus Alpha (new)
                 auto* focusAlpha = new tsl::elm::ListItem("Focus Alpha");
                 focusAlpha->setValue(getAlphaPercentage(focusCurrentColor));
@@ -1429,7 +1448,7 @@ public:
             return false;
         });
         list->addItem(textColor);
-
+        
         if (isFPSGraphMode) {
             // FPS Graph specific colors
             struct ColorSetting {
@@ -1438,7 +1457,7 @@ public:
                 std::string defaultVal;
                 bool isBackgroundType;  // true for colors that allow alpha adjustment
             };
-
+            
             // Game Resolutions: only category color (no separator)
             auto* catColor = new tsl::elm::ListItem("Category Color");
             catColor->setValue(getColorName(getCurrentColor("cat_color", "#0F0F")));
@@ -1461,11 +1480,11 @@ public:
                 {"Rounded Line", "rounded_line_color", "#F0FF", false},   // text type
                 {"Perfect Line", "perfect_line_color", "#0C0F", false}    // text type
             };
-
+            
             for (const auto& color : fpsGraphColors) {
                 auto* colorItem = new tsl::elm::ListItem(color.name + " Color");
                 const std::string currentVal = getCurrentColor(color.key, color.defaultVal);
-
+                
                 if (color.isBackgroundType) {
                     // For background-type colors, show color name
                     colorItem->setValue(getColorName(currentVal));
@@ -1473,7 +1492,7 @@ public:
                     // For text-type colors, show color name
                     colorItem->setValue(getColorName(currentVal));
                 }
-
+                
                 colorItem->setClickListener([this, color](uint64_t keys) {
                     if (keys & KEY_A) {
                         tsl::changeTo<ColorSelector>(modeName, color.name, color.key, color.defaultVal);
@@ -1482,7 +1501,7 @@ public:
                     return false;
                 });
                 list->addItem(colorItem);
-
+                
                 // Add alpha selector for background-type colors
                 if (color.isBackgroundType) {
                     auto* alphaItem = new tsl::elm::ListItem(color.name + " Alpha");
@@ -1522,7 +1541,7 @@ public:
                 return false;
             });
             list->addItem(catColor2);
-
+    
             auto* sepColor = new tsl::elm::ListItem("Separator Color");
             // Display color name for separator colors
             sepColor->setValue(getColorName(getCurrentColor("separator_color", "#888F")));
@@ -1546,7 +1565,7 @@ public:
                 return false;
             });
             list->addItem(catColor);
-
+    
             auto* sepColor = new tsl::elm::ListItem("Separator Color");
             // Display color name for separator colors
             sepColor->setValue(getColorName(getCurrentColor("separator_color", "#888F")));
@@ -1558,7 +1577,7 @@ public:
                 return false;
             });
             list->addItem(sepColor);
-
+            
         } else if (isMicroMode) {
             auto* catColor = new tsl::elm::ListItem("Category Color");
             catColor->setValue(getColorName(getCurrentColor("cat_color", "#2DFF")));
@@ -1570,7 +1589,7 @@ public:
                 return false;
             });
             list->addItem(catColor);
-
+            
             // Micro mode: separator and category colors (no focus background like Mini)
             auto* sepColor = new tsl::elm::ListItem("Separator Color");
             sepColor->setValue(getColorName(getCurrentColor("separator_color", "#888F")));
@@ -1582,8 +1601,8 @@ public:
                 return false;
             });
             list->addItem(sepColor);
-
-
+            
+            
         } else if (isGameResolutionsMode) {
             // Game Resolutions: only category color (no separator)
             auto* catColor = new tsl::elm::ListItem("Category Color");
@@ -1599,20 +1618,20 @@ public:
         }
         // FPS Counter mode: only background and text colors (already added above)
         // Full mode: NO color settings at all (excluded from this function)
-
+        
         list->jumpToItem(jumpItemName, jumpItemValue, jumpItemExactMatch);
         {
             jumpItemName = "";
             jumpItemValue = "";
             jumpItemExactMatch = false;
         }
-
+        
         //list->disableCaching();
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Configuration");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -1632,13 +1651,13 @@ private:
     bool isMicroMode;
     std::vector<std::string> elementOrder;
     std::unordered_set<std::string> enabledElements;
-
+    
 public:
     ShowConfig(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
         isMicroMode = (mode == "Micro");
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Elements " + ult::DIVIDER_SYMBOL + " \uE0E3 Move Down " + ult::DIVIDER_SYMBOL + " \uE0E2 Move Up"));
@@ -1646,12 +1665,12 @@ public:
         const std::string section = isMiniMode ? "mini" : "micro";
         std::string showValue = ult::parseValueFromIniSection(configIniPath, section, "show");
         std::string orderValue = ult::parseValueFromIniSection(configIniPath, section, "element_order");
-
+        
         if (showValue.empty()) {
             showValue = isMiniMode ? "DTC+BAT+CPU+GPU+RAM+TMP+FPS+RES" : "FPS+CPU+GPU+RAM+SOC+BAT+DTC";
         }
         convertToUpper(showValue);
-
+        
         enabledElements.clear();
         ult::StringStream ss(showValue);
         std::string item;
@@ -1660,7 +1679,7 @@ public:
                 enabledElements.insert(item);
             }
         }
-
+        
         elementOrder.clear();
         if (!orderValue.empty()) {
             convertToUpper(orderValue);
@@ -1679,19 +1698,19 @@ public:
                 }
             }
         }
-
+                
         static constexpr std::string_view miniElements[] = {
             "DTC","BAT","CPU","GPU","RAM","MEM","READ","SOC","TMP","FPS","RES"
         };
-
+        
         static constexpr std::string_view microElements[] = {
             "FPS","CPU","GPU","RAM","READ","SOC","TMP","RES","BAT","DTC"
         };
-
+        
         // Use span or array reference instead of pointer
         const auto* allElements = isMiniMode ? miniElements : microElements;
         const size_t allElementsSize = isMiniMode ? std::size(miniElements) : std::size(microElements);
-
+        
         elementOrder.clear();
         if (!orderValue.empty()) {
             convertToUpper(orderValue);
@@ -1711,14 +1730,14 @@ public:
                 elementOrder.emplace_back(elem);
             }
         }
-
+        
         for (size_t i = 0; i < elementOrder.size(); i++) {
             const std::string& element = elementOrder[i];
             const bool isEnabled = enabledElements.find(element) != enabledElements.end();
-
+            
             auto* elementItem = new tsl::elm::ListItem(element);
             elementItem->setValue(isEnabled ? ult::ON : ult::OFF, !isEnabled);
-
+            
             elementItem->setClickListener([this, elementItem, element](uint64_t keys) {
                 static bool hasNotTriggeredAnimation = false;
 
@@ -1729,19 +1748,19 @@ public:
 
                 if (keys & KEY_A) {
                     const bool currentlyEnabled = enabledElements.find(element) != enabledElements.end();
-
+                    
                     if (currentlyEnabled) {
                         enabledElements.erase(element);
                     } else {
                         enabledElements.insert(element);
                     }
-
+                    
                     updateShowAndOrder();
                     jumpItemName = element;
                     jumpItemValue = "";
                     jumpItemExactMatch = true;
                     hasNotTriggeredAnimation = true;
-
+                    
                     tsl::swapTo<ShowConfig>(SwapDepth(1), modeName);
                     return true;
                 }
@@ -1753,7 +1772,7 @@ public:
                             break;
                         }
                     }
-
+                    
                     if (keys & KEY_X) {
                         if (currentPos > 0) {
                             std::swap(elementOrder[currentPos], elementOrder[currentPos - 1]);
@@ -1779,18 +1798,18 @@ public:
                         triggerRumbleClick.store(true, std::memory_order_release);
                         triggerMoveSound.store(true, std::memory_order_release);
                     }
-
+                    
                     updateShowAndOrder();
                     jumpItemName = element;
                     jumpItemValue = "";
                     jumpItemExactMatch = true;
-
+                    
                     tsl::swapTo<ShowConfig>(SwapDepth(1), modeName);
                     return true;
                 }
                 return false;
             });
-
+            
             list->addItem(elementItem);
         }
 
@@ -1800,12 +1819,12 @@ public:
             jumpItemValue = "";
             jumpItemExactMatch = false;
         }
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", "Configuration");
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -1815,21 +1834,21 @@ public:
         }
         return false;
     }
-
+    
 private:
     void updateShowAndOrder() {
         std::string newShowValue;
         std::string newOrderValue;
         bool showFirst = true;
         bool orderFirst = true;
-
+        
         for (const std::string& element : elementOrder) {
             if (!orderFirst) {
                 newOrderValue += "+";
             }
             newOrderValue += element;
             orderFirst = false;
-
+            
             if (enabledElements.find(element) != enabledElements.end()) {
                 if (!showFirst) {
                     newShowValue += "+";
@@ -1838,7 +1857,7 @@ private:
                 showFirst = false;
             }
         }
-
+        
         const std::string section = isMiniMode ? "mini" : "micro";
         ult::setIniFileValue(configIniPath, section, "show", newShowValue);
         ult::setIniFileValue(configIniPath, section, "element_order", newOrderValue);
@@ -1855,7 +1874,7 @@ private:
     bool isGameResolutionsMode;
     bool isFPSCounterMode;
     bool isFPSGraphMode;
-
+    
 public:
     ConfiguratorOverlay(const std::string& mode) : modeName(mode) {
         isMiniMode = (mode == "Mini");
@@ -1865,11 +1884,11 @@ public:
         isFPSCounterMode = (mode == "FPS Counter");
         isFPSGraphMode = (mode == "FPS Graph");
     }
-
+    
     virtual tsl::elm::Element* createUI() override {
         auto* list = new tsl::elm::List();
         list->addItem(new tsl::elm::CategoryHeader("Configuration"));
-
+        
         // 5. Elements (Mini/Micro only)
         if (isMiniMode || isMicroMode) {
             auto* showSettings = new tsl::elm::ListItem("Elements");
@@ -1911,8 +1930,8 @@ public:
         });
         list->addItem(colors);
         //}
-
-
+        
+        
         // 4. Font Sizes (Mini/Micro/FPS Counter only)
         if (isMiniMode || isMicroMode || isFPSCounterMode) {
             auto* fontSizes = new tsl::elm::ListItem("Font Sizes");
@@ -1926,7 +1945,7 @@ public:
             });
             list->addItem(fontSizes);
         }
-
+        
         // 1. Refresh Rate (all modes)
         auto* refreshRate = new tsl::elm::ListItem("Refresh Rate");
         refreshRate->setValue(std::to_string(getCurrentRefreshRate()) + " Hz");
@@ -1938,7 +1957,7 @@ public:
             return false;
         });
         list->addItem(refreshRate);
-
+        
         // 6. DTC Format (Mini/Micro only) - NEW ADDITION
         if (isMiniMode || isMicroMode) {
             auto* dtcFormat = new tsl::elm::ListItem("DTC Format");
@@ -1966,7 +1985,7 @@ public:
             });
             list->addItem(framePadding);
         }
-
+        
         // 7. Mode-specific positioning settings
         if (isMicroMode) {
             // Text Alignment for Micro
@@ -1994,7 +2013,7 @@ public:
                 return false;
             });
             list->addItem(layerPos);
-
+            
         } else if (isFullMode) {
             // Horizontal Position for Full (Left/Right only)
             auto* layerPos = new tsl::elm::ListItem("Horizontal Position");
@@ -2008,7 +2027,7 @@ public:
                 return false;
             });
             list->addItem(layerPos);
-
+            
         //} else if (isGameResolutionsMode || isFPSCounterMode || isFPSGraphMode) {
         //    // Both horizontal and vertical positioning
         //    auto* layerPosH = new tsl::elm::ListItem("Horizontal Position");
@@ -2022,7 +2041,7 @@ public:
         //        return false;
         //    });
         //    list->addItem(layerPosH);
-        //
+        //    
         //    auto* layerPosV = new tsl::elm::ListItem("Vertical Position");
         //    layerPosV->setValue(getCurrentLayerPosBottom());
         //    layerPosV->setClickListener([this, layerPosV](uint64_t keys) {
@@ -2035,19 +2054,19 @@ public:
         //    });
         //    list->addItem(layerPosV);
         }
-
+        
         list->jumpToItem(jumpItemName, jumpItemValue, jumpItemExactMatch.load(std::memory_order_acquire));
         {
             jumpItemName = "";
             jumpItemValue = "";
             jumpItemExactMatch = false;
         }
-
+        
         tsl::elm::OverlayFrame* rootFrame = new tsl::elm::OverlayFrame("Horizon OC Monitor", modeName);
         rootFrame->setContent(list);
         return rootFrame;
     }
-
+    
     virtual bool handleInput(u64 keysDown, u64 keysHeld, const HidTouchState &touchPos, HidAnalogStickState joyStickPosLeft, HidAnalogStickState joyStickPosRight) override {
         if (keysDown & KEY_B) {
             triggerRumbleDoubleClick.store(true, std::memory_order_release);
@@ -2058,7 +2077,7 @@ public:
         }
         return false;
     }
-
+    
 private:
     int getCurrentRefreshRate() {
         std::string section;
@@ -2068,52 +2087,48 @@ private:
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "refresh_rate");
         int defaultRate = (isGameResolutionsMode) ? 10 : ((isFPSCounterMode || isFPSGraphMode) ? 30 : 1);
         return value.empty() ? defaultRate : atoi(value.c_str());
     }
-
+    
     // NEW METHOD: Get current DTC format for display
     std::string getCurrentDTCFormat() {
         if (isMiniMode || isMicroMode) {
             const std::string section = isMiniMode ? "mini" : "micro";
             std::string value = ult::parseValueFromIniSection(configIniPath, section, "dtc_format");
-
+            
             // Handle defaults properly
             if (value.empty()) {
                 value = isMiniMode ? "%m-%d-%Y"+ult::DIVIDER_SYMBOL+"%H:%M:%S" : "%H:%M:%S";
             }
-
+            
             // Convert format string to display name
             return getDTCFormatName(value);
         }
         return "";
     }
-
+    
     // Helper function to convert format string to display name
     std::string getDTCFormatName(const std::string& formatStr) {
-
+        
         for (const auto& format : dtcFormats) {
             if (format.second == formatStr) {
                 return format.first;
             }
         }
-
+        
         // Return the format string itself if no match found
         return formatStr;
     }
-
+    
     int getCurrentFramePadding() {
-        std::string section;
-        if (isMiniMode) section = "mini";
-        else if (isGameResolutionsMode) section = "game_resolutions";
-        else if (isFPSCounterMode) section = "fps-counter";
-        else if (isFPSGraphMode) section = "fps-graph";
-        else return 10;
-
-        std::string value = ult::parseValueFromIniSection(configIniPath, section, "frame_padding");
-        return value.empty() ? 10 : atoi(value.c_str());
+        if (isMiniMode) {
+            std::string value = ult::parseValueFromIniSection(configIniPath, "mini", "frame_padding");
+            return value.empty() ? 10 : atoi(value.c_str());
+        }
+        return 10;
     }
 
     std::string getCurrentTextAlign() {
@@ -2126,17 +2141,17 @@ private:
         }
         return "";
     }
-
+    
     std::string getCurrentLayerPosRight() {
         std::string section;
         if (isFullMode) section = "full";
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "layer_width_align");
         convertToUpper(value);
-
+        
         if (isFullMode) {
             // Full mode: only Left and Right allowed
             if (value == "RIGHT") return "Right";
@@ -2155,10 +2170,10 @@ private:
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         std::string value = ult::parseValueFromIniSection(configIniPath, section, "layer_height_align");
         convertToUpper(value);
-
+        
         if (isMicroMode) {
             // Micro mode: only Top and Bottom allowed
             if (value == "BOTTOM") return "Bottom";
@@ -2170,7 +2185,7 @@ private:
             return "Top";
         }
     }
-
+    
     std::string cycleTextAlign() {
         if (isMicroMode) {
             const std::string current = getCurrentTextAlign();
@@ -2179,23 +2194,23 @@ private:
             else if (current == "Center") next = "Right";
             else if (current == "Right") next = "Left";
             else next = "Center";
-
+            
             ult::setIniFileValue(configIniPath, "micro", "text_align", next);
             return next;
         }
         return "";
     }
-
+    
     std::string cycleLayerPosRight() {
         std::string section;
         if (isFullMode) section = "full";
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         const std::string current = getCurrentLayerPosRight();
         std::string next;
-
+        
         if (isFullMode) {
             // Full mode: only Left and Right
             if (current == "Left") next = "Right";
@@ -2206,7 +2221,7 @@ private:
             else if (current == "Center") next = "Right";
             else next = "Left";
         }
-
+        
         const std::string value = (next == "Right") ? "right" : (next == "Center" ? "center" : "left");
         ult::setIniFileValue(configIniPath, section, "layer_width_align", value);
         return next;
@@ -2218,10 +2233,10 @@ private:
         else if (isGameResolutionsMode) section = "game_resolutions";
         else if (isFPSCounterMode) section = "fps-counter";
         else if (isFPSGraphMode) section = "fps-graph";
-
+        
         const std::string current = getCurrentLayerPosBottom();
         std::string next;
-
+        
         if (isMicroMode) {
             // Micro mode: only Top and Bottom
             if (current == "Top") next = "Bottom";
@@ -2232,7 +2247,7 @@ private:
             else if (current == "Center") next = "Bottom";
             else next = "Top";
         }
-
+        
         const std::string value = (next == "Bottom") ? "bottom" : (next == "Center" ? "center" : "top");
         ult::setIniFileValue(configIniPath, section, "layer_height_align", value);
         return next;

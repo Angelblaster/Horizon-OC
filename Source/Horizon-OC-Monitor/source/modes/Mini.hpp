@@ -8,6 +8,9 @@ private:
     char Battery_c[64] = "";
     char soc_temperature_c[64] = "";
     char skin_temperature_c[64] = "";
+	char CPU_temp_c[32];
+    char GPU_temp_c[32];
+    char RAM_temp_c[32];
 
     uint32_t rectangleWidth;
     char Variables[512];
@@ -354,10 +357,13 @@ public:
                             else
                                 width = renderer->getTextDimensions("100%@4444.4444 mV", false, fontsize).first;
                         }
-                    } else if (key == "GPU" || (key == "RAM" && settings.showRAMLoad)) {
+						    if (settings.realTemps) {
+								width += renderer->getTextDimensions(" 888.8°C", false, fontsize).first;
+							}
+                    } else if (key == "GPU" || (key == "RAM" && settings.showpartLoad && R_SUCCEEDED(sysclkCheck))) {
                         //dimensions = renderer->drawString("100.0%@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
 
-                        if (!settings.showRAMLoadCPUGPU) {
+                        if (!settings.showpartLoadCPUGPU) {
                             if (!settings.realVolts) {
                                 width = renderer->getTextDimensions("100%@4444.4", false, fontsize).first;
                             } else {
@@ -370,10 +376,16 @@ public:
                                 width = renderer->getTextDimensions("100%[100%,100%]@4444.4444 mV", false, fontsize).first;
                             }
                         }
-                    } else if (key == "RAM" && (!settings.showRAMLoad)) {
+						    if (key == "GPU" && settings.realTemps) {
+								width += renderer->getTextDimensions(" 88.8°C", false, fontsize).first;
+							}
+                    } else if (key == "RAM" && (!settings.showpartLoad || R_FAILED(sysclkCheck))) {
                         //dimensions = renderer->drawString("44444444MB@4444.4", false, 0, 0, fontsize, renderer->a(0x0000));
                         if (!settings.realVolts) {
                             width = renderer->getTextDimensions("100%@4444.4", false, fontsize).first;
+						if (settings.realTemps) {
+							width += renderer->getTextDimensions(" 88.8°C", false, fontsize).first;
+							}
                         } else {
                             if (isMariko) {
                                 if (settings.showVDD2 && settings.decimalVDD2 && settings.showVDDQ)
@@ -676,7 +688,130 @@ public:
                 const int baseY = currentY + frameOffsetY + clippingOffsetY;
                 
                 if (settings.useDynamicColors) {
-                    if (labelIndex < labelLines.size() && labelLines[labelIndex] == "SOC") {
+					 if (labelIndex < labelLines.size() && labelLines[labelIndex] == "CPU") {
+						std::string dataStr = currentLine;
+
+						const size_t degreesPos = dataStr.find("°");
+						if (degreesPos != std::string::npos && settings.realTemps && realCPU_Temp != 0) {
+							size_t tempStart = dataStr.rfind(' ', degreesPos);
+							if (tempStart != std::string::npos) {
+							tempStart++;
+							const size_t cPos = dataStr.find("C", degreesPos);
+							if (cPos != std::string::npos) {
+								const size_t tempEnd = cPos + 1;
+                    
+								const std::string preTempPart = dataStr.substr(0, tempStart);
+								const std::string tempPart = dataStr.substr(tempStart, tempEnd - tempStart);
+								const std::string postTempPart = dataStr.substr(tempEnd);
+
+								const float temp = realCPU_Temp / 1000.0f;
+								const tsl::Color tempColor = tsl::GradientColor(temp);
+                    
+								int currentX = baseX;
+								if (!preTempPart.empty()) {
+									renderer->drawStringWithColoredSections(preTempPart, false, specialChars, currentX, baseY, fontsize, settings.textColor, settings.separatorColor);
+									currentX += renderer->getTextDimensions(preTempPart, false, fontsize).first;
+								}
+                    
+								renderer->drawStringWithColoredSections(tempPart, false, specialChars, currentX, baseY, fontsize, tempColor, settings.separatorColor);
+                    
+								if (!postTempPart.empty()) {
+									currentX += renderer->getTextDimensions(tempPart, false, fontsize).first;
+									renderer->drawStringWithColoredSections(postTempPart, false, specialChars, currentX, baseY, fontsize, settings.textColor, settings.separatorColor);
+								}
+							} else {
+								renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+							}
+						} else {
+							renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+						}
+					} else {
+						renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+					}
+        
+				} else if (labelIndex < labelLines.size() && labelLines[labelIndex] == "GPU") {
+				std::string dataStr = currentLine;
+        
+				const size_t degreesPos = dataStr.find("°");
+				if (degreesPos != std::string::npos && settings.realTemps && realGPU_Temp != 0) {
+					size_t tempStart = dataStr.rfind(' ', degreesPos);
+					if (tempStart != std::string::npos) {
+						tempStart++;
+						const size_t cPos = dataStr.find("C", degreesPos);
+						if (cPos != std::string::npos) {
+							const size_t tempEnd = cPos + 1;
+                    
+							const std::string preTempPart = dataStr.substr(0, tempStart);
+							const std::string tempPart = dataStr.substr(tempStart, tempEnd - tempStart);
+							const std::string postTempPart = dataStr.substr(tempEnd);
+                    
+							const float temp = realGPU_Temp / 1000.0f;
+							const tsl::Color tempColor = tsl::GradientColor(temp);
+                    
+							int currentX = baseX;
+							if (!preTempPart.empty()) {
+								renderer->drawStringWithColoredSections(preTempPart, false, specialChars, currentX, baseY, fontsize, settings.textColor, settings.separatorColor);
+								currentX += renderer->getTextDimensions(preTempPart, false, fontsize).first;
+							}
+                    
+							renderer->drawStringWithColoredSections(tempPart, false, specialChars, currentX, baseY, fontsize, tempColor, settings.separatorColor);
+                    
+							if (!postTempPart.empty()) {
+								currentX += renderer->getTextDimensions(tempPart, false, fontsize).first;
+								renderer->drawStringWithColoredSections(postTempPart, false, specialChars, currentX, baseY, fontsize, settings.textColor, settings.separatorColor);
+							}
+						} else {
+							renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+						}
+					} else {
+						renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+					}
+				} else {
+					renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+				}
+        
+			} else if (labelIndex < labelLines.size() && labelLines[labelIndex] == "RAM") {
+				std::string dataStr = currentLine;
+        
+				const size_t degreesPos = dataStr.find("°");
+				if (degreesPos != std::string::npos && settings.realTemps && realRAM_Temp != 0) {
+					size_t tempStart = dataStr.rfind(' ', degreesPos);
+					if (tempStart != std::string::npos) {
+						tempStart++;
+						const size_t cPos = dataStr.find("C", degreesPos);
+						if (cPos != std::string::npos) {
+							const size_t tempEnd = cPos + 1;
+                    
+							const std::string preTempPart = dataStr.substr(0, tempStart);
+							const std::string tempPart = dataStr.substr(tempStart, tempEnd - tempStart);
+							const std::string postTempPart = dataStr.substr(tempEnd);
+                    
+							const float temp = realRAM_Temp / 1000.0f;
+							const tsl::Color tempColor = tsl::GradientColor(temp);
+                    
+							int currentX = baseX;
+							if (!preTempPart.empty()) {
+								renderer->drawStringWithColoredSections(preTempPart, false, specialChars, currentX, baseY, fontsize, settings.textColor, settings.separatorColor);
+								currentX += renderer->getTextDimensions(preTempPart, false, fontsize).first;
+							}
+                    
+							renderer->drawStringWithColoredSections(tempPart, false, specialChars, currentX, baseY, fontsize, tempColor, settings.separatorColor);
+                    
+							if (!postTempPart.empty()) {
+								currentX += renderer->getTextDimensions(tempPart, false, fontsize).first;
+								renderer->drawStringWithColoredSections(postTempPart, false, specialChars, currentX, baseY, fontsize, settings.textColor, settings.separatorColor);
+							}
+						} else {
+							renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+						}
+					} else {
+						renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+					}
+				} else {
+					renderer->drawStringWithColoredSections(currentLine, false, specialChars, baseX, baseY, fontsize, settings.textColor, settings.separatorColor);
+				}
+		
+			} else if (labelIndex < labelLines.size() && labelLines[labelIndex] == "SOC") {
                         // SOC temperature rendering with gradient
                         const size_t degreesPos = currentLine.find("°");
                         if (degreesPos != std::string::npos) {
@@ -867,7 +1002,7 @@ public:
         // Variables to store formatted strings
         char MINI_CPU_compressed_c[42] = "";
         char MINI_CPU_volt_c[16] = "";
-        char MINI_GPU_Load_c[20] = "";
+        char MINI_GPU_Load_c[32] = "";
         char MINI_GPU_volt_c[20] = "";
         char MINI_RAM_var_compressed_c[35] = "";
         char MINI_RAM_volt_c[32] = "";
@@ -934,6 +1069,12 @@ public:
                 snprintf(MINI_CPU_volt_c, sizeof(MINI_CPU_volt_c), "%u mV", mv);
             }
         }
+		
+		if (settings.realTemps && realCPU_Temp != 0) {
+                char temp_buffer[48];
+                snprintf(temp_buffer, sizeof(temp_buffer), " %s", CPU_temp_c);
+                strncat(MINI_CPU_compressed_c, temp_buffer, sizeof(MINI_CPU_compressed_c) - strlen(MINI_CPU_compressed_c) - 1);
+            }
     
         // Only process GPU if needed
         if (isActive("GPU")) {
@@ -968,10 +1109,16 @@ public:
                 snprintf(MINI_GPU_volt_c, sizeof(MINI_GPU_volt_c), "%u mV", mv);
             }
         }
+		
+		    if (settings.realTemps && realGPU_Temp != 0) {
+                char temp_buffer[48];
+                snprintf(temp_buffer, sizeof(temp_buffer), " %s", GPU_temp_c);
+                strncat(MINI_GPU_Load_c, temp_buffer, sizeof(MINI_GPU_Load_c) - strlen(MINI_GPU_Load_c) - 1);
+            }
     
         // Only process RAM if needed
         if (isActive("RAM")) {
-            if (!settings.showRAMLoad) {
+            if (!settings.showpartLoad) {
                 const float ramTotalGiB = (RAM_Total_application_u + RAM_Total_applet_u +
                                      RAM_Total_system_u + RAM_Total_systemunsafe_u) /
                                     (1024.0f * 1024.0f);
@@ -991,43 +1138,61 @@ public:
                              RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
                 }
             } else {
-                unsigned PartLoadInt;
+                unsigned partLoadInt;
                 
-                PartLoadInt = partLoad[SysClkPartLoad_EMC] / 10;
-                
-                if (settings.showRAMLoadCPUGPU) {
-                    unsigned ramCpuLoadInt = partLoad[SysClkPartLoad_EMCCpu] / 10;
-                    int RAM_GPU_Load = partLoad[SysClkPartLoad_EMC] - partLoad[SysClkPartLoad_EMCCpu];
-                    unsigned ramGpuLoadInt = RAM_GPU_Load / 10;
+                if (R_SUCCEEDED(sysclkCheck)) {
+                    partLoadInt = partLoad[SysClkPartLoad_EMC] / 10;
+                    
+                    if (settings.showpartLoadCPUGPU) {
+                        unsigned ramCpuLoadInt = partLoad[SysClkPartLoad_EMCCpu] / 10;
+                        int RAM_GPU_Load = partLoad[SysClkPartLoad_EMC] - partLoad[SysClkPartLoad_EMCCpu];
+                        unsigned ramGpuLoadInt = RAM_GPU_Load / 10;
+                        
+                        if (settings.realFrequencies && realRAM_Hz) {
+                            snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
+                                     "%u%%[%u%%,%u%%]@%hu.%hhu",
+                                     partLoadInt, ramCpuLoadInt, ramGpuLoadInt,
+                                     realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+                        } else {
+                            snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
+                                     "%u%%[%u%%,%u%%]@%hu.%hhu",
+                                     partLoadInt, ramCpuLoadInt, ramGpuLoadInt,
+                                     RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+                        }
+                    } else {
+                        if (settings.realFrequencies && realRAM_Hz) {
+                            snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
+                                     "%u%%@%hu.%hhu", partLoadInt,
+                                     realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+                        } else {
+                            snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
+                                     "%u%%@%hu.%hhu", partLoadInt,
+                                     RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+                        }
+                    }
+                } else {
+                    const uint64_t RAM_Total_all = RAM_Total_application_u + RAM_Total_applet_u + 
+                                                   RAM_Total_system_u + RAM_Total_systemunsafe_u;
+                    const uint64_t RAM_Used_all = RAM_Used_application_u + RAM_Used_applet_u + 
+                                                  RAM_Used_system_u + RAM_Used_systemunsafe_u;
+                    partLoadInt = (RAM_Total_all > 0) ? (unsigned)((RAM_Used_all * 100) / RAM_Total_all) : 0;
                     
                     if (settings.realFrequencies && realRAM_Hz) {
                         snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
-                                    "%u%%[%u%%,%u%%]@%hu.%hhu",
-                                    PartLoadInt, ramCpuLoadInt, ramGpuLoadInt,
-                                    realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
+                                 "%u%%@%hu.%hhu", partLoadInt,
+                                 realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
                     } else {
                         snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
-                                    "%u%%[%u%%,%u%%]@%hu.%hhu",
-                                    PartLoadInt, ramCpuLoadInt, ramGpuLoadInt,
-                                    RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
-                    }
-                } else {
-                    if (settings.realFrequencies && realRAM_Hz) {
-                        snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
-                                    "%u%%@%hu.%hhu", PartLoadInt,
-                                    realRAM_Hz / 1000000, (realRAM_Hz / 100000) % 10);
-                    } else {
-                        snprintf(MINI_RAM_var_compressed_c, sizeof(MINI_RAM_var_compressed_c),
-                                    "%u%%@%hu.%hhu", PartLoadInt,
-                                    RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
+                                 "%u%%@%hu.%hhu", partLoadInt,
+                                 RAM_Hz / 1000000, (RAM_Hz / 100000) % 10);
                     }
                 }
             }
     
             if (settings.realVolts) {
-                const float mv_vdd2_f = realVDD2_mV / 100000.0f;
-                const uint32_t mv_vdd2_i = realVDD2_mV / 1000;
-                const uint32_t mv_vddq   = realVDDQ_mV / 1000;
+                const float mv_vdd2_f = realRAM_mV / 100000.0f;
+                const uint32_t mv_vdd2_i = realRAM_mV / 100000;
+                const uint32_t mv_vddq   = (realRAM_mV % 100000) / 10;
             
                 if (isMariko) {
                     if (settings.showVDDQ && settings.showVDD2) {
@@ -1053,6 +1218,11 @@ public:
                 }
             }
         }
+		    if (settings.realTemps && realRAM_Temp != 0) {
+                char temp_buffer[48];
+                snprintf(temp_buffer, sizeof(temp_buffer), " %s", RAM_temp_c);
+                strncat(MINI_RAM_var_compressed_c, temp_buffer, sizeof(MINI_RAM_var_compressed_c) - strlen(MINI_RAM_var_compressed_c) - 1);
+            }
     
         // Only process MEM if needed
         if (isActive("MEM")) {
@@ -1117,6 +1287,18 @@ public:
                 }
             }
         }
+		
+		if (settings.realTemps) {
+            if (realCPU_Temp != 0) {
+                snprintf(CPU_temp_c, sizeof(CPU_temp_c), "%.1f°C", realCPU_Temp / 1000.0f);
+            }
+            if (realGPU_Temp != 0) {
+                snprintf(GPU_temp_c, sizeof(GPU_temp_c), "%.1f°C", realGPU_Temp / 1000.0f);
+            }
+            if (realRAM_Temp != 0) {
+                snprintf(RAM_temp_c, sizeof(RAM_temp_c), "%.1f°C", realRAM_Temp / 1000.0f);
+            }
+		}
     
         // Only process resolution if RES is active and game is running
         if (isActive("RES") && GameRunning && NxFps) {
