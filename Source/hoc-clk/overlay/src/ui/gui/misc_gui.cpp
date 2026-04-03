@@ -1349,6 +1349,19 @@ protected:
                 false
             );
         }
+        
+        std::vector<NamedValue> gpuOffset = {
+            NamedValue("-50 mV", 50),
+            NamedValue("-45 mV", 45),
+            NamedValue("-40 mV", 40),
+            NamedValue("-30 mV", 30),
+            NamedValue("-25 mV", 25),
+            NamedValue("-20 mV", 20),
+            NamedValue("-15 mV", 15),
+            NamedValue("-10 mV", 10),
+            NamedValue(" -5 mV", 5),
+            NamedValue("Disabled", 0),
+        };
 
         addConfigButton(
             KipConfigValue_commonGpuVoltOffset,
@@ -1357,7 +1370,7 @@ protected:
             "GPU Voltage Offset",
             &thresholdsDisabled,
             {},
-            {},
+            gpuOffset,
             false
         );
 
