@@ -884,7 +884,7 @@ public:
 
 		 if (settings.realTemps && realCPU_Temp != 0) {
             char temp_buffer[48];
-            snprintf(temp_buffer, sizeof(temp_buffer), "%s", CPU_temp_c);
+            snprintf(temp_buffer, sizeof(temp_buffer), " %s", CPU_temp_c);
             strncat(CPU_compressed_c, temp_buffer, sizeof(CPU_compressed_c) - strlen(CPU_compressed_c) - 1);
         }
 
@@ -914,7 +914,7 @@ public:
 
 		if (settings.realTemps && realGPU_Temp != 0) {
             char temp_buffer[48];
-            snprintf(temp_buffer, sizeof(temp_buffer), "%s", GPU_temp_c);
+            snprintf(temp_buffer, sizeof(temp_buffer), " %s", GPU_temp_c);
             strncat(GPU_Load_c, temp_buffer, sizeof(GPU_Load_c) - strlen(GPU_Load_c) - 1);
         }
 
@@ -979,7 +979,7 @@ public:
 
 		if (settings.realTemps && realRAM_Temp != 0) {
             char temp_buffer[48];
-            snprintf(temp_buffer, sizeof(temp_buffer), "%s", RAM_temp_c);
+            snprintf(temp_buffer, sizeof(temp_buffer), " %s", RAM_temp_c);
             strncat(RAM_var_compressed_c, temp_buffer, sizeof(RAM_var_compressed_c) - strlen(RAM_var_compressed_c) - 1);
         }
 
@@ -1099,16 +1099,28 @@ public:
         }
 
 		if (settings.realTemps) {
-		if (realCPU_Temp != 0) {
-        snprintf(CPU_temp_c, sizeof(CPU_temp_c), "%.1f°C", realCPU_Temp / 1000.0f);
-		}
-		if (realGPU_Temp != 0) {
-        snprintf(GPU_temp_c, sizeof(GPU_temp_c), "%.1f°C", realGPU_Temp / 1000.0f);
-		}
-		if (realRAM_Temp != 0) {
-        snprintf(RAM_temp_c, sizeof(RAM_temp_c), "%.1f°C", realRAM_Temp / 1000.0f);
-		}
-}
+            if (realCPU_Temp != 0) {
+                if (settings.realTempsDec) {
+                    snprintf(CPU_temp_c, sizeof(CPU_temp_c), "%.1f°C", realCPU_Temp / 1000.0f);
+                } else {
+                    snprintf(CPU_temp_c, sizeof(CPU_temp_c), "%u°C", static_cast<u32>(realCPU_Temp / 1000.0));
+                }
+            }
+            if (realGPU_Temp != 0) {
+                if (settings.realTempsDec) {
+                    snprintf(GPU_temp_c, sizeof(GPU_temp_c), "%.1f°C", realGPU_Temp / 1000.0f);
+                } else {
+                    snprintf(GPU_temp_c, sizeof(GPU_temp_c), "%u°C", static_cast<u32>(realGPU_Temp / 1000.0));
+                }
+            }
+            if (realRAM_Temp != 0) {
+                if (settings.realTempsDec) {
+                    snprintf(RAM_temp_c, sizeof(RAM_temp_c), "%.1f°C", realRAM_Temp / 1000.0f);
+                } else {
+                    snprintf(RAM_temp_c, sizeof(RAM_temp_c), "%u°C", static_cast<u32>(realRAM_Temp / 1000.0));
+                }
+            }
+        }
 
         // Resolution processing
         //char RES_var_compressed_c[32] = "";

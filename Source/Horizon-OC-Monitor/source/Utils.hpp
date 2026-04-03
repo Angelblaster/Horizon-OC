@@ -1291,6 +1291,7 @@ struct MiniSettings {
     bool realFrequencies;
     bool realVolts;
 	bool realTemps;
+    bool realTempsDec;
     bool showFullCPU;
     bool showFullResolution;
     bool showFanPercentage;
@@ -1327,6 +1328,7 @@ struct MicroSettings {
     bool realFrequencies;
     bool realVolts;
 	bool realTemps;
+    bool realTempsDec;
     bool showFullCPU;
     bool showFullResolution;
     bool showSOCVoltage;
@@ -1411,6 +1413,7 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
     settings->realFrequencies = true;
     settings->realVolts = true;
 	settings->realTemps = true;
+    settings->realTempsDec = false;
     settings->showFullCPU = false;
     settings->showFullResolution = true;
     settings->showFanPercentage = true;
@@ -1494,6 +1497,14 @@ ALWAYS_INLINE void GetConfigSettings(MiniSettings* settings) {
 		convertToUpper(key);
 		settings->realTemps = (key == "TRUE");
 	}
+
+    it = section.find("real_temps_dec");
+    if (it != section.end()) {
+        key = it->second;
+        convertToUpper(key);
+        settings->realTempsDec = !(key == "FALSE");
+    }
+
     // Process font sizes with shared bounds
     static constexpr long minFontSize = 8;
     static constexpr long maxFontSize = 22;
@@ -1710,6 +1721,7 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
     settings->realFrequencies = true;
     settings->realVolts = true;
 	settings->realTemps = true;
+    settings->realTempsDec = false;
     settings->showFullCPU = false;
     settings->showFullResolution = false;
     settings->showSOCVoltage = true;
@@ -1785,7 +1797,14 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
 		key = it->second;
 		convertToUpper(key);
 		settings->realTemps = (key == "TRUE");
-		}
+    }
+
+    it = section.find("real_temps_dec");
+    if (it != section.end()) {
+        key = it->second;
+        convertToUpper(key);
+        settings->realTempsDec = !(key == "FALSE");
+    }
 
     it = section.find("show_full_cpu");
     if (it != section.end()) {
