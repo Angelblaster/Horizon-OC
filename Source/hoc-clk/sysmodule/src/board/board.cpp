@@ -116,13 +116,13 @@ namespace board {
         Result nvCheck = 1;
         if (R_SUCCEEDED(nvInitialize())) {
             nvCheck = nvOpen(&fd, "/dev/nvhost-ctrl-gpu");
-            // Result nvCheck_sched = nvOpen(&fd2, "/dev/nvsched-ctrl");
-            // /* This can be improved. */
-            // NvSchedSucceed(nvCheck_sched);
+            Result nvCheck_sched = nvOpen(&fd2, "/dev/nvsched-ctrl");
+            /* This can be improved. */
+            NvSchedSucceed(nvCheck_sched);
 
-            // if (R_SUCCEEDED(nvCheck_sched)) {
-            //     SchedSetFD2(fd2);
-            // }
+            if (R_SUCCEEDED(nvCheck_sched)) {
+                SchedSetFD2(fd2);
+            }
         }
 
         rc = rgltrInitialize();
