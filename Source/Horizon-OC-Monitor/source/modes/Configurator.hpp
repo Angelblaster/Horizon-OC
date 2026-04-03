@@ -411,12 +411,6 @@ public:
 			});
 			list->addItem(realTemps);
 
-            auto *realTempsDec = new tsl::elm::ToggleListItem("Real Temp Decimals", getCurrentRealTempsDec());
-            realTempsDec->setStateChangedListener([this, section](bool state) {
-				ult::setIniFileValue(configIniPath, section, "real_temps_dec", state ? "true" : "false");
-            });
-            list->addItem(realTempsDec);
-
             auto* showFullCPU = new tsl::elm::ToggleListItem("Full CPU", getCurrentShowFullCPU());
             showFullCPU->setStateChangedListener([this, section](bool state) {
                 ult::setIniFileValue(configIniPath, section, "show_full_cpu", state ? "true" : "false");
@@ -568,14 +562,6 @@ private:
 	bool getCurrentRealTemps() {
 		const std::string section = isMiniMode ? "mini" : "micro";
 		std::string value = ult::parseValueFromIniSection(configIniPath, section, "real_temps");
-		if (value.empty()) return true;
-		convertToUpper(value);
-		return value == "TRUE";
-	}
-
-    bool getCurrentRealTempsDec() {
-		const std::string section = isMiniMode ? "mini" : "micro";
-		std::string value = ult::parseValueFromIniSection(configIniPath, section, "real_temps_dec");
 		if (value.empty()) return true;
 		convertToUpper(value);
 		return value == "TRUE";
