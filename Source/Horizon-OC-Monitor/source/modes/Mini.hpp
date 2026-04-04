@@ -39,6 +39,10 @@ private:
     std::atomic<bool> touchPollRunning{false};
 public:
     MiniOverlay() {
+        CPU_temp_c[0] = '\0';
+        GPU_temp_c[0] = '\0';
+        RAM_temp_c[0] = '\0';
+
         tsl::hlp::requestForeground(false);
         disableJumpTo = true;
         //tsl::initializeUltrahandSettings();
@@ -1070,7 +1074,7 @@ public:
             }
         }
 
-		if (settings.realTemps && realCPU_Temp != 0) {
+		if (settings.realTemps && realCPU_Temp != 0 && CPU_temp_c[0] != '\0') {
                 char temp_buffer[48];
                 snprintf(temp_buffer, sizeof(temp_buffer), " %s", CPU_temp_c);
                 strncat(MINI_CPU_compressed_c, temp_buffer, sizeof(MINI_CPU_compressed_c) - strlen(MINI_CPU_compressed_c) - 1);
@@ -1110,11 +1114,11 @@ public:
             }
         }
 
-		    if (settings.realTemps && realGPU_Temp != 0) {
-                char temp_buffer[48];
-                snprintf(temp_buffer, sizeof(temp_buffer), " %s", GPU_temp_c);
-                strncat(MINI_GPU_Load_c, temp_buffer, sizeof(MINI_GPU_Load_c) - strlen(MINI_GPU_Load_c) - 1);
-            }
+        if (settings.realTemps && realGPU_Temp != 0 && GPU_temp_c[0] != '\0') {
+            char temp_buffer[48];
+            snprintf(temp_buffer, sizeof(temp_buffer), " %s", GPU_temp_c);
+            strncat(MINI_GPU_Load_c, temp_buffer, sizeof(MINI_GPU_Load_c) - strlen(MINI_GPU_Load_c) - 1);
+        }
 
         // Only process RAM if needed
         if (isActive("RAM")) {
@@ -1218,11 +1222,12 @@ public:
                 }
             }
         }
-		    if (settings.realTemps && realRAM_Temp != 0) {
-                char temp_buffer[48];
-                snprintf(temp_buffer, sizeof(temp_buffer), " %s", RAM_temp_c);
-                strncat(MINI_RAM_var_compressed_c, temp_buffer, sizeof(MINI_RAM_var_compressed_c) - strlen(MINI_RAM_var_compressed_c) - 1);
-            }
+
+        if (settings.realTemps && realRAM_Temp != 0 && RAM_temp_c[0] != '\0') {
+            char temp_buffer[48];
+            snprintf(temp_buffer, sizeof(temp_buffer), " %s", RAM_temp_c);
+            strncat(MINI_RAM_var_compressed_c, temp_buffer, sizeof(MINI_RAM_var_compressed_c) - strlen(MINI_RAM_var_compressed_c) - 1);
+        }
 
         // Only process MEM if needed
         if (isActive("MEM")) {
