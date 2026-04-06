@@ -38,7 +38,5 @@ namespace governor {
     void startThreads();
     void exitThreads();
     void HandleGovernor(uint32_t targetHz);
-    void CpuGovernorThread(void* arg);
     void GovernorThread(void* arg);
-    void VRRThread(void* arg);
 }

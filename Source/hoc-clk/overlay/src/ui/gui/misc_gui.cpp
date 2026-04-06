@@ -621,6 +621,8 @@ public:
 
 protected:
     void listUI() override {
+        ValueThresholds thresholdsDisabled(0, 0);
+        
         BaseMenuGui::refresh(); // get latest context
         if(!this->context)
             return;
@@ -649,6 +651,16 @@ protected:
                 false
             );
         }
+        addConfigButton(
+            HocClkConfigValue_DisplayVoltage,
+            "Display Voltage",
+            ValueRange(900, 1200, 25, " mV", 1),
+            "Display Voltage",
+            &thresholdsDisabled,
+            {},
+            {},
+            false
+        );
     }
 };
 

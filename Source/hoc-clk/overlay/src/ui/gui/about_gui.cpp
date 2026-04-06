@@ -31,6 +31,7 @@ tsl::elm::ListItem* RETROStatusItem = NULL;
 tsl::elm::ListItem* waferCordsItem = NULL;
 tsl::elm::ListItem* ramVoltItem = NULL;
 tsl::elm::ListItem* eristaPLLXItem = NULL;
+tsl::elm::ListItem* dispVoltItem = NULL;
 
 ImageElement* CatImage = NULL;
 HideableCategoryHeader* CatHeader = NULL;
@@ -55,6 +56,10 @@ void AboutGui::listUI()
     ramVoltItem =
         new tsl::elm::ListItem("RAM Voltage:");
     this->listElement->addItem(ramVoltItem);
+
+    dispVoltItem =
+        new tsl::elm::ListItem("Display Voltage:");
+    this->listElement->addItem(dispVoltItem);
 
     eristaPLLXItem =
         new tsl::elm::ListItem("PLLX Temp:");
@@ -327,5 +332,8 @@ void AboutGui::refresh()
 
     sprintf(strings[4], "%u.%u / %u mV", context->voltages[HocClkVoltage_EMCVDD2] / 1000U, (context->voltages[HocClkVoltage_EMCVDD2] % 1000U) / 100U, context->voltages[HocClkVoltage_EMCVDDQ] / 1000);
     ramVoltItem->setValue(strings[4]);
+    
+    sprintf(strings[5], "%u.%u mV", context->voltages[HocClkVoltage_Display] / 1000U, (context->voltages[HocClkVoltage_Display] % 1000U) / 100U);
+    dispVoltItem->setValue(strings[5]);
 
 }

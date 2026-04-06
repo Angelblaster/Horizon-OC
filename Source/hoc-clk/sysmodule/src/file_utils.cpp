@@ -84,9 +84,8 @@ namespace fileUtils {
                 if (file) {
                     struct timespec now;
                     clock_gettime(CLOCK_REALTIME, &now);
-                    struct tm* nowTm = localtime(&now.tv_sec);
 
-                    fprintf(file, "[%04d-%02d-%02d %02d:%02d:%02d.%03ld] ", nowTm->tm_year+1900, nowTm->tm_mon+1, nowTm->tm_mday, nowTm->tm_hour, nowTm->tm_min, nowTm->tm_sec, now.tv_nsec / 1000000UL);
+                    fprintf(file, "[%lu] ", armGetSystemTick());
                     vfprintf(file, format, args);
                     fprintf(file, "\n");
                     fclose(file);

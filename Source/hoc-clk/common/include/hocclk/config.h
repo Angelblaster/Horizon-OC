@@ -66,6 +66,7 @@ typedef enum {
 
     HocClkConfigValue_RAMVoltDisplayMode,
     HocClkConfigValue_CpuGovernorMinimumFreq,
+    HocClkConfigValue_DisplayVoltage,
 
     KipConfigValue_custRev,
     // KipConfigValue_mtcConf,
@@ -252,6 +253,10 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
             return pretty ? "RAM Voltage / Usage Display Mode" : "ram_volt_usage_display_mode";
         case HocClkConfigValue_CpuGovernorMinimumFreq:
             return pretty ? "CPU Governor Minimum Frequency" : "cpu_gov_min_freq";
+
+        case HocClkConfigValue_DisplayVoltage:
+            return pretty ? "Display Voltage" : "display_voltage";
+
         // KIP config values
         case KipConfigValue_custRev:
             return pretty ? "Custom Revision" : "kip_cust_rev";
@@ -453,6 +458,8 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
             return 612000000ULL; // 612MHz
         case HocClkConfigValue_MaxDisplayClockH:
             return 60ULL;
+        case HocClkConfigValue_DisplayVoltage:
+            return 1200ULL; // Auto
         default:
             return 0ULL;
     }
@@ -588,6 +595,9 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
             return true;
         case HocClkConfigValue_BatteryChargeCurrent:
             return ((input >= 1024) && (input <= 3072)) || !input;
+        case HocClkConfigValue_DisplayVoltage:
+            return ((input >= 900) && (input <= 1325));
+
         default:
             return false;
     }

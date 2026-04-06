@@ -37,8 +37,8 @@
 #include "clock_manager.hpp"
 #include "ipc_service.hpp"
 #include "config.hpp"
-#define INNER_HEAP_SIZE 0x45000
 
+#define INNER_HEAP_SIZE 0x45000
 
 extern "C"
 {
@@ -54,6 +54,23 @@ extern "C"
     char nx_inner_heap[INNER_HEAP_SIZE];
     NvServiceType __nx_nv_service_type = NvServiceType_Factory;
 
+    // Ty to MasaGratoR for this!
+    //This is done to save some space as they have no practical use in our case
+    void* __real___cxa_throw(void *thrown_exception, void *pvar, void (*dest)(void *));
+    void* __real__Unwind_Resume();
+    void* __real___gxx_personality_v0();
+
+    void __wrap___cxa_throw(void *thrown_exception, void *pvar, void (*dest)(void *)) {
+        abort();
+    }
+
+    void __wrap__Unwind_Resume() {
+        return;
+    }
+
+    void __wrap___gxx_personality_v0() {
+        return;
+    }
 
     void __libnx_initheap(void)
     {
@@ -94,20 +111,19 @@ extern "C"
         rc = i2cInitialize();
         if (R_FAILED(rc))
             diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
-        rc = appletInitialize();
-        if (R_FAILED(rc))
-            diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
-    }
+
+        }
 
     void __appExit(void)
     {
         // CloseFanControllerThread();
         // fanExit();
         i2cExit();
-        fsExit();
+        setsysExit();
         fsdevUnmountAll();
-        appletExit();
-        }
+        fsExit();
+        smExit();
+    }
 }
 
 int main(int argc, char** argv)
@@ -119,47 +135,35 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    try
+    board::Initialize();
+    processManagement::Initialize();
+
+    processManagement::WaitForQLaunch();
+
+    clockManager::Initialize();
+    ipcService::Initialize();
+
+    fileUtils::LogLine("Ready");
+
+    clockManager::SetRunning(true);
+    config::SetEnabled(true);
+    ipcService::SetRunning(true);
+    // TemperaturePoint *table;
+    // ReadConfigFile(&table);
+    // InitFanController(table);
+    // StartFanControllerThread();
+
+    while (clockManager::Running())
     {
-        board::Initialize();
-        processManagement::Initialize();
-
-        processManagement::WaitForQLaunch();
-
-        clockManager::Initialize();
-        ipcService::Initialize();
-
-        fileUtils::LogLine("Ready");
-
-        clockManager::SetRunning(true);
-        config::SetEnabled(true);
-        ipcService::SetRunning(true);
-        // TemperaturePoint *table;
-        // ReadConfigFile(&table);
-        // InitFanController(table);
-        // StartFanControllerThread();
-
-        while (clockManager::Running())
-        {
-            clockManager::Tick();
-            clockManager::WaitForNextTick();
-        }
-
-        ipcService::SetRunning(false);
-        ipcService::Exit();
-        clockManager::Exit();
-        processManagement::Exit();
-        board::Exit();
+        clockManager::Tick();
+        clockManager::WaitForNextTick();
     }
-    catch (const std::exception &ex)
-    {
-        fileUtils::LogLine("[!] %s", ex.what());
-    }
-    catch (...)
-    {
-        std::exception_ptr p = std::current_exception();
-        fileUtils::LogLine("[!?] %s", p ? p.__cxa_exception_type()->name() : "...");
-    }
+
+    ipcService::SetRunning(false);
+    ipcService::Exit();
+    clockManager::Exit();
+    processManagement::Exit();
+    board::Exit();
 
     fileUtils::LogLine("Exit");
     svcSleepThread(1000000ULL);
