@@ -87,9 +87,8 @@ namespace board {
     }
 
     void CacheDfllData() {
-        u64 temp;
-        Result rc = svcQueryMemoryMapping(&cldvfs, &temp, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
-        ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (cldvfs)");
+        Result rc = QueryMemoryMapping(&cldvfs, CLDVFS_REGION_BASE, CLDVFS_REGION_SIZE);
+        ASSERT_RESULT_OK(rc, "QueryMemoryMapping (cldvfs)");
 
         if (GetSocType() == HocClkSocType_Erista) {
             cachedTune.tune0Low = *reinterpret_cast<u32 *>(cldvfs + CL_DVFS_TUNE0_0);

@@ -1718,8 +1718,8 @@ ALWAYS_INLINE void GetConfigSettings(MicroSettings* settings) {
     settings->useDTCSymbol = true;
     settings->dtcFormat = "%H:%M:%S";//"%Y-%m-%d %I:%M:%S %p";
     settings->invertBatteryDisplay = false;
-    settings->handheldFontSize = 15;
-    settings->dockedFontSize = 15;
+    settings->handheldFontSize = 14;
+    settings->dockedFontSize = 14;
     settings->alignTo = 1; // CENTER
     convertStrToRGBA4444("#0009", &(settings->backgroundColor));
     convertStrToRGBA4444("#888F", &(settings->separatorColor));

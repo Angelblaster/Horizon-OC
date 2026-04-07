@@ -217,8 +217,13 @@ namespace clockManager {
 
     void HandleMiscFeatures()
     {
-        if (config::GetConfigValue(HocClkConfigValue_BatteryChargeCurrent)) {
-            I2c_Bq24193_SetFastChargeCurrentLimit(config::GetConfigValue(HocClkConfigValue_BatteryChargeCurrent));
+        static u32 tick = 0;
+        if(++tick > 10) {
+            if (config::GetConfigValue(HocClkConfigValue_BatteryChargeCurrent)) {
+                I2c_Bq24193_SetFastChargeCurrentLimit(config::GetConfigValue(HocClkConfigValue_BatteryChargeCurrent));
+            }
+            tick = 0;
+            I2c_BuckConverter_SetMvOut(&I2c_Display, config::GetConfigValue(HocClkConfigValue_DisplayVoltage));
         }
     }
 
@@ -560,12 +565,12 @@ namespace clockManager {
 
         board::FuseData *fuse = board::GetFuseData();
 
-        gContext.speedos[0] = fuse->cpuSpeedo;
-        gContext.speedos[1] = fuse->gpuSpeedo;
-        gContext.speedos[2] = fuse->socSpeedo;
-        gContext.iddq[0] = fuse->cpuIDDQ;
-        gContext.iddq[1] = fuse->gpuIDDQ;
-        gContext.iddq[2] = fuse->socIDDQ;
+        gContext.speedos[HocClkSpeedo_CPU] = fuse->cpuSpeedo;
+        gContext.speedos[HocClkSpeedo_GPU] = fuse->gpuSpeedo;
+        gContext.speedos[HocClkSpeedo_SOC] = fuse->socSpeedo;
+        gContext.iddq[HocClkSpeedo_CPU] = fuse->cpuIDDQ;
+        gContext.iddq[HocClkSpeedo_GPU] = fuse->gpuIDDQ;
+        gContext.iddq[HocClkSpeedo_SOC] = fuse->socIDDQ;
         gContext.waferX = fuse->waferX;
         gContext.waferY = fuse->waferY;
 
@@ -625,9 +630,9 @@ namespace clockManager {
         bool isBoost = apmExtIsBoostMode(mode);
 
         HandleSafetyFeatures();
+        HandleMiscFeatures();
 
         if (RefreshContext() || config::Refresh()) {
-            HandleMiscFeatures();
             SetClocks(isBoost);
         }
     }

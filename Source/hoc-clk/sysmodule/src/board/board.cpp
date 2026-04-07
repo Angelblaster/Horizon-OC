@@ -145,13 +145,13 @@ namespace board {
 
         StartMiscThread(pwmCheck, &iCon);
 
-        u64 clkVirtAddr, dsiVirtAddr, outsize;
+        u64 clkVirtAddr, dsiVirtAddr;
 
-        rc = svcQueryMemoryMapping(&clkVirtAddr, &outsize, 0x60006000, 0x1000);
-        ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (clk)");
+        rc = QueryMemoryMapping(&clkVirtAddr, 0x60006000, 0x1000);
+        ASSERT_RESULT_OK(rc, "QueryMemoryMapping (clk)");
 
-        rc = svcQueryMemoryMapping(&dsiVirtAddr, &outsize, 0x54300000, 0x40000);
-        ASSERT_RESULT_OK(rc, "svcQueryMemoryMapping (dsi)");
+        rc = QueryMemoryMapping(&dsiVirtAddr, 0x54300000, 0x40000);
+        ASSERT_RESULT_OK(rc, "QueryMemoryMapping (dsi)");
 
         display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == HocClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);

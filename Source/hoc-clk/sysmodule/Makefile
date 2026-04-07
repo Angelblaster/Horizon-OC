@@ -41,7 +41,7 @@ DEFINES	:=	-DDISABLE_IPC -DTARGET="\"$(TARGET)\"" -DTARGET_VERSION="\"$(TARGET_V
 ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 
 CFLAGS	:=	-g -Wall -Os -ffunction-sections \
-			$(ARCH) $(DEFINES)
+			$(ARCH) $(DEFINES) -ffast-math
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 

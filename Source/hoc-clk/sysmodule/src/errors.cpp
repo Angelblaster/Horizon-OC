@@ -30,28 +30,12 @@
 #include <cstring>
 
 namespace errors {
-
-    namespace {
-
-        const char* FormatMessage(const char* format, va_list args) {
-            size_t len = vsnprintf(NULL, 0, format, args) * sizeof(char);
-            char* buf = (char*)malloc(len + 1);
-            if (buf == NULL) {
-                return format;
-            }
-            vsnprintf(buf, len + 1, format, args);
-            return buf;
-        }
-
-    }
-
     void ThrowException(const char* format, ...) {
         va_list args;
         va_start(args, format);
-        const char* msg = FormatMessage(format, args);
-        va_end(args);
         fileUtils::LogLine(format, args);
-        throw std::runtime_error(msg);
+        va_end(args);
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+        // throw std::runtime_error(msg);
     }
-
 }
