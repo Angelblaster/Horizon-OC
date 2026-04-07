@@ -1014,6 +1014,9 @@ protected:
                 NamedValue("2193 MHz", 2193000),
                 NamedValue("2295 MHz", 2295000),
                 NamedValue("2397 MHz", 2397000),
+                NamedValue("2500 MHz", 2500000),
+                NamedValue("2600 MHz", 2600000), 
+            
             };
             addConfigButton(
                 KipConfigValue_eristaCpuBoostClock,
