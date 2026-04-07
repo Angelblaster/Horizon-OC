@@ -1214,8 +1214,8 @@ protected:
 
         std::vector<NamedValue> eristaMaxEmcClock = {
             NamedValue("Disabled", 1600000),
-            NamedValue("1633 MHz", 1633000),
-            NamedValue("1666 MHz", 1666000),
+            NamedValue("2500 MHz", 2500000),
+            NamedValue("2600 MHz", 2600000),
             NamedValue("1700 MHz", 1700000),
             NamedValue("1733 MHz", 1733000),
             NamedValue("1766 MHz", 1766000),
