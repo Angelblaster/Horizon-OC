@@ -1250,6 +1250,8 @@ protected:
             NamedValue("2361 MHz", 2361600),
             NamedValue("2380 MHz", 2380800),
             NamedValue("2400 MHz", 2400000, "JEDEC."),
+            NamedValue("2380 MHz", 2500000),
+            NamedValue("2380 MHz", 2600000),
         };
 
         addConfigButtonS(KipConfigValue_eristaEmcMaxClock, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN);
