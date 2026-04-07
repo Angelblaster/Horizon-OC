@@ -42,6 +42,7 @@ class CpuSubmenuGui;
 class GpuSubmenuGui;
 class GpuCustomTableSubmenuGui;
 class RamTableEditor;
+class ExperimentalSettingsSubMenuGui;
 
 MiscGui::MiscGui()
 {
@@ -458,100 +459,19 @@ void MiscGui::listUI()
     displaySubMenu->setValue(R_ARROW);
     this->listElement->addItem(displaySubMenu);
 
-    #if IS_MINIMAL == 0
-        // std::vector<NamedValue> chargerCurrents = {
-        //     NamedValue("Disabled", 0),
-        //     NamedValue("1024mA", 1024),
-        //     NamedValue("1280mA", 1280),
-        //     NamedValue("1536mA", 1536),
-        //     NamedValue("1792mA", 1792),
-        //     NamedValue("2048mA", 2048),
-        //     NamedValue("2304mA", 2304),
-        //     NamedValue("2560mA", 2560),
-        //     NamedValue("2816mA", 2816),
-        //     NamedValue("3072mA", 3072),
-        // };
-        if(this->configList->values[HocClkConfigValue_EnableExperimentalSettings]) {
-            this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental"));
-
-            addConfigToggle(HocClkConfigValue_LiveCpuUv, nullptr);
-            std::vector<NamedValue> gpuSchedMethodValues = {
-                NamedValue("INI", GpuSchedulingOverrideMethod_Ini),
-                NamedValue("NV Service", GpuSchedulingOverrideMethod_NvService),
-            };
-            addConfigButton(
-                HocClkConfigValue_GPUSchedulingMethod,
-                "GPU Scheduling Override Method",
-                ValueRange(0, 0, 1, "", 0),
-                "GPU Scheduling Override Method",
-                &thresholdsDisabled,
-                {},
-                gpuSchedMethodValues,
-                false
-            );
-            tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-                renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-                renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-                renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-            });
-            chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
-            this->listElement->addItem(chargeWarningText);
-
-            if(!IsHoag()) {
-                    std::vector<NamedValue> chargerCurrents = {
-                        NamedValue("Disabled", 0),
-                        NamedValue("1024mA", 1024),
-                        NamedValue("1280mA", 1280),
-                        NamedValue("1536mA", 1536),
-                        NamedValue("1792mA", 1792),
-                        NamedValue("2048mA", 2048),
-                        NamedValue("2304mA", 2304),
-                        NamedValue("2560mA", 2560),
-                        NamedValue("2816mA", 2816),
-                        NamedValue("3072mA", 3072),
-                    };
-
-                    ValueThresholds chargerThresholds(2048, 2049);
-
-                    addConfigButton(
-                        HocClkConfigValue_BatteryChargeCurrent,
-                        "Charge Current Override",
-                        ValueRange(0, 0, 1, "", 0),
-                        "Charge Current Override",
-                        &chargerThresholds,
-                        {},
-                        chargerCurrents,
-                        false
-                    );
+    if(this->configList->values[HocClkConfigValue_EnableExperimentalSettings]) {
+        tsl::elm::ListItem* experimentalSubMenu = new tsl::elm::ListItem("Experimental Settings");
+        experimentalSubMenu->setClickListener([](u64 keys) {
+            if (keys & HidNpadButton_A) {
+                tsl::changeTo<ExperimentalSettingsSubMenuGui>();
+                return true;
             }
-            else {
-                std::vector<NamedValue> chargerCurrents = {
-                    NamedValue("Disabled", 0),
-                    NamedValue("1024mA", 1024),
-                    NamedValue("1280mA", 1280),
-                    NamedValue("1536mA", 1536),
-                    NamedValue("1792mA", 1792),
-                    NamedValue("2048mA", 2048),
-                    NamedValue("2304mA", 2304),
-                    NamedValue("2560mA", 2560),
-                };
+            return false;
+        });
+        experimentalSubMenu->setValue(R_ARROW);
+        this->listElement->addItem(experimentalSubMenu);
+    }
 
-                ValueThresholds chargerThresholds(1792, 1793);
-
-                addConfigButton(
-                    HocClkConfigValue_BatteryChargeCurrent,
-                    "Charge Current Override",
-                    ValueRange(0, 0, 1, "", 0),
-                    "Charge Current Override",
-                    &chargerThresholds,
-                    {},
-                    chargerCurrents,
-                    false
-                );
-
-            }
-        }
-    #endif
 }
 
 class GeneralSettingsSubMenuGui : public MiscGui {
@@ -579,8 +499,124 @@ protected:
             {},
             false
         );
+
+        tsl::elm::CustomDrawer* exSetWarning = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+            renderer->drawString("\uE150 Experimental Settings", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("are a work in progress! Use with caution!", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("Here be dragons!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+        });
+        exSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
+        this->listElement->addItem(exSetWarning);
+
+        addConfigToggle(HocClkConfigValue_EnableExperimentalSettings, nullptr);
     }
 };
+
+class ExperimentalSettingsSubMenuGui : public MiscGui {
+public:
+    ExperimentalSettingsSubMenuGui() { }
+
+protected:
+    void listUI() override {
+        this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental Settings"));
+        ValueThresholds thresholdsDisabled(0, 0);
+
+        addConfigToggle(HocClkConfigValue_LiveCpuUv, nullptr);
+        std::vector<NamedValue> gpuSchedMethodValues = {
+            NamedValue("INI", GpuSchedulingOverrideMethod_Ini),
+            NamedValue("NV Service", GpuSchedulingOverrideMethod_NvService),
+        };
+        addConfigButton(
+            HocClkConfigValue_GPUSchedulingMethod,
+            "GPU Scheduling Override Method",
+            ValueRange(0, 0, 1, "", 0),
+            "GPU Scheduling Override Method",
+            &thresholdsDisabled,
+            {},
+            gpuSchedMethodValues,
+            false
+        );
+
+        
+        std::vector<NamedValue> ramRFMeasurementMethods = {
+            NamedValue("Actmon", MemoryFrequencyMeasurementMode_Actmon),
+            NamedValue("PLL", MemoryFrequencyMeasurementMode_PLL),
+        };
+        addConfigButton(
+            HocClkConfigValue_MemoryFrequencyMeasurementMode,
+            "Memory Frequency Measurement Mode",
+            ValueRange(0, 0, 1, "", 0),
+            "Memory Frequency Measurement Mode",
+            &thresholdsDisabled,
+            {},
+            ramRFMeasurementMethods,
+            false
+        );
+
+
+        tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+            renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+        });
+        chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
+        this->listElement->addItem(chargeWarningText);
+
+        if(!IsHoag()) {
+                std::vector<NamedValue> chargerCurrents = {
+                    NamedValue("Disabled", 0),
+                    NamedValue("1024mA", 1024),
+                    NamedValue("1280mA", 1280),
+                    NamedValue("1536mA", 1536),
+                    NamedValue("1792mA", 1792),
+                    NamedValue("2048mA", 2048),
+                    NamedValue("2304mA", 2304),
+                    NamedValue("2560mA", 2560),
+                    NamedValue("2816mA", 2816),
+                    NamedValue("3072mA", 3072),
+                };
+
+                ValueThresholds chargerThresholds(2048, 2049);
+
+                addConfigButton(
+                    HocClkConfigValue_BatteryChargeCurrent,
+                    "Charge Current Override",
+                    ValueRange(0, 0, 1, "", 0),
+                    "Charge Current Override",
+                    &chargerThresholds,
+                    {},
+                    chargerCurrents,
+                    false
+                );
+        } else {
+            std::vector<NamedValue> chargerCurrents = {
+                NamedValue("Disabled", 0),
+                NamedValue("1024mA", 1024),
+                NamedValue("1280mA", 1280),
+                NamedValue("1536mA", 1536),
+                NamedValue("1792mA", 1792),
+                NamedValue("2048mA", 2048),
+                NamedValue("2304mA", 2304),
+                NamedValue("2560mA", 2560),
+            };
+
+            ValueThresholds chargerThresholds(1792, 1793);
+
+            addConfigButton(
+                HocClkConfigValue_BatteryChargeCurrent,
+                "Charge Current Override",
+                ValueRange(0, 0, 1, "", 0),
+                "Charge Current Override",
+                &chargerThresholds,
+                {},
+                chargerCurrents,
+                false
+            );
+
+        }
+    }
+};
+
 
 class GovernorSettingsSubMenuGui : public MiscGui {
 public:
@@ -1314,7 +1350,7 @@ protected:
             addConfigButton(
                 KipConfigValue_eristaGpuVmin,
                 "GPU Minimum Voltage",
-                ValueRange(700, 875, 5, "mV", 1),
+                ValueRange(675, 875, 5, "mV", 1),
                 "GPU Minimum Voltage",
                 &thresholdsDisabled,
                 {},

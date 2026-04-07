@@ -68,6 +68,8 @@ typedef enum {
     HocClkConfigValue_CpuGovernorMinimumFreq,
     HocClkConfigValue_DisplayVoltage,
 
+    HocClkConfigValue_MemoryFrequencyMeasurementMode,
+
     KipConfigValue_custRev,
     // KipConfigValue_mtcConf,
     KipConfigValue_hpMode,
@@ -257,6 +259,9 @@ static inline const char* hocclkFormatConfigValue(HocClkConfigValue val, bool pr
         case HocClkConfigValue_DisplayVoltage:
             return pretty ? "Display Voltage" : "display_voltage";
 
+        case HocClkConfigValue_MemoryFrequencyMeasurementMode:
+            return pretty ? "Memory Frequency Measurement Mode" : "mem_freq_measurement_mode";
+
         // KIP config values
         case KipConfigValue_custRev:
             return pretty ? "Custom Revision" : "kip_cust_rev";
@@ -436,6 +441,7 @@ static inline uint64_t hocclkDefaultConfigValue(HocClkConfigValue val)
         case HocClkConfigValue_GPUScheduling:
         case HocClkConfigValue_LiveCpuUv:
         case HocClkConfigValue_GPUSchedulingMethod:
+        case HocClkConfigValue_MemoryFrequencyMeasurementMode:
             return 0ULL;
         case HocClkConfigValue_EristaMaxCpuClock:
             return 1785ULL;
@@ -592,6 +598,7 @@ static inline uint64_t hocclkValidConfigValue(HocClkConfigValue val, uint64_t in
         case HocClkConfigValue_GPUScheduling:
         case HocClkConfigValue_RAMVoltDisplayMode:
         case HocClkConfigValue_CpuGovernorMinimumFreq:
+        case HocClkConfigValue_MemoryFrequencyMeasurementMode:
             return true;
         case HocClkConfigValue_BatteryChargeCurrent:
             return ((input >= 1024) && (input <= 3072)) || !input;

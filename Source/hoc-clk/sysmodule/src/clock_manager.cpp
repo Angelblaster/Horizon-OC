@@ -545,8 +545,6 @@ namespace clockManager {
 
     void Initialize()
     {
-        config::Initialize();
-
         gContext = {};
         gContext.applicationId = 0;
         gContext.profile = HocClkProfile_Handheld;
@@ -592,7 +590,6 @@ namespace clockManager {
     void Exit()
     {
         governor::exitThreads();
-        config::Exit();
     }
 
     HocClkContext GetCurrentContext()

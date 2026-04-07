@@ -44,6 +44,8 @@
 #include "../file_utils.hpp"
 namespace board {
 
+    u64 clkVirtAddr, dsiVirtAddr;
+
     HocClkSocType gSocType;
     u8 gDramID;
     HocClkConsoleType gConsoleType = HocClkConsoleType_Iowa;
@@ -145,14 +147,12 @@ namespace board {
 
         StartMiscThread(pwmCheck, &iCon);
 
-        u64 clkVirtAddr, dsiVirtAddr;
-
         rc = QueryMemoryMapping(&clkVirtAddr, 0x60006000, 0x1000);
         ASSERT_RESULT_OK(rc, "QueryMemoryMapping (clk)");
 
         rc = QueryMemoryMapping(&dsiVirtAddr, 0x54300000, 0x40000);
         ASSERT_RESULT_OK(rc, "QueryMemoryMapping (dsi)");
-
+        
         display::DisplayRefreshConfig cfg = {.clkVirtAddr = clkVirtAddr, .dsiVirtAddr = dsiVirtAddr, .isLite = (GetConsoleType() == HocClkConsoleType_Hoag), .isRetroSUPER = integrations::GetRETROSuperStatus()};
         display::Initialize(&cfg);
 

@@ -121,7 +121,7 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     // === VOLTAGES ===
     renderer->drawString(displayStrings[8], false, dataPositions[0], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // CPU voltage
-    renderer->drawString(displayStrings[9], false, dataPositions[1] + 9, y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // GPU voltage
+    renderer->drawString(displayStrings[9], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // GPU voltage
 
     renderer->drawStringWithColoredSections(displayStrings[10], false, {""}, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor, tsl::separatorColor);
 

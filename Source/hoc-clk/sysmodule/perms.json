@@ -86,7 +86,8 @@
                 "is_ro": false,
                 "is_io": true
             }
-        }, {
+        },
+		{
 			"type": "syscalls",
 			"value": {
 				"svcUnknown":	"0x00",
