@@ -1070,8 +1070,8 @@ protected:
                 NamedValue("2193 MHz", 2193),
                 NamedValue("2300 MHz", 2295),
                 NamedValue("2400 MHz", 2397),
-                NamedValue("2400 MHz", 2500),
-                NamedValue("2400 MHz", 2600),
+                NamedValue("2500 MHz", 2500),
+                NamedValue("2600 MHz", 2600),
             };
             ValueThresholds eCpuMaxClockThresholds(1785, 2091);
             addConfigButton(
