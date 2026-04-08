@@ -280,7 +280,7 @@ namespace ams::ldr::hoc::pcv::mariko {
 
         /* Verify the limit. */
         /* TODO: Make this a little bit cleaner at some point. */
-        if (AsmGetImm16(ins1) != (GpuOsLimit & 0xFFFF) || AsmGetImm16(ins2) != (GpuOsLimit >> 16)) {
+        if (AsmGetImm16(ins1) != (GpuClkOsLimit & 0xFFFF) || AsmGetImm16(ins2) != (GpuClkOsLimit >> 16)) {
             R_THROW(ldr::ResultInvalidGpuFreqMaxPattern());
         }
 
