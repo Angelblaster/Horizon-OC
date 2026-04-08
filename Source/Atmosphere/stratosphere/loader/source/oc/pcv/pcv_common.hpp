@@ -119,7 +119,7 @@ namespace ams::ldr::hoc::pcv {
     static_assert(sizeof(regulator) == 0x120);
 
     constexpr u32 CpuClkOSLimit = 1785'000;
-
+    constexpr u32 GpuOsLimit      = 921'600;
     constexpr u32 EmcClkOSLimit = 1600'000;
 
     #define R_SKIP() R_SUCCEED()

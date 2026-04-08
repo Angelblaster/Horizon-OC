@@ -82,7 +82,6 @@ namespace ams::ldr::hoc::pcv {
             {                                                           },
         };
 
-        constexpr u32 GpuOsLimit      = 921'600;
         constexpr u32 GpuClkPllMax    = 1300'000'000;
         constexpr u32 GpuClkPllLimit  = 2'600'000;
         constexpr u32 GpuVminOfficial = 610;
@@ -187,7 +186,6 @@ namespace ams::ldr::hoc::pcv {
         static const u32 cpuVoltageThermalPattern[] = { 950, 1132, 0, 950, 1227, 0, 825, 1227, 15000, 825, 1170, 60000, 825, 1132, 80000 };
         static_assert(sizeof(cpuVoltageThermalPattern) == 0x3c, "invalid cpuVoltageThermalPattern size");
 
-        constexpr u32 GpuOsLimit      = 921'600;
         constexpr u32 GpuClkPllLimit  = 2'600'000;
         constexpr u32 GpuClkPllMax    = 921'600'000;
         constexpr u32 GpuVminOfficial = 810;
