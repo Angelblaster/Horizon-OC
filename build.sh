@@ -15,7 +15,7 @@ cp build/stratosphere/loader/hoc.kip dist/atmosphere/kips/hoc.kip
 
 cd Source/hoc-clk/
 ./build.sh
-cp -r dist/ ../../
+cp -r dist/switch/.overlays/horizon-oc-overlay.ovl
 
 cd ../../
 
