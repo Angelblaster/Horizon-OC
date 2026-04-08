@@ -42,25 +42,27 @@ protected:
     std::set<HocClkConfigValue> configButtonSKeys;
     std::map<HocClkConfigValue, std::string> configButtonSSubtext;
     
-    void addConfigToggle(HocClkConfigValue configVal, const char* altName);
-    void addConfigButton(HocClkConfigValue configVal, 
-        const char* altName, 
-        const ValueRange& range,
-        const std::string& categoryName,
-        const ValueThresholds* thresholds,
-        const std::map<uint32_t, std::string>& labels = {},
-        const std::vector<NamedValue>& namedValues = {},
-        bool showDefaultValue = true);
-        
-    void addConfigButtonS(HocClkConfigValue configVal, 
-        const char* altName, 
+    void addConfigToggle(HocClkConfigValue configVal, const char* altName, bool kip = false);
+    void addConfigButton(HocClkConfigValue configVal,
+        const char* altName,
         const ValueRange& range,
         const std::string& categoryName,
         const ValueThresholds* thresholds,
         const std::map<uint32_t, std::string>& labels = {},
         const std::vector<NamedValue>& namedValues = {},
         bool showDefaultValue = true,
-        const char* subText = nullptr);
+        bool kip = false);
+
+    void addConfigButtonS(HocClkConfigValue configVal,
+        const char* altName,
+        const ValueRange& range,
+        const std::string& categoryName,
+        const ValueThresholds* thresholds,
+        const std::map<uint32_t, std::string>& labels = {},
+        const std::vector<NamedValue>& namedValues = {},
+        bool showDefaultValue = true,
+        const char* subText = nullptr,
+        bool kip = false);
     void addFreqButton(HocClkConfigValue configVal,
                             const char* altName,
                             HocClkModule module,

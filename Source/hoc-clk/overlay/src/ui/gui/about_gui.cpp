@@ -55,7 +55,10 @@ void AboutGui::listUI()
 
     ramVoltItem =
         new tsl::elm::ListItem("RAM Voltage:");
-    this->listElement->addItem(ramVoltItem);
+        
+    if(IsMariko()) {
+        this->listElement->addItem(ramVoltItem);
+    }
 
     dispVoltItem =
         new tsl::elm::ListItem("Display Voltage:");
@@ -105,7 +108,7 @@ void AboutGui::listUI()
     saltyNXStatusItem =
         new tsl::elm::ListItem("SaltyNX status:");
     this->listElement->addItem(saltyNXStatusItem);
-    
+
     this->listElement->addItem(
         new tsl::elm::CategoryHeader("Credits")
     );
