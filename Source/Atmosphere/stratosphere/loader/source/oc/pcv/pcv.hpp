@@ -82,8 +82,9 @@ namespace ams::ldr::hoc::pcv {
             {                                                           },
         };
 
-        constexpr u32 GpuClkPllMax = 1300'000'000;
-        constexpr u32 GpuClkPllLimit = 2'600'000;
+        constexpr u32 GpuOsLimit      = 921'600;
+        constexpr u32 GpuClkPllMax    = 1300'000'000;
+        constexpr u32 GpuClkPllLimit  = 2'600'000;
         constexpr u32 GpuVminOfficial = 610;
 
         static const u32 gpuDVFSPattern[] = { 1050, 1000, 100, 1000, 10, };
@@ -119,6 +120,10 @@ namespace ams::ldr::hoc::pcv {
 
         inline auto asm_set_imm16 = [](u32 ins, u16 imm) {
             return (ins & 0xFFE0001F) | ((imm & 0xFFFF) << 5);
+        };
+
+        inline auto AsmGetImm16 = [](u32 ins) {
+            return static_cast<u16>((ins >> 5) & 0xFFFF);
         };
 
         inline bool GpuMaxClockPatternFn(u32 *ptr32) {
@@ -181,8 +186,10 @@ namespace ams::ldr::hoc::pcv {
 
         static const u32 cpuVoltageThermalPattern[] = { 950, 1132, 0, 950, 1227, 0, 825, 1227, 15000, 825, 1170, 60000, 825, 1132, 80000 };
         static_assert(sizeof(cpuVoltageThermalPattern) == 0x3c, "invalid cpuVoltageThermalPattern size");
-        constexpr u32 GpuClkPllLimit = 2'600'000;
-        constexpr u32 GpuClkPllMax = 921'600'000;
+
+        constexpr u32 GpuOsLimit      = 921'600;
+        constexpr u32 GpuClkPllLimit  = 2'600'000;
+        constexpr u32 GpuClkPllMax    = 921'600'000;
         constexpr u32 GpuVminOfficial = 810;
 
         constexpr u16 CpuMinVolts[] = { 950, 850, 825, 810 };
@@ -228,6 +235,10 @@ namespace ams::ldr::hoc::pcv {
 
         inline auto asm_set_imm16 = [](u32 ins, u16 imm) {
             return (ins & 0xFFE0001F) | ((imm & 0xFFFF) << 5);
+        };
+
+        inline auto AsmGetImm16 = [](u32 ins) {
+            return static_cast<u16>((ins >> 5) & 0xFFFF);
         };
 
         inline bool GpuMaxClockPatternFn(u32 *ptr32) {

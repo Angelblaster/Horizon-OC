@@ -268,13 +268,21 @@ namespace ams::ldr::hoc::pcv::mariko {
     Result GpuFreqMaxAsm(u32 *ptr32) {
         // Check if both two instructions match the pattern
         u32 ins1 = *ptr32, ins2 = *(ptr32 + 1);
-        if (!(asm_compare_no_rd(ins1, asm_pattern[0]) && asm_compare_no_rd(ins2, asm_pattern[1])))
+        if (!(asm_compare_no_rd(ins1, asm_pattern[0]) && asm_compare_no_rd(ins2, asm_pattern[1]))) {
             R_THROW(ldr::ResultInvalidGpuFreqMaxPattern());
+        }
 
         // Both instructions should operate on the same register
         u8 rd = asm_get_rd(ins1);
-        if (rd != asm_get_rd(ins2))
+        if (rd != asm_get_rd(ins2)) {
             R_THROW(ldr::ResultInvalidGpuFreqMaxPattern());
+        }
+
+        /* Verify the limit. */
+        /* TODO: Make this a little bit cleaner at some point. */
+        if (AsmGetImm16(ins1) != (GpuOsLimit & 0xFFFF) || AsmGetImm16(ins2) != (GpuOsLimit >> 16)) {
+            R_THROW(ldr::ResultInvalidGpuFreqMaxPattern());
+        }
 
         u32 max_clock;
         switch (C.marikoGpuUV) {
@@ -291,6 +299,7 @@ namespace ams::ldr::hoc::pcv::mariko {
             max_clock = GetDvfsTableLastEntry(C.marikoGpuDvfsTable)->freq;
             break;
         }
+
         u32 asm_patch[2] = {
             asm_set_rd(asm_set_imm16(asm_pattern[0], max_clock), rd),
             asm_set_rd(asm_set_imm16(asm_pattern[1], max_clock >> 16), rd)
