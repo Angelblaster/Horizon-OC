@@ -31,7 +31,8 @@
 #include "board.hpp"
 #include "board_name.hpp"
 #include "../errors.hpp"
-
+#include "pllmb.hpp"
+#include "../config.hpp"
 namespace board {
 
     PcvModule GetPcvModule(HocClkModule hocclkModule) {
@@ -141,10 +142,9 @@ namespace board {
             case HocClkModule_GPU:
                 return t210ClkGpuFreq();
             case HocClkModule_MEM:
-                return t210ClkMemFreq();
+                return config::GetConfigValue(HocClkConfigValue_MemoryFrequencyMeasurementMode) == MemoryFrequencyMeasurementMode_PLL ? pllmb::getRamClockRatePLLMB() : t210ClkMemFreq();
             case HocClkModule_Display:
                 return GetDisplayRate(hz);
-            return hz;
             default:
                 ASSERT_ENUM_VALID(HocClkModule, module);
         }

@@ -40,7 +40,7 @@
 #define HOSSVC_HAS_TC (hosversionAtLeast(5,0,0))
 
 namespace board {
-
+    extern u64 clkVirtAddr, dsiVirtAddr;
     void Initialize();
     void Exit();
     HocClkSocType GetSocType();

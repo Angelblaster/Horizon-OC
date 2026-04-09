@@ -158,6 +158,12 @@ typedef enum {
     RamDisplayMode_EnumMax,
 } RamDisplayMode;
 
+typedef enum {
+    MemoryFrequencyMeasurementMode_Actmon = 0,
+    MemoryFrequencyMeasurementMode_PLL,
+    MemoryFrequencyMeasurementMode_EnumMax,
+} MemoryFrequencyMeasurementMode;
+
 #define HOCCLK_ENUM_VALID(n, v) ((v) < n##_EnumMax)
 
 // Packed u32

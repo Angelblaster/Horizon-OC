@@ -134,6 +134,7 @@ int main(int argc, char** argv)
         fatalThrow(rc);
         return 1;
     }
+    config::Initialize();
 
     board::Initialize();
     processManagement::Initialize();
@@ -164,7 +165,7 @@ int main(int argc, char** argv)
     clockManager::Exit();
     processManagement::Exit();
     board::Exit();
-
+    config::Exit();
     fileUtils::LogLine("Exit");
     svcSleepThread(1000000ULL);
     fileUtils::Exit();

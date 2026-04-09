@@ -32,7 +32,7 @@ It enables advanced CPU, GPU, and RAM tuning with user-friendly configuration to
 
 ---
 
-## Features
+## Default clocks
 
 * **CPU:** Up to 1963MHz (Mariko) / 1785MHz (Erista)
 * **GPU:** Up to 1075MHz (Mariko) / 921MHz (Erista)
@@ -93,7 +93,8 @@ Refer to COMPILATION.md
 * 665
 
 ### CPU clocks
-* 2601 → mariko absolute max, very dangerous
+* 2703 → mariko absolute max, dangerous
+* 2601 → unsafe
 * 2499
 * 2397 → mariko safe max with UV (low speedo)
 * 2295
@@ -113,9 +114,6 @@ Refer to COMPILATION.md
 * 816
 * 714
 * 612 → sleep mode
-  
-**Notes:**
-1. On Erista, CPU in handheld is capped to 1581MHz
 
 ### GPU clocks
 * 1536 → absolute max clock on mariko. very dangerous
@@ -142,27 +140,33 @@ Refer to COMPILATION.md
 * 76 → boost mode
 
 **Notes:**
-1. GPU overclock is capped at 460MHz on erista in handheld
-2. On Mariko, cap with No uv is 614MHz, with SLT it is 691MHz and with HiOPT it's 768MHz
-3. Clocks higher than 768MHz on erista need the official charger is plugged in.
-4. On Mariko, cap with No uv is 844MHz, with SLT it is 921MHz and with HiOPT it's 998MHz
+1. On Erista, CPU in handheld is capped to 1581MHz
+2. GPU overclock is capped at 460MHz on erista in handheld
+3. On Mariko, cap with No uv is 614MHz, with SLT it is 691MHz and with HiOPT it's 768MHz
+4. Clocks higher than 768MHz on erista need the official charger is plugged in.
+5. On Mariko, cap with No uv is 844MHz, with SLT it is 921MHz and with HiOPT it's 998MHz
+
 
 ---
 
 ## Credits
 * **Lightos's Cat** - Cat
 
-* **Souldbminer** – hoc-clk and loader development
-* **Lightos** – loader patches development
+* **Souldbminer** - hoc-clk and loader development
+* **Lightos** - Loader patches development, hoc-clk development, guides
 * **SciresM** - Atmosphere CFW
-* **CTCaer** - L4T, Hekate, perfect ram timings
-* **KazushiMe** – Switch OC Suite
-* **hanai3bi (meha)** – Switch OC Suite, EOS, sys-clk-eos
-* **NaGaa95** – L4T-OC-kernel
-* **B3711 (halop)** – EOS
-* **sys-clk team (m4xw, p-sam, natinusala)** – sys-clk
-* **b0rd2death** – Ultrahand sys-clk & Status Monitor fork
+* **CTCaer** - L4T, Hekate, proper RAM timings
+* **KazushiMe** - Switch OC Suite
+* **Hanai3bi (Meha)** - Switch OC Suite, EOS, sys-clk-eos
+* **NaGaa95** - L4T-OC kernel, Status Monitor fork
+* **B3711 (halop)** - EOS
+* **sys-clk team (m4xw, p-sam, natinusala)** - sys-clk
+* **Dominatorul** - Soctherm driver, guides, general help
+* **b0rd2death** - Ultrahand sys-clk & Status Monitor fork
 * **MasaGratoR and ZachyCatGames** - General help
-* **MasaGratoR** - Status Monitor & Display Refresh Rate Driver
-* **Dom, Samybigio, Arcdelta, Miki, Happy, Flopsider, Winnerboi77, Blaise, Alvise, TDRR, agjeococh, frost, letum00 and Xenshen** - Testing
-* **Samybigio2011** - Italian translations
+* **MasaGratoR** - Status Monitor & Display Refresh Rate driver
+* **Dominatorul, Samybigio, Arcdelta, Miki, Happy, Flopsider, Winnerboi77, Blaise, Alvise, TDRR, agjeococh, frost, letum00, and Xenshen** - Testing
+* **Samybigio2011, Miki** - Italian translations
+* **angelblaster** - Korean translations
+* **q1332348216-glitch** - Chinese translations
+* **Nvidia** - [Tegra X1 Technical Reference Manual](https://developer.nvidia.com/embedded/dlc/tegra-x1-technical-reference-manual), soctherm driver, L4T

@@ -50,12 +50,15 @@ AboutGui::~AboutGui()
 void AboutGui::listUI()
 {
     this->listElement->addItem(
-        new tsl::elm::CategoryHeader("Information")
+        new tsl::elm::CategoryHeader("Voltages and Temperatures")
     );
 
     ramVoltItem =
         new tsl::elm::ListItem("RAM Voltage:");
-    this->listElement->addItem(ramVoltItem);
+        
+    if(IsMariko()) {
+        this->listElement->addItem(ramVoltItem);
+    }
 
     dispVoltItem =
         new tsl::elm::ListItem("Display Voltage:");
@@ -67,6 +70,9 @@ void AboutGui::listUI()
         this->listElement->addItem(eristaPLLXItem);
     }
 
+    this->listElement->addItem(
+        new tsl::elm::CategoryHeader("HW Info")
+    );
     SpeedoItem =
         new tsl::elm::ListItem("Speedo:");
     this->listElement->addItem(SpeedoItem);
@@ -79,6 +85,20 @@ void AboutGui::listUI()
         new tsl::elm::ListItem("Module: ");
     this->listElement->addItem(DramModule);
 
+    waferCordsItem =
+        new tsl::elm::ListItem("Wafer Position:");
+    this->listElement->addItem(waferCordsItem);
+
+    if(IsHoag()) {
+        RETROStatusItem =
+            new tsl::elm::ListItem("RR Display status:");
+        this->listElement->addItem(RETROStatusItem);
+    }
+
+    this->listElement->addItem(
+        new tsl::elm::CategoryHeader("Software Info")
+    );
+
     if(!IsHoag()) {
         sysdockStatusItem =
             new tsl::elm::ListItem("sys-dock status:");
@@ -88,16 +108,6 @@ void AboutGui::listUI()
     saltyNXStatusItem =
         new tsl::elm::ListItem("SaltyNX status:");
     this->listElement->addItem(saltyNXStatusItem);
-    
-    if(IsHoag()) {
-        RETROStatusItem =
-            new tsl::elm::ListItem("RR Display status:");
-        this->listElement->addItem(RETROStatusItem);
-    }
-
-    waferCordsItem =
-        new tsl::elm::ListItem("Wafer Position:");
-    this->listElement->addItem(waferCordsItem);
 
     this->listElement->addItem(
         new tsl::elm::CategoryHeader("Credits")
@@ -303,7 +313,7 @@ void AboutGui::update()
 void AboutGui::refresh()
 {
     BaseMenuGui::refresh();
-
+    
     if (!this->context)
         return;
     // Format strings once per refresh
@@ -326,7 +336,7 @@ void AboutGui::refresh()
 
     if(IsErista()) {
         u32 millis = context->temps[HocClkThermalSensor_PLLX];
-        sprintf(strings[3], "%u.%u", millis / 1000U, (millis % 1000U) / 100U);
+        sprintf(strings[3], "%u.%u °C", millis / 1000U, (millis % 1000U) / 100U);
         eristaPLLXItem->setValue(strings[3]);
     }
 

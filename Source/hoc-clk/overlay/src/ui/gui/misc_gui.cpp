@@ -24,6 +24,26 @@
 #include <vector>
 #include <notification.h>
 #include "labels.h"
+
+// This workaround *may* not be nessasary, but it seems to help with reducing stutter
+static void kipDataThreadFunc(void*) {
+    hocClkIpcSetKipData();
+}
+
+static Thread s_kipThread;
+static bool s_kipThreadPending = false;
+
+static void sendKipData() {
+    if (s_kipThreadPending) {
+        threadWaitForExit(&s_kipThread);
+        threadClose(&s_kipThread);
+        s_kipThreadPending = false;
+    }
+    if (R_SUCCEEDED(threadCreate(&s_kipThread, kipDataThreadFunc, nullptr, nullptr, 0x1000, 0x2C, -2))) {
+        threadStart(&s_kipThread);
+        s_kipThreadPending = true;
+    }
+}
 #if IS_MINIMAL == 1
 #pragma message("Compiling with minimal features")
 #endif
@@ -42,6 +62,7 @@ class CpuSubmenuGui;
 class GpuSubmenuGui;
 class GpuCustomTableSubmenuGui;
 class RamTableEditor;
+class ExperimentalSettingsSubMenuGui;
 
 MiscGui::MiscGui()
 {
@@ -50,6 +71,11 @@ MiscGui::MiscGui()
 
 MiscGui::~MiscGui()
 {
+    if (s_kipThreadPending) {
+        threadWaitForExit(&s_kipThread);
+        threadClose(&s_kipThread);
+        s_kipThreadPending = false;
+    }
     delete this->configList;
     this->configToggles.clear();
     this->configTrackbars.clear();
@@ -57,14 +83,19 @@ MiscGui::~MiscGui()
     this->configRanges.clear();
 }
 
-void MiscGui::addConfigToggle(HocClkConfigValue configVal, const char* altName) {
+void MiscGui::addConfigToggle(HocClkConfigValue configVal, const char* altName, bool kip) {
     const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
     tsl::elm::ToggleListItem* toggle = new tsl::elm::ToggleListItem(configName, this->configList->values[configVal]);
-    toggle->setStateChangedListener([this, configVal](bool state) {
+    if (kip)
+        toggle->setTextColor(tsl::Color(255, 165, 0, 255));
+    toggle->setStateChangedListener([this, configVal, kip](bool state) {
         this->configList->values[configVal] = uint64_t(state);
         Result rc = hocclkIpcSetConfigValues(this->configList);
-        if (R_FAILED(rc))
+        if (R_FAILED(rc)) {
             FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
+        } else if (kip) {
+            sendKipData();
+        }
         this->lastContextUpdate = armGetSystemTick();
     });
     this->listElement->addItem(toggle);
@@ -79,11 +110,14 @@ void MiscGui::addConfigButton(HocClkConfigValue configVal,
     const ValueThresholds* thresholds,
     const std::map<uint32_t, std::string>& labels,
     const std::vector<NamedValue>& namedValues,
-    bool showDefaultValue)
+    bool showDefaultValue,
+    bool kip)
 {
     const char* configName = altName ? altName : hocclkFormatConfigValue(configVal, true);
 
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem(configName);
+    if (kip)
+        listItem->setTextColor(tsl::Color(255, 165, 0, 255));
 
     uint64_t currentValue = this->configList->values[configVal];
     char valueText[32];
@@ -113,7 +147,7 @@ void MiscGui::addConfigButton(HocClkConfigValue configVal,
     ValueThresholds thresholdsCopy = (thresholds ? *thresholds : ValueThresholds{});
 
     listItem->setClickListener(
-        [this, configVal, range, categoryName, thresholdsCopy, labels, namedValues, showDefaultValue](u64 keys)
+        [this, configVal, range, categoryName, thresholdsCopy, labels, namedValues, showDefaultValue, kip](u64 keys)
         {
             if ((keys & HidNpadButton_A) == 0)
                 return false;
@@ -126,12 +160,15 @@ void MiscGui::addConfigButton(HocClkConfigValue configVal,
                     currentValue,
                     range,
                     categoryName,
-                    [this, configVal](std::uint32_t value) {
+                    [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
                         Result rc = hocclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
                             FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
                             return false;
+                        }
+                        if (kip) {
+                            sendKipData();
                         }
                         this->lastContextUpdate = armGetSystemTick();
                         return true;
@@ -148,12 +185,15 @@ void MiscGui::addConfigButton(HocClkConfigValue configVal,
                     currentValue,
                     range,
                     categoryName,
-                    [this, configVal](std::uint32_t value) {
+                    [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
                         Result rc = hocclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
                             FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
                             return false;
+                        }
+                        if (kip) {
+                            sendKipData();
                         }
                         this->lastContextUpdate = armGetSystemTick();
                         return true;
@@ -183,9 +223,12 @@ void MiscGui::addConfigButtonS(HocClkConfigValue configVal,
     const std::map<uint32_t, std::string>& labels,
     const std::vector<NamedValue>& namedValues,
     bool showDefaultValue,
-    const char* subText)
+    const char* subText,
+    bool kip)
 {
     tsl::elm::ListItem* listItem = new tsl::elm::ListItem("");
+    if (kip)
+        listItem->setTextColor(tsl::Color(255, 165, 0, 255));
 
     uint64_t currentValue = this->configList->values[configVal];
     char valueText[32];
@@ -217,7 +260,7 @@ void MiscGui::addConfigButtonS(HocClkConfigValue configVal,
     ValueThresholds thresholdsCopy = (thresholds ? *thresholds : ValueThresholds{});
 
     listItem->setClickListener(
-        [this, configVal, range, categoryName, thresholdsCopy, labels, namedValues, showDefaultValue](u64 keys)
+        [this, configVal, range, categoryName, thresholdsCopy, labels, namedValues, showDefaultValue, kip](u64 keys)
         {
             if ((keys & HidNpadButton_A) == 0)
                 return false;
@@ -230,12 +273,15 @@ void MiscGui::addConfigButtonS(HocClkConfigValue configVal,
                     currentValue,
                     range,
                     categoryName,
-                    [this, configVal](std::uint32_t value) {
+                    [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
                         Result rc = hocclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
                             FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
                             return false;
+                        }
+                        if (kip) {
+                            sendKipData();
                         }
                         this->lastContextUpdate = armGetSystemTick();
                         return true;
@@ -252,12 +298,15 @@ void MiscGui::addConfigButtonS(HocClkConfigValue configVal,
                     currentValue,
                     range,
                     categoryName,
-                    [this, configVal](std::uint32_t value) {
+                    [this, configVal, kip](std::uint32_t value) {
                         this->configList->values[configVal] = value;
                         Result rc = hocclkIpcSetConfigValues(this->configList);
                         if (R_FAILED(rc)) {
                             FatalGui::openWithResultCode("hocclkIpcSetConfigValues", rc);
                             return false;
+                        }
+                        if (kip) {
+                            sendKipData();
                         }
                         this->lastContextUpdate = armGetSystemTick();
                         return true;
@@ -364,6 +413,14 @@ void MiscGui::listUI()
     std::vector<NamedValue> noNamedValues = {};
 
     this->listElement->addItem(new tsl::elm::CategoryHeader("Settings"));
+    
+    tsl::elm::CustomDrawer* rebootSetWarning = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+        renderer->drawString("\uE150 Settings marked in orange", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+        renderer->drawString("require a reboot to apply!", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+    });
+    rebootSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 70);
+    this->listElement->addItem(rebootSetWarning);
+
     tsl::elm::ListItem* sysmoduleSettingsSubMenu = new tsl::elm::ListItem("General Settings");
     sysmoduleSettingsSubMenu->setClickListener([](u64 keys) {
         if (keys & HidNpadButton_A) {
@@ -396,23 +453,6 @@ void MiscGui::listUI()
     });
     safetySubmenu->setValue(R_ARROW);
     this->listElement->addItem(safetySubmenu);
-
-    // this->listElement->addItem(new tsl::elm::CategoryHeader("KIP"));
-
-    tsl::elm::ListItem* saveBtn = new tsl::elm::ListItem("Save KIP Settings");
-    saveBtn->setClickListener([](u64 keys) {
-        if (keys & HidNpadButton_A) {
-            Result rc = hocClkIpcSetKipData();
-            if (R_FAILED(rc)) {
-                FatalGui::openWithResultCode("hocClkIpcSetKipData", rc);
-                return false;
-            }
-            return true;
-        }
-        return false;
-    });
-    saveBtn->setValue(A_BTN);
-    this->listElement->addItem(saveBtn);
 
     tsl::elm::ListItem* ramSubmenu = new tsl::elm::ListItem("RAM Settings");
     ramSubmenu->setClickListener([](u64 keys) {
@@ -458,100 +498,19 @@ void MiscGui::listUI()
     displaySubMenu->setValue(R_ARROW);
     this->listElement->addItem(displaySubMenu);
 
-    #if IS_MINIMAL == 0
-        // std::vector<NamedValue> chargerCurrents = {
-        //     NamedValue("Disabled", 0),
-        //     NamedValue("1024mA", 1024),
-        //     NamedValue("1280mA", 1280),
-        //     NamedValue("1536mA", 1536),
-        //     NamedValue("1792mA", 1792),
-        //     NamedValue("2048mA", 2048),
-        //     NamedValue("2304mA", 2304),
-        //     NamedValue("2560mA", 2560),
-        //     NamedValue("2816mA", 2816),
-        //     NamedValue("3072mA", 3072),
-        // };
-        if(this->configList->values[HocClkConfigValue_EnableExperimentalSettings]) {
-            this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental"));
-
-            addConfigToggle(HocClkConfigValue_LiveCpuUv, nullptr);
-            std::vector<NamedValue> gpuSchedMethodValues = {
-                NamedValue("INI", GpuSchedulingOverrideMethod_Ini),
-                NamedValue("NV Service", GpuSchedulingOverrideMethod_NvService),
-            };
-            addConfigButton(
-                HocClkConfigValue_GPUSchedulingMethod,
-                "GPU Scheduling Override Method",
-                ValueRange(0, 0, 1, "", 0),
-                "GPU Scheduling Override Method",
-                &thresholdsDisabled,
-                {},
-                gpuSchedMethodValues,
-                false
-            );
-            tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
-                renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
-                renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
-                renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
-            });
-            chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
-            this->listElement->addItem(chargeWarningText);
-
-            if(!IsHoag()) {
-                    std::vector<NamedValue> chargerCurrents = {
-                        NamedValue("Disabled", 0),
-                        NamedValue("1024mA", 1024),
-                        NamedValue("1280mA", 1280),
-                        NamedValue("1536mA", 1536),
-                        NamedValue("1792mA", 1792),
-                        NamedValue("2048mA", 2048),
-                        NamedValue("2304mA", 2304),
-                        NamedValue("2560mA", 2560),
-                        NamedValue("2816mA", 2816),
-                        NamedValue("3072mA", 3072),
-                    };
-
-                    ValueThresholds chargerThresholds(2048, 2049);
-
-                    addConfigButton(
-                        HocClkConfigValue_BatteryChargeCurrent,
-                        "Charge Current Override",
-                        ValueRange(0, 0, 1, "", 0),
-                        "Charge Current Override",
-                        &chargerThresholds,
-                        {},
-                        chargerCurrents,
-                        false
-                    );
+    if(this->configList->values[HocClkConfigValue_EnableExperimentalSettings]) {
+        tsl::elm::ListItem* experimentalSubMenu = new tsl::elm::ListItem("Experimental Settings");
+        experimentalSubMenu->setClickListener([](u64 keys) {
+            if (keys & HidNpadButton_A) {
+                tsl::changeTo<ExperimentalSettingsSubMenuGui>();
+                return true;
             }
-            else {
-                std::vector<NamedValue> chargerCurrents = {
-                    NamedValue("Disabled", 0),
-                    NamedValue("1024mA", 1024),
-                    NamedValue("1280mA", 1280),
-                    NamedValue("1536mA", 1536),
-                    NamedValue("1792mA", 1792),
-                    NamedValue("2048mA", 2048),
-                    NamedValue("2304mA", 2304),
-                    NamedValue("2560mA", 2560),
-                };
+            return false;
+        });
+        experimentalSubMenu->setValue(R_ARROW);
+        this->listElement->addItem(experimentalSubMenu);
+    }
 
-                ValueThresholds chargerThresholds(1792, 1793);
-
-                addConfigButton(
-                    HocClkConfigValue_BatteryChargeCurrent,
-                    "Charge Current Override",
-                    ValueRange(0, 0, 1, "", 0),
-                    "Charge Current Override",
-                    &chargerThresholds,
-                    {},
-                    chargerCurrents,
-                    false
-                );
-
-            }
-        }
-    #endif
 }
 
 class GeneralSettingsSubMenuGui : public MiscGui {
@@ -567,7 +526,9 @@ protected:
             NamedValue("VDDQ", RamDisplayMode_VDDQ),
         };
 
-        addConfigButton(HocClkConfigValue_RAMVoltDisplayMode, "RAM Voltage Display Mode", ValueRange(0, 12, 1, "", 0), "RAM Voltage Display Mode", &thresholdsDisabled, {}, ramVoltDispModes, false);
+        if(IsMariko()) {
+            addConfigButton(HocClkConfigValue_RAMVoltDisplayMode, "RAM Voltage Display Mode", ValueRange(0, 12, 1, "", 0), "RAM Voltage Display Mode", &thresholdsDisabled, {}, ramVoltDispModes, false);
+        }
 
         addConfigButton(
             HocClkConfigValue_PollingIntervalMs,
@@ -579,8 +540,124 @@ protected:
             {},
             false
         );
+
+        tsl::elm::CustomDrawer* exSetWarning = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+            renderer->drawString("\uE150 Experimental Settings", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("are a work in progress! Use with caution!", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("Here be dragons!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+        });
+        exSetWarning->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
+        this->listElement->addItem(exSetWarning);
+
+        addConfigToggle(HocClkConfigValue_EnableExperimentalSettings, nullptr);
     }
 };
+
+class ExperimentalSettingsSubMenuGui : public MiscGui {
+public:
+    ExperimentalSettingsSubMenuGui() { }
+
+protected:
+    void listUI() override {
+        this->listElement->addItem(new tsl::elm::CategoryHeader("Experimental Settings"));
+        ValueThresholds thresholdsDisabled(0, 0);
+
+        addConfigToggle(HocClkConfigValue_LiveCpuUv, nullptr);
+        std::vector<NamedValue> gpuSchedMethodValues = {
+            NamedValue("INI", GpuSchedulingOverrideMethod_Ini),
+            NamedValue("NV Service", GpuSchedulingOverrideMethod_NvService),
+        };
+        addConfigButton(
+            HocClkConfigValue_GPUSchedulingMethod,
+            "GPU Scheduling Override Method",
+            ValueRange(0, 0, 1, "", 0),
+            "GPU Scheduling Override Method",
+            &thresholdsDisabled,
+            {},
+            gpuSchedMethodValues,
+            false
+        );
+
+        
+        std::vector<NamedValue> ramRFMeasurementMethods = {
+            NamedValue("Actmon", MemoryFrequencyMeasurementMode_Actmon),
+            NamedValue("PLL", MemoryFrequencyMeasurementMode_PLL),
+        };
+        addConfigButton(
+            HocClkConfigValue_MemoryFrequencyMeasurementMode,
+            "Memory Frequency Measurement Mode",
+            ValueRange(0, 0, 1, "", 0),
+            "Memory Frequency Measurement Mode",
+            &thresholdsDisabled,
+            {},
+            ramRFMeasurementMethods,
+            false
+        );
+
+
+        tsl::elm::CustomDrawer* chargeWarningText = new tsl::elm::CustomDrawer([](tsl::gfx::Renderer *renderer, s32 x, s32 y, s32 w, s32 h) {
+            renderer->drawString("\uE150 Overriding the charge current", false, x + 20, y + 30, 18, tsl::style::color::ColorText);
+            renderer->drawString("can be dangerous and may cause", false, x + 20, y + 50, 18, tsl::style::color::ColorText);
+            renderer->drawString("damage to your battery or charger!", false, x + 20, y + 70, 18, tsl::style::color::ColorText);
+        });
+        chargeWarningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 90);
+        this->listElement->addItem(chargeWarningText);
+
+        if(!IsHoag()) {
+                std::vector<NamedValue> chargerCurrents = {
+                    NamedValue("Disabled", 0),
+                    NamedValue("1024mA", 1024),
+                    NamedValue("1280mA", 1280),
+                    NamedValue("1536mA", 1536),
+                    NamedValue("1792mA", 1792),
+                    NamedValue("2048mA", 2048),
+                    NamedValue("2304mA", 2304),
+                    NamedValue("2560mA", 2560),
+                    NamedValue("2816mA", 2816),
+                    NamedValue("3072mA", 3072),
+                };
+
+                ValueThresholds chargerThresholds(2048, 2049);
+
+                addConfigButton(
+                    HocClkConfigValue_BatteryChargeCurrent,
+                    "Charge Current Override",
+                    ValueRange(0, 0, 1, "", 0),
+                    "Charge Current Override",
+                    &chargerThresholds,
+                    {},
+                    chargerCurrents,
+                    false
+                );
+        } else {
+            std::vector<NamedValue> chargerCurrents = {
+                NamedValue("Disabled", 0),
+                NamedValue("1024mA", 1024),
+                NamedValue("1280mA", 1280),
+                NamedValue("1536mA", 1536),
+                NamedValue("1792mA", 1792),
+                NamedValue("2048mA", 2048),
+                NamedValue("2304mA", 2304),
+                NamedValue("2560mA", 2560),
+            };
+
+            ValueThresholds chargerThresholds(1792, 1793);
+
+            addConfigButton(
+                HocClkConfigValue_BatteryChargeCurrent,
+                "Charge Current Override",
+                ValueRange(0, 0, 1, "", 0),
+                "Charge Current Override",
+                &chargerThresholds,
+                {},
+                chargerCurrents,
+                false
+            );
+
+        }
+    }
+};
+
 
 class GovernorSettingsSubMenuGui : public MiscGui {
 public:
@@ -724,7 +801,7 @@ protected:
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("RAM Settings"));
 
-        addConfigToggle(KipConfigValue_hpMode, "HP Mode");
+        addConfigToggle(KipConfigValue_hpMode, "HP Mode", true);
 
         std::map<uint32_t, std::string> emc_voltage_label = {
             {1100000, "Default (Mariko)"},
@@ -744,7 +821,8 @@ protected:
             &vdd2Thresholds,
             emc_voltage_label,
             noNamedValues,
-            false
+            false,
+            true
         );
 
         if(IsMariko()) {
@@ -756,7 +834,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
         }
 
@@ -768,11 +847,13 @@ protected:
             &thresholdsDisabled,
             {},
             {},
-            false
+            false,
+            true
         );
 
         if (IsErista()) {
             tsl::elm::ListItem* freqSubmenu = new tsl::elm::ListItem("RAM Frequency Editor");
+            freqSubmenu->setTextColor(tsl::Color(255, 165, 0, 255));
             freqSubmenu->setClickListener([](u64 keys) {
                 if (keys & HidNpadButton_A) {
                     tsl::changeTo<RamTableEditor>();
@@ -845,10 +926,11 @@ protected:
                 // NamedValue("3500MHz (Needs ridiculous Speedo/PLL)", 3500000),
             };
 
-            addConfigButton(KipConfigValue_marikoEmcMaxClock, "Ram Max Clock", ValueRange(0, 1, 1, "", 1), "Ram Max Clock", &thresholdsDisabled, {}, marikoMaxEmcClock, false);
+            addConfigButton(KipConfigValue_marikoEmcMaxClock, "Ram Max Clock", ValueRange(0, 1, 1, "", 1), "Ram Max Clock", &thresholdsDisabled, {}, marikoMaxEmcClock, false, true);
         }
 
         tsl::elm::ListItem* latenciesSubmenu = new tsl::elm::ListItem("RAM Latency Editor");
+        latenciesSubmenu->setTextColor(tsl::Color(255, 165, 0, 255));
         latenciesSubmenu->setClickListener([](u64 keys) {
             if (keys & HidNpadButton_A) {
                 tsl::changeTo<RamLatenciesSubmenuGui>();
@@ -860,6 +942,7 @@ protected:
         this->listElement->addItem(latenciesSubmenu);
 
         tsl::elm::ListItem* timingsSubmenu = new tsl::elm::ListItem("RAM Timing Reductions");
+        timingsSubmenu->setTextColor(tsl::Color(255, 165, 0, 255));
         timingsSubmenu->setClickListener([](u64 keys) {
             if (keys & HidNpadButton_A) {
                 tsl::changeTo<RamTimingsSubmenuGui>();
@@ -883,14 +966,14 @@ protected:
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("Memory Timings"));
 
-        addConfigButton(KipConfigValue_t1_tRCD, "t1 tRCD", ValueRange(0, 8, 1, "", 1), "tRCD", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t2_tRP, "t2 tRP", ValueRange(0, 8, 1, "", 1), "tRP", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t3_tRAS, "t3 tRAS", ValueRange(0, 10, 1, "", 1), "tRAS", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t4_tRRD, "t4 tRRD", ValueRange(0, 7, 1, "", 1), "tRRD", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t5_tRFC, "t5 tRFC", ValueRange(0, 11, 1, "", 1), "tRFC", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t6_tRTW, "t6 tRTW", ValueRange(0, 10, 1, "", 1), "tRTW", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t7_tWTR, "t7 tWTR", ValueRange(0, 10, 1, "", 1), "tWTR", &thresholdsDisabled, {}, {}, false);
-        addConfigButton(KipConfigValue_t8_tREFI, "t8 tREFI", ValueRange(0, 6, 1, "", 1), "tREFI", &thresholdsDisabled, {}, {}, false);
+        addConfigButton(KipConfigValue_t1_tRCD, "t1 tRCD", ValueRange(0, 8, 1, "", 1), "tRCD", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t2_tRP, "t2 tRP", ValueRange(0, 8, 1, "", 1), "tRP", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t3_tRAS, "t3 tRAS", ValueRange(0, 10, 1, "", 1), "tRAS", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t4_tRRD, "t4 tRRD", ValueRange(0, 7, 1, "", 1), "tRRD", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t5_tRFC, "t5 tRFC", ValueRange(0, 11, 1, "", 1), "tRFC", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t6_tRTW, "t6 tRTW", ValueRange(0, 10, 1, "", 1), "tRTW", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t7_tWTR, "t7 tWTR", ValueRange(0, 10, 1, "", 1), "tWTR", &thresholdsDisabled, {}, {}, false, true);
+        addConfigButton(KipConfigValue_t8_tREFI, "t8 tREFI", ValueRange(0, 6, 1, "", 1), "tREFI", &thresholdsDisabled, {}, {}, false, true);
 
         std::vector<NamedValue> t6_tRTW_fine_tune = {
             NamedValue("-2", 0xFFFFFFFE),
@@ -911,8 +994,8 @@ protected:
         };
 
         this->listElement->addItem(new tsl::elm::CategoryHeader("Advanced"));
-        addConfigButton(KipConfigValue_t6_tRTW_fine_tune, "t6 tRTW Fine Tune", ValueRange(0, 4, 1, "", 0), "tRTW Fine Tune", &thresholdsDisabled, {}, t6_tRTW_fine_tune, false);
-        addConfigButton(KipConfigValue_t7_tWTR_fine_tune, "t7 tWTR Fine Tune", ValueRange(0, 6, 1, "", 0), "tWTR Fine Tune", &thresholdsDisabled, {}, t7_tWTR_fine_tune, false);
+        addConfigButton(KipConfigValue_t6_tRTW_fine_tune, "t6 tRTW Fine Tune", ValueRange(0, 4, 1, "", 0), "tRTW Fine Tune", &thresholdsDisabled, {}, t6_tRTW_fine_tune, false, true);
+        addConfigButton(KipConfigValue_t7_tWTR_fine_tune, "t7 tWTR Fine Tune", ValueRange(0, 6, 1, "", 0), "tWTR Fine Tune", &thresholdsDisabled, {}, t7_tWTR_fine_tune, false, true);
     }
 };
 
@@ -948,7 +1031,8 @@ protected:
             &thresholdsDisabled,
             {},
             rlLabels,
-            false
+            false,
+            true
         );
 
         addConfigButton(
@@ -959,7 +1043,8 @@ protected:
             &thresholdsDisabled,
             {},
             wlLabels,
-            false
+            false,
+            true
         );
     }
 };
@@ -1003,7 +1088,8 @@ protected:
                 this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds,
                 {},
                 ClkOptions,
-                false
+                false,
+                true
             );
         } else {
             std::vector<NamedValue> ClkOptionsE = {
@@ -1023,7 +1109,8 @@ protected:
                 this->configList->values[KipConfigValue_eristaCpuUV] ? &eCpuClockThresholdsUV : &eCpuClockThresholds,
                 {},
                 ClkOptionsE,
-                false
+                false,
+                true
             );
         }
         if(IsErista()) {
@@ -1035,10 +1122,11 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
-            addConfigToggle(KipConfigValue_eristaCpuUnlock, "CPU Unlock");
+            addConfigToggle(KipConfigValue_eristaCpuUnlock, "CPU Unlock", true);
             addConfigButton(
                 KipConfigValue_eristaCpuVmin,
                 "CPU VMIN",
@@ -1047,7 +1135,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
             ValueThresholds eCpuVoltThresholds(1235, 1260);
@@ -1059,7 +1148,8 @@ protected:
                 &eCpuVoltThresholds,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
             std::vector<NamedValue> maxClkOptions = {
@@ -1099,7 +1189,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 marikoTableConf,
-                false
+                false,
+                true
             );
             addConfigButton(
                 KipConfigValue_marikoCpuUVLow,
@@ -1109,7 +1200,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
             addConfigButton(
                 KipConfigValue_marikoCpuUVHigh,
@@ -1119,7 +1211,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
             std::vector<NamedValue> maxClkOptions = {
@@ -1141,7 +1234,8 @@ protected:
                 this->configList->values[KipConfigValue_marikoCpuUVHigh] ? &mCpuClockThresholdsUV : &mCpuClockThresholds,
                 {},
                 maxClkOptions,
-                false
+                false,
+                true
             );
 
             addConfigButton(
@@ -1152,7 +1246,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
             addConfigButton(
@@ -1163,7 +1258,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
             ValueThresholds mCpuVoltThresholds(1160, 1180);
@@ -1175,7 +1271,8 @@ protected:
                 &mCpuVoltThresholds,
                 {},
                 {},
-                false
+                false,
+                true
             );
 
             addConfigToggle(HocClkConfigValue_OverwriteBoostMode, nullptr);
@@ -1252,9 +1349,9 @@ protected:
             NamedValue("2400 MHz", 2400000, "JEDEC."),
         };
 
-        addConfigButtonS(KipConfigValue_eristaEmcMaxClock, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN);
-        addConfigButtonS(KipConfigValue_eristaEmcMaxClock1, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN);
-        addConfigButtonS(KipConfigValue_eristaEmcMaxClock2, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN);
+        addConfigButtonS(KipConfigValue_eristaEmcMaxClock, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
+        addConfigButtonS(KipConfigValue_eristaEmcMaxClock1, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
+        addConfigButtonS(KipConfigValue_eristaEmcMaxClock2, "", ValueRange(0, 1, 1, "", 1), "", &eristaRamThresholds, {}, eristaMaxEmcClock, false, A_BTN, true);
     };
 };
 
@@ -1309,17 +1406,19 @@ protected:
                 &thresholdsDisabled,
                 {},
                 gpuUvConf,
-                false
+                false,
+                true
             );
             addConfigButton(
                 KipConfigValue_eristaGpuVmin,
                 "GPU Minimum Voltage",
-                ValueRange(700, 875, 5, "mV", 1),
+                ValueRange(675, 875, 5, "mV", 1),
                 "GPU Minimum Voltage",
                 &thresholdsDisabled,
                 {},
                 {},
-                false
+                false,
+                true
             );
         } else {
             addConfigButton(
@@ -1330,7 +1429,8 @@ protected:
                 &thresholdsDisabled,
                 {},
                 gpuUvConf,
-                false
+                false,
+                true
             );
 
             // tsl::elm::ListItem* vminCalcBtn = new tsl::elm::ListItem("Calculate GPU Vmin");
@@ -1346,7 +1446,7 @@ protected:
             //     return false;
             // });
 
-            addConfigButton(KipConfigValue_marikoGpuVmin, "GPU VMIN", ValueRange(0, 0, 0, "0", 1), "GPU VMIN", &thresholdsDisabled, {}, mGpuVoltsVmin, false);
+            addConfigButton(KipConfigValue_marikoGpuVmin, "GPU VMIN", ValueRange(0, 0, 0, "0", 1), "GPU VMIN", &thresholdsDisabled, {}, mGpuVoltsVmin, false, true);
             ValueThresholds MgpuVmaxThresholds(805, 850);
             addConfigButton(
                 KipConfigValue_marikoGpuVmax,
@@ -1356,7 +1456,8 @@ protected:
                 &MgpuVmaxThresholds,
                 {},
                 {},
-                false
+                false,
+                true
             );
         }
 
@@ -1381,7 +1482,8 @@ protected:
             &thresholdsDisabled,
             {},
             gpuOffset,
-            false
+            false,
+            true
         );
 
         std::vector<NamedValue> gpuSchedValues = {
@@ -1517,6 +1619,8 @@ protected:
         std::vector<NamedValue> eGpuVolts = {
             NamedValue("Disabled", 2000),
             NamedValue("Auto", 0),
+            NamedValue("675mV", 675), NamedValue("680mV", 680), NamedValue("685mV", 685),
+            NamedValue("690mV", 690), NamedValue("695mV", 695),
             NamedValue("700mV", 700), NamedValue("705mV", 705), NamedValue("710mV", 710),
             NamedValue("715mV", 715), NamedValue("720mV", 720), NamedValue("725mV", 725),
             NamedValue("730mV", 730), NamedValue("735mV", 735), NamedValue("740mV", 740),
@@ -1612,32 +1716,32 @@ protected:
             warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 130);
             this->listElement->addItem(warningText);
 
-            addConfigButton(KipConfigValue_g_volt_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_153600, "153.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_230400, "230.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_307200, "307.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_384000, "384.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_460800, "460.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_537600, "537.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_614400, "614.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_691200, "691.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_768000, "768.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_844800, "844.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_921600, "921.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_153600, "153.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_230400, "230.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_307200, "307.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_384000, "384.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_460800, "460.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_537600, "537.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_614400, "614.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_691200, "691.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_768000, "768.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_844800, "844.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_921600, "921.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
             if(this->configList->values[KipConfigValue_marikoGpuUV] >= GPUUVLevel_SLT)
-                addConfigButton(KipConfigValue_g_volt_1152000, "1152.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
+                addConfigButton(KipConfigValue_g_volt_1152000, "1152.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
             if(this->configList->values[KipConfigValue_marikoGpuUV] >= GPUUVLevel_HiOPT) {
-                addConfigButton(KipConfigValue_g_volt_1228800, "1228.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_1267200, "1267.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_1305600, "1305.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_1344000, "1344.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1382400, "1382.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1420800, "1420.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1459200, "1459.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1497600, "1497.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_1536000, "1536.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false);
+                addConfigButton(KipConfigValue_g_volt_1228800, "1228.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+                addConfigButton(KipConfigValue_g_volt_1267200, "1267.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+                addConfigButton(KipConfigValue_g_volt_1305600, "1305.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts, false, true);
+                addConfigButton(KipConfigValue_g_volt_1344000, "1344.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false, true);
+                addConfigButton(KipConfigValue_g_volt_1382400, "1382.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false, true);
+                addConfigButton(KipConfigValue_g_volt_1420800, "1420.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false, true);
+                addConfigButton(KipConfigValue_g_volt_1459200, "1459.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false, true);
+                addConfigButton(KipConfigValue_g_volt_1497600, "1497.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false, true);
+                addConfigButton(KipConfigValue_g_volt_1536000, "1536.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &MgpuVmaxThresholds, {}, mGpuVolts_noAuto, false, true);
             }
 
         } else {
@@ -1652,35 +1756,35 @@ protected:
             warningText->setBoundaries(0, 0, tsl::cfg::FramebufferWidth, 130);
             this->listElement->addItem(warningText);
 
-            addConfigButton(KipConfigValue_g_volt_e_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_115200, "115.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_153600, "153.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_192000, "192.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_230400, "230.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_268800, "268.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_307200, "307.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_345600, "345.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_384000, "384.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_422400, "422.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_460800, "460.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_499200, "499.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_537600, "537.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_576000, "576.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_614400, "614.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_652800, "652.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_691200, "691.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_729600, "729.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_768000, "768.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_806400, "806.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_844800, "844.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_883200, "883.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-            addConfigButton(KipConfigValue_g_volt_e_921600, "921.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
+            addConfigButton(KipConfigValue_g_volt_e_76800, "76.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_115200, "115.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_153600, "153.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_192000, "192.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_230400, "230.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_268800, "268.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_307200, "307.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_345600, "345.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_384000, "384.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_422400, "422.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_460800, "460.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_499200, "499.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_537600, "537.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_576000, "576.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_614400, "614.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_652800, "652.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_691200, "691.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_729600, "729.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_768000, "768.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_806400, "806.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_844800, "844.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_883200, "883.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+            addConfigButton(KipConfigValue_g_volt_e_921600, "921.6MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
             if(this->configList->values[KipConfigValue_eristaGpuUV] >= GPUUVLevel_SLT)
-                addConfigButton(KipConfigValue_g_volt_e_960000, "960.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
+                addConfigButton(KipConfigValue_g_volt_e_960000, "960.0MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
             if(this->configList->values[KipConfigValue_eristaGpuUV] >= GPUUVLevel_HiOPT) {
-                addConfigButton(KipConfigValue_g_volt_e_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false);
-                addConfigButton(KipConfigValue_g_volt_e_1036800, "1036.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false);
-                addConfigButton(KipConfigValue_g_volt_e_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false);
+                addConfigButton(KipConfigValue_g_volt_e_998400, "998.4MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts, false, true);
+                addConfigButton(KipConfigValue_g_volt_e_1036800, "1036.8MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false, true);
+                addConfigButton(KipConfigValue_g_volt_e_1075200, "1075.2MHz", ValueRange(0, 0, 0, "0", 1), "Voltage", &EgpuVmaxThresholds, {}, eGpuVolts_noAuto, false, true);
             }
         }
     }

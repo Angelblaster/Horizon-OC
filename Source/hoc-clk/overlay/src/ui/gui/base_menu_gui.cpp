@@ -134,17 +134,17 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
     // === TEMPERATURE SECTION ===
     // Labels
     renderer->drawString(labels[5], false, positions[5], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
-    renderer->drawString(labels[6], false, positions[6]-1, y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
+    renderer->drawString(labels[6], false, positions[6], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
     renderer->drawString(labels[7], false, positions[7], y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
 
     // Temperatures with color - use pre-computed colors
-    renderer->drawString(displayStrings[11], false, dataPositions[0], y, SMALL_TEXT_SIZE, tempColors[HocClkThermalSensor_SOC]);  // SOC
+    renderer->drawString(displayStrings[11], false, dataPositions[0] - 1, y, SMALL_TEXT_SIZE, tempColors[HocClkThermalSensor_SOC]);  // SOC
     renderer->drawString(displayStrings[12], false, dataPositions[1], y, SMALL_TEXT_SIZE, tempColors[HocClkThermalSensor_PCB]);  // PCB
     renderer->drawString(displayStrings[13], false, dataPositions[2], y, SMALL_TEXT_SIZE, tempColors[HocClkThermalSensor_Skin]);  // Skin
 
     y += 20; // Direct assignment (191 + 20)
 
-    renderer->drawString(displayStrings[14], false, dataPositions[0], y, SMALL_TEXT_SIZE, tsl::infoTextColor);
+    renderer->drawString(displayStrings[14], false, dataPositions[0], y, SMALL_TEXT_SIZE, tsl::infoTextColor); // SOC voltage
 
     // Power labels and values
     renderer->drawString(labels[8], false, positions[8]-1, y, SMALL_TEXT_SIZE, tsl::sectionTextColor);
@@ -159,13 +159,13 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     renderer->drawString(displayStrings[20], false, dataPositions[0], y, SMALL_TEXT_SIZE, tempColors[HocClkThermalSensor_Battery]);  // Battery
 
-    renderer->drawString(labels[13], false, positions[4], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // disp label
-
-    renderer->drawString(displayStrings[25], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // disp freq
-    
     renderer->drawString(labels[12], false, positions[3], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // fan label
 
-    renderer->drawString(displayStrings[24], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // fan speed
+    renderer->drawString(displayStrings[24], false, dataPositions[1] + 5, y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // fan speed
+
+    renderer->drawString(labels[13], false, positions[4] + 4, y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // disp label
+
+    renderer->drawString(displayStrings[25], false, dataPositions[2] + 6, y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // disp freq
 
     y+=20;
 
@@ -174,11 +174,11 @@ void BaseMenuGui::preDraw(tsl::gfx::Renderer* renderer) {
 
     if(this->context->isSaltyNXInstalled) {
 
-        renderer->drawString(labels[15], false, positions[3], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // RES label
-        renderer->drawString(displayStrings[27], false, dataPositions[1], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // RES
+        renderer->drawString(labels[15], false, positions[3] + 7, y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // RES label
+        renderer->drawString(displayStrings[27], false, dataPositions[1] + 5, y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // RES
 
-        renderer->drawString(labels[14], false, positions[4], y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // FPS label
-        renderer->drawString(displayStrings[26], false, dataPositions[2], y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // FPS
+        renderer->drawString(labels[14], false, positions[4] + 9, y, SMALL_TEXT_SIZE, tsl::sectionTextColor); // FPS label
+        renderer->drawString(displayStrings[26], false, dataPositions[2] + 6, y, SMALL_TEXT_SIZE, tsl::infoTextColor);   // FPS
 
     }
 
@@ -201,7 +201,6 @@ void BaseMenuGui::refresh()
         this->context = new HocClkContext;
     }
 
-    // === HOCCLK CONTEXT UPDATE ===
     Result rc = hocclkIpcGetCurrentContext(this->context);
     if (R_FAILED(rc)) [[unlikely]] {
         FatalGui::openWithResultCode("hocclkIpcGetCurrentContext", rc);
