@@ -104,7 +104,7 @@ namespace ams::ldr::hoc::pcv {
          *   0 | 1 1 | 1  0  0  1  0  1| 0  1| 0  0  0  0  0  0  0  0  0  0  0  0  1  1  1  0 |0  1  0  1  1
          */
 
-        inline constexpr u32 GpuAsmPattern[] = {0x52820000, 0x72A001C0};
+        inline constexpr u32 GpuAsmPattern[] = { 0x52820000, 0x72A001C0 };
 
         inline bool GpuMaxClockPatternFn(u32 *ptr32) {
             return asm_compare_no_rd(*ptr32, GpuAsmPattern[0]);
